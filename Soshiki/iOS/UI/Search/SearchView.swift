@@ -70,7 +70,7 @@ struct SearchView: View {
                 LazyVGrid(columns: gridItems, spacing: 10) {
                     ForEach(searchViewModel.searchResults, id: \._id) { entry in
                         NavigationLink {
-                            EntryView(entry: entry)
+                            EntryView(libraryViewModel: nil, entry: entry)
                         } label: {
                             EntryCellView(entry: entry.toUnifiedEntry())
                         }.onAppear {

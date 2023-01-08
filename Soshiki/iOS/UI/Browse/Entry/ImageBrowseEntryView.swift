@@ -109,14 +109,6 @@ struct ImageBrowseEntryView: View {
                         .foregroundStyle(.white, .tint, .tint)
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    
-                } label: {
-                    Image(systemName: "ellipsis.circle.fill")
-                        .foregroundStyle(.white, .tint, .tint)
-                }
-            }
         }.task {
             let entry = await source.getEntry(id: shortEntry.id)
             let chapters = await source.getChapters(id: shortEntry.id)
