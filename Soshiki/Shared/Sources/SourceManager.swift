@@ -26,15 +26,26 @@ class SourceManager: ObservableObject {
         }
     }
 
-    func installSource(_ url: URL) {
+    func installSource(_ url: URL) async {
         guard let temporaryDirectory = try? FileManager.default.url(for: .itemReplacementDirectory,
                                                                     in: .userDomainMask,
                                                                     appropriateFor: FileManager.default.documentDirectory,
                                                                     create: true) else { return }
-        guard url.startAccessingSecurityScopedResource() else { return }
+        var url = url
+        var shouldRemoveFile = false
+        if url.isFileURL {
+            guard url.startAccessingSecurityScopedResource() else { return }
+        } else {
+            guard let newUrl = try? await URLSession.shared.download(from: url).0 else { return }
+            url = newUrl
+            shouldRemoveFile = true
+        }
         defer {
             _ = try? FileManager.default.removeItem(at: temporaryDirectory)
             url.stopAccessingSecurityScopedResource()
+            if shouldRemoveFile {
+                _ = try? FileManager.default.removeItem(at: url)
+            }
         }
         guard (try? FileManager.default.unzipItem(at: url, to: temporaryDirectory)) != nil else { return }
         if let manifest = Source.manifest(directory: temporaryDirectory) {

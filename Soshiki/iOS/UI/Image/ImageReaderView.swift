@@ -39,7 +39,7 @@ struct ImageReaderView: View {
                             await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [
                                     .page(imageReaderViewModel.page + 1),
                                     .chapter(imageReaderViewModel.chapters[imageReaderViewModel.chapter].chapter)
-                                ] + (imageReaderViewModel.chapters[imageReaderViewModel.chapter].volume.flatMap({
+                            ] + (imageReaderViewModel.chapters[imageReaderViewModel.chapter].volume.flatMap({
                                     [ .volume($0) ] as [SoshikiAPI.HistoryQuery]
                                 }) ?? [])
                             )

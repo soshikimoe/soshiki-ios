@@ -18,7 +18,9 @@ struct SoshikiApp: App {
             ContentView()
                 .onOpenURL { url in
                     if url.pathExtension == "soshikisource" {
-                        SourceManager.shared.installSource(url)
+                        Task {
+                            await SourceManager.shared.installSource(url)
+                        }
                     }
                     if url.pathExtension == "soshikisources" {
                         SourceManager.shared.installSources(url)

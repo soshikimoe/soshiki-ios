@@ -26,6 +26,8 @@ struct EntrySourceListView: View {
 
     let accentColor: Color?
 
+    @State var webViewShown = false
+
     init(entry: Entry) {
         self.entry = entry
         self.sources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.enumerated().compactMap({ offset, source in
@@ -103,10 +105,8 @@ struct EntrySourceListView: View {
                     }
                 }.frame(width: 50)
                     .disabled(apiTask != nil)
-                NavigationLink {
-                    if let url = (sourceEntry?.url).flatMap({ URL(string: $0) }) {
-                        WebView(url: url)
-                    }
+                Button {
+                    webViewShown.toggle()
                 } label: {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
@@ -115,6 +115,11 @@ struct EntrySourceListView: View {
                             .foregroundColor(accentColor?.contrastingFontColor() ?? .white)
                     }
                 }.frame(width: 50)
+                    .sheet(isPresented: $webViewShown) {
+                        if let url = (sourceEntry?.url).flatMap({ URL(string: $0) }) {
+                            WebView(url: url)
+                        }
+                    }
             }.frame(height: 50)
             HStack {
                 if source is VideoSource {
@@ -209,7 +214,7 @@ struct EntrySourceListView: View {
                 }
             }
         }.padding(10)
-            .task {
+        .task {
             guard let source else { return }
             let mediaType: MediaType = source is TextSource ? .text : source is ImageSource ? .image : .video
             history = try? await SoshikiAPI.shared.getHistory(mediaType: mediaType, id: entry._id).get()

@@ -29,7 +29,7 @@ struct LibraryView: View {
                         : contentViewModel.mediaType == .image ? libraryViewModel.imageEntries : libraryViewModel.videoEntries
                     ForEach(entries, id: \._id) { entry in
                         NavigationLink {
-                            EntryView(entry: entry)
+                            EntryView(libraryViewModel: libraryViewModel, entry: entry)
                         } label: {
                             EntryCellView(entry: entry.toUnifiedEntry())
                         }.contextMenu {
@@ -129,5 +129,6 @@ struct LibraryView: View {
             case .video: self.videoEntries = allVideoEntries
             }
         }
+        self.category = category
     }
 }

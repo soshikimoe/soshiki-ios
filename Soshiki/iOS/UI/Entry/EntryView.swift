@@ -16,12 +16,14 @@ struct EntryView: View {
     var entry: Entry
 
     @EnvironmentObject var contentViewModel: ContentViewModel
+    var libraryViewModel: LibraryViewModel?
 
     var accentColor: Color?
 
     @State var sources: [Source] = []
 
-    init(entry: Entry) {
+    init(libraryViewModel: LibraryViewModel? = nil, entry: Entry) {
+        self.libraryViewModel = libraryViewModel
         self.entry = entry
         self.accentColor = Color(hex: entry.color ?? "")
     }
@@ -42,8 +44,8 @@ struct EntryView: View {
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-
+                    Menu {
+                        LibraryCellMenuView(libraryViewModel: libraryViewModel, entry: entry)
                     } label: {
                         Image(systemName: "ellipsis.circle.fill")
                             .foregroundStyle(.white, .tint, .tint)

@@ -107,7 +107,7 @@ struct VideoBrowseEntryView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    
+
                 } label: {
                     Image(systemName: "ellipsis.circle.fill")
                         .foregroundStyle(.white, .tint, .tint)

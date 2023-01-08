@@ -29,6 +29,7 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gear")
                 }
         }.environmentObject(contentViewModel)
+            .environmentObject(SourceManager.shared)
     }
 }
 

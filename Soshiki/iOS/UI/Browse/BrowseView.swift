@@ -8,42 +8,44 @@
 import SwiftUI
 
 struct BrowseView: View {
+    @EnvironmentObject var sourceManager: SourceManager
+
     var body: some View {
         NavigationStack {
             List {
                 Section("Text") {
-                    ForEach(SourceManager.shared.sources.filter({ $0 is TextSource }), id: \.id) { source in
+                    ForEach(sourceManager.sources.filter({ $0 is TextSource }), id: \.id) { source in
                         NavigationLink {
                             SourceView(source: source)
                         } label: {
                             SourceCardView(source: source)
                         }
                     }
-                    if !SourceManager.shared.sources.contains(where: { $0 is TextSource }) {
+                    if !sourceManager.sources.contains(where: { $0 is TextSource }) {
                         Text("No Sources Found.")
                     }
                 }
                 Section("Image") {
-                    ForEach(SourceManager.shared.sources.filter({ $0 is ImageSource }), id: \.id) { source in
+                    ForEach(sourceManager.sources.filter({ $0 is ImageSource }), id: \.id) { source in
                         NavigationLink {
                             SourceView(source: source)
                         } label: {
                             SourceCardView(source: source)
                         }
                     }
-                    if !SourceManager.shared.sources.contains(where: { $0 is ImageSource }) {
+                    if !sourceManager.sources.contains(where: { $0 is ImageSource }) {
                         Text("No Sources Found.")
                     }
                 }
                 Section("Video") {
-                    ForEach(SourceManager.shared.sources.filter({ $0 is VideoSource }), id: \.id) { source in
+                    ForEach(sourceManager.sources.filter({ $0 is VideoSource }), id: \.id) { source in
                         NavigationLink {
                             SourceView(source: source)
                         } label: {
                             SourceCardView(source: source)
                         }
                     }
-                    if !SourceManager.shared.sources.contains(where: { $0 is VideoSource }) {
+                    if !sourceManager.sources.contains(where: { $0 is VideoSource }) {
                         Text("No Sources Found.")
                     }
                 }

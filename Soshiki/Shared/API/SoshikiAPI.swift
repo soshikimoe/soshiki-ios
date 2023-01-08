@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SafariServices
 
 class SoshikiAPI {
     static let shared = SoshikiAPI()
@@ -13,6 +14,8 @@ class SoshikiAPI {
     static let baseUrl = "https://api.soshiki.moe"
 
     var token: String?
+
+    lazy var loginViewController = SFSafariViewController(url: self.loginUrl)
 
     init() {
         token = KeychainManager.shared.get("soshiki.api.access")
@@ -574,7 +577,16 @@ class SoshikiAPI {
         UserDefaults.standard.set(id, forKey: "user.id")
         UserDefaults.standard.set(discord, forKey: "user.discord")
         self.token = access
-        print(access)
+        loginViewController.dismiss()
+        loginViewController = SFSafariViewController(url: loginUrl)
+    }
+
+    func logout() {
+        KeychainManager.shared.delete("soshiki.api.access")
+        KeychainManager.shared.delete("soshiki.api.refresh")
+        UserDefaults.standard.removeObject(forKey: "user.id")
+        UserDefaults.standard.removeObject(forKey: "user.discord")
+        token = nil
     }
 
     @discardableResult

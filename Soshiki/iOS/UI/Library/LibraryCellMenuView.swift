@@ -10,7 +10,7 @@ import NukeUI
 
 struct LibraryCellMenuView: View {
     @EnvironmentObject var contentViewModel: ContentViewModel
-    @ObservedObject var libraryViewModel: LibraryViewModel
+    var libraryViewModel: LibraryViewModel?
 
     var entry: Entry
 
@@ -116,6 +116,8 @@ struct LibraryCellMenuView: View {
                                 id: category.id,
                                 entryId: entry._id
                             )
+                            await contentViewModel.refreshLibraries()
+                            libraryViewModel?.setCategory(to: libraryViewModel?.category)
                         }
                     } label: {
                         Text(category.name)
@@ -124,7 +126,7 @@ struct LibraryCellMenuView: View {
             } label: {
                 Label("Add to Category", systemImage: "folder.badge.plus")
             }
-            if let category = libraryViewModel.category {
+            if let category = libraryViewModel?.category {
                 Button {
                     Task {
                         await SoshikiAPI.shared.deleteEntryFromLibraryCategory(
@@ -132,6 +134,8 @@ struct LibraryCellMenuView: View {
                             id: category,
                             entryId: entry._id
                         )
+                        await contentViewModel.refreshLibraries()
+                        libraryViewModel?.setCategory(to: libraryViewModel?.category)
                     }
                 } label: {
                     Label("Remove from Category", systemImage: "folder.badge.minus")
@@ -159,7 +163,7 @@ struct LibraryCellMenuView: View {
             Button(role: .destructive) {
                 Task {
                     await SoshikiAPI.shared.deleteEntryFromLibrary(mediaType: entry.mediaType, entryId: entry._id)
-                    libraryViewModel.refresh()
+                    libraryViewModel?.refresh()
                 }
             } label: {
                 Label("Remove from Library", systemImage: "trash")
