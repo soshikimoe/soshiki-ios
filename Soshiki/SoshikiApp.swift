@@ -23,6 +23,11 @@ struct SoshikiApp: App {
                     if url.pathExtension == "soshikisources" {
                         SourceManager.shared.installSources(url)
                     }
+                    if url.scheme == "soshiki" {
+                        if url.host == "login" {
+                            SoshikiAPI.shared.loginCallback(url)
+                        }
+                    }
                 }
         }
     }

@@ -9,16 +9,14 @@ import SwiftUI
 import NukeUI
 
 struct EntryRowView: View {
-    var title: String
-    var subtitle: String
-    var cover: String
+    let entry: UnifiedEntry
 
     var newCount = 0
     var unseenCount = 0
 
     var body: some View {
         HStack {
-            LazyImage(url: URL(string: cover)) { state in
+            LazyImage(url: URL(string: entry.cover)) { state in
                 if let image = state.image {
                     image.resizingMode(.aspectFill)
                 } else if state.error != nil {
@@ -40,35 +38,37 @@ struct EntryRowView: View {
                 .stroke(style: StrokeStyle(lineWidth: 0.25))
                 .foregroundColor(.gray)
             )
-            .frame(width: 100, height: 150)
+            .frame(width: 50, height: 75)
             ZStack(alignment: .topLeading) {
-                HStack(spacing: 5) {
-                    Spacer()
-                    if newCount != 0 {
-                        Text(newCount >= 100 ? "99+" : " \(newCount) ")
-                            .background(.blue)
-                            .foregroundColor(.white)
-                            .bold()
-                            .clipShape(RoundedRectangle(cornerRadius: 5))
-                    }
-                    if unseenCount != 0 {
-                        Text(unseenCount >= 100 ? " 99+ " : " \(unseenCount) ")
-                            .background(.red)
-                            .foregroundColor(.white)
-                            .bold()
-                            .clipShape(RoundedRectangle(cornerRadius: 5))
-                    }
-                }
                 VStack(alignment: .leading) {
-                    Text(title)
-                        .lineLimit(3)
-                        .foregroundColor(.white)
-                        .bold()
-                        .multilineTextAlignment(.leading)
-                    Text(subtitle)
-                        .lineLimit(3)
+                    HStack {
+                        Text(entry.title)
+                            .lineLimit(2)
+                            .foregroundColor(.white)
+                            .bold()
+                            .multilineTextAlignment(.leading)
+                            .padding(.top)
+                        Spacer()
+                        if newCount != 0 {
+                            Text(newCount >= 100 ? "99+" : " \(newCount) ")
+                                .background(.blue)
+                                .foregroundColor(.white)
+                                .bold()
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                        if unseenCount != 0 {
+                            Text(unseenCount >= 100 ? " 99+ " : " \(unseenCount) ")
+                                .background(.red)
+                                .foregroundColor(.white)
+                                .bold()
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                    }
+                    Text(entry.staff[safe: 0] ?? "")
+                        .lineLimit(1)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)
+                    Spacer(minLength: 0)
                 }
             }
         }

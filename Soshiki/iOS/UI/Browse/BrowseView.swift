@@ -47,7 +47,7 @@ struct BrowseView: View {
                         Text("No Sources Found.")
                     }
                 }
-            }
+            }.navigationTitle("Browse")
         }
     }
 }

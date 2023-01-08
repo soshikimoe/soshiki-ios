@@ -10,6 +10,8 @@ import NukeUI
 import SwiftUI
 
 struct VideoBrowseEntryView: View {
+    @Environment(\.presentationMode) var presentationMode
+
     var shortEntry: SourceShortEntry
     var source: VideoSource
 
@@ -18,59 +20,13 @@ struct VideoBrowseEntryView: View {
 
     @State var descriptionExpanded = false
 
-    @State var linkedEntry: EntryConnection?
-    @State var history: HistoryEntry?
+    @State var linkedEntry: Entry?
+    @State var history: History?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-                HStack(spacing: 20) {
-                    LazyImage(url: URL(string: entry?.cover ?? shortEntry.cover)) { state in
-                        if let image = state.image {
-                            image
-                        } else if state.error != nil {
-                            Rectangle()
-                                .overlay {
-                                    Image(systemName: "exclamationmark.triangle")
-                                }
-                                .foregroundColor(.gray)
-                        } else {
-                            Rectangle()
-                                .foregroundColor(.gray)
-                        }
-                    }.aspectRatio(1 / 1.5, contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .frame(width: 150, height: 225)
-                        .overlay(RoundedRectangle(cornerRadius: 20)
-                            .stroke(style: StrokeStyle(lineWidth: 0.25))
-                            .foregroundColor(.gray)
-                        )
-                    VStack(alignment: .leading) {
-                        Spacer(minLength: 0)
-                        Text(entry?.title ?? shortEntry.title)
-                            .font(.title2)
-                            .fontWeight(.heavy)
-                        Text(entry?.staff.first ?? shortEntry.title)
-                            .foregroundColor(.secondary)
-                            .font(.body)
-                            .fontWeight(.semibold)
-                    }
-                    Spacer(minLength: 0)
-                }
-                Text(entry?.description ?? "")
-                    .lineLimit(descriptionExpanded ? nil : 4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .font(.subheadline)
-                HStack {
-                    Spacer()
-                    Button {
-                        descriptionExpanded.toggle()
-                    } label: {
-                        Text(descriptionExpanded ? "See Less" : "See More")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                    }
-                }
+                EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
                 HStack(spacing: 10) {
                     NavigationLink {
                         if !episodes.isEmpty {
@@ -80,8 +36,8 @@ struct VideoBrowseEntryView: View {
                                     episodes.firstIndex(where: { $0.episode == episode })
                                 }) ?? episodes.count - 1,
                                 source: source,
-                                linkedEntry: linkedEntry,
-                                history: history
+                                entry: nil,
+                                history: nil
                             )
                         }
                     } label: {
@@ -93,8 +49,8 @@ struct VideoBrowseEntryView: View {
                         }
                     }.disabled(episodes.isEmpty)
                     NavigationLink {
-                        if let soshikiEntry = linkedEntry?.entry {
-                            EntryView(entry: soshikiEntry)
+                        if let entry = linkedEntry {
+                            EntryView(entry: entry)
                         } else if let entry {
                             LinkView(entry: entry, source: source, linkedEntry: $linkedEntry)
                         }
@@ -123,7 +79,7 @@ struct VideoBrowseEntryView: View {
                 ForEach(episodes.enumerated().map({ $0 }), id: \.element.id) { offset, episode in
                     Divider()
                     NavigationLink {
-                        VideoPlayerView(episodes: episodes, episode: offset, source: source, linkedEntry: linkedEntry, history: history)
+                        VideoPlayerView(episodes: episodes, episode: offset, source: source, entry: nil, history: nil)
                     } label: {
                         VStack(alignment: .leading) {
                             let episodeNameString = episode.name != nil && !episode.name!.isEmpty ? ": \(episode.name!)" : ""
@@ -140,6 +96,23 @@ struct VideoBrowseEntryView: View {
                     }.buttonStyle(.plain)
                 }
             }.padding(10)
+        }.toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .foregroundStyle(.white, .tint, .tint)
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    
+                } label: {
+                    Image(systemName: "ellipsis.circle.fill")
+                        .foregroundStyle(.white, .tint, .tint)
+                }
+            }
         }.task {
             let entry = await source.getEntry(id: shortEntry.id)
             let episodes = await source.getEpisodes(id: shortEntry.id)
@@ -147,23 +120,14 @@ struct VideoBrowseEntryView: View {
                 self.entry = entry
                 self.episodes = episodes
             }
-            linkedEntry = await GraphQL.query(
-                QueryLink(mediaType: .video, platform: "Soshiki", source: source.id, sourceId: shortEntry.id),
-                returning: [
-                    .id,
-                    .entry(SoshikiAPI.baseEntriesQuery)
-                ],
-                token: SoshikiAPI.shared.token
-            )
-            if let entryId = linkedEntry?.id {
-                history = await GraphQL.query(
-                    QueryHistoryEntry(mediaType: .video, id: entryId),
-                    returning: [
-                        .timestamp,
-                        .episode
-                    ],
-                    token: SoshikiAPI.shared.token
-                )
+            linkedEntry = (try? await SoshikiAPI.shared.getLink(
+                mediaType: .video,
+                platformId: "soshiki",
+                sourceId: source.id,
+                entryId: shortEntry.id
+            ).get())?.first
+            if let entry = linkedEntry {
+                history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
             }
         }
     }

@@ -11,9 +11,16 @@ struct ImageSourceChapter: Sendable {
     let id: String
     let entryId: String
     let name: String?
-    let chapter: Float
-    let volume: Float?
+    let chapter: Double
+    let volume: Double?
     let translator: String?
+
+    func toListString() -> String {
+        let volumeString = volume.flatMap({ !$0.isNaN ? "Volume \($0.toTruncatedString()) " : nil }) ?? ""
+        let chapterString = "Chapter \(chapter.toTruncatedString())"
+        let nameString = name.flatMap({ ": \($0)" }) ?? ""
+        return volumeString + chapterString + nameString
+    }
 }
 
 struct ImageSourceChapterDetails: Sendable {

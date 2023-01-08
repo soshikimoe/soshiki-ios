@@ -5,7 +5,7 @@
 //  Created by Jim Phieffer on 11/20/22.
 //
 
-@preconcurrency import JavaScriptCore
+import JavaScriptCore
 
 class JSFetch {
     static func inject(into context: JSContext) {

@@ -17,8 +17,14 @@ struct VideoSourceEpisode: Sendable {
     let id: String
     let entryId: String
     let name: String?
-    let episode: Float
+    let episode: Double
     let type: VideoSourceEpisodeType
+
+    func toListString() -> String {
+        let episodeString = "Episode \(episode.toTruncatedString())"
+        let nameString = name.flatMap({ ": \($0)" }) ?? ""
+        return episodeString + nameString
+    }
 }
 
 struct VideoSourceEpisodeDetails: Sendable {
@@ -35,7 +41,7 @@ struct VideoSourceEpisodeProvider: Sendable {
 struct VideoSourceEpisodeUrl: Sendable {
     let type: VideoSourceEpisodeUrlType
     let url: String
-    let quality: Float?
+    let quality: Double?
 }
 
 enum VideoSourceEpisodeUrlType: String {

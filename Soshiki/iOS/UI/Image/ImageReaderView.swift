@@ -19,9 +19,9 @@ struct ImageReaderView: View {
 
     @State var settingsViewShown = false
 
-    @MainActor init(chapters: [ImageSourceChapter], chapter: Int, source: ImageSource, linkedEntry: EntryConnection?, history: HistoryEntry?) {
+    @MainActor init(chapters: [ImageSourceChapter], chapter: Int, source: ImageSource, entry: Entry?, history: History?) {
         self._imageReaderViewModel = StateObject(
-            wrappedValue: ImageReaderViewModel(chapters: chapters, chapter: chapter, source: source, linkedEntry: linkedEntry, history: history)
+            wrappedValue: ImageReaderViewModel(chapters: chapters, chapter: chapter, source: source, entry: entry, history: history)
         )
     }
 
@@ -35,24 +35,13 @@ struct ImageReaderView: View {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     Task {
-                        if let entryId = imageReaderViewModel.linkedEntry?.id {
-                            _ = await GraphQL.mutation(
-                                MutationSetHistoryEntry(
-                                    mediaType: .image,
-                                    id: entryId,
-                                    page: imageReaderViewModel.page + 1,
-                                    chapter: imageReaderViewModel.chapters[imageReaderViewModel.chapter].chapter,
-                                    volume: nil,
-                                    timestamp: nil,
-                                    episode: nil,
-                                    rating: nil,
-                                    status: nil,
-                                    startTime: nil,
-                                    lastTime: Float64(Date().timeIntervalSince1970),
-                                    trackers: []
-                                ),
-                                returning: [.chapter],
-                                token: SoshikiAPI.shared.token
+                        if let entry = imageReaderViewModel.entry {
+                            await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [
+                                    .page(imageReaderViewModel.page + 1),
+                                    .chapter(imageReaderViewModel.chapters[imageReaderViewModel.chapter].chapter)
+                                ] + (imageReaderViewModel.chapters[imageReaderViewModel.chapter].volume.flatMap({
+                                    [ .volume($0) ] as [SoshikiAPI.HistoryQuery]
+                                }) ?? [])
                             )
                         }
                     }
@@ -187,21 +176,21 @@ struct ImageReaderView: View {
     @AppStorage("settings.image.pagesToPreload") var pagesToPreload = 3
     @AppStorage("settings.image.readingMode") var readingMode: ReadingMode = .rtl
 
-    var linkedEntry: EntryConnection?
-    var history: HistoryEntry?
+    var entry: Entry?
+    var history: History?
 
     var viewController = ImageReaderViewController()
 
     init(chapters: [ImageSourceChapter],
          chapter: Int,
          source: ImageSource,
-         linkedEntry: EntryConnection?,
-         history: HistoryEntry?
+         entry: Entry?,
+         history: History?
     ) {
         self.chapters = chapters
         self.source = source
         self.chapter = chapter
-        self.linkedEntry = linkedEntry
+        self.entry = entry
         self.history = history
 
         if let page = history?.page {
@@ -330,6 +319,15 @@ struct ImageReaderRepresentableView: UIViewControllerRepresentable {
 
         var chapters: [ImageSourceChapter] {
             parent.viewModel.chapters
+        }
+
+        var entry: Entry? {
+            parent.viewModel.entry
+        }
+
+        var history: History? {
+            get { parent.viewModel.history }
+            set { parent.viewModel.history = newValue }
         }
     }
 }
@@ -524,25 +522,12 @@ class ImageReaderViewController: UIPageViewController {
             }
         }
         Task {
-            if let entryId = coordinator.parent.viewModel.linkedEntry?.id {
-                _ = await GraphQL.mutation(
-                    MutationSetHistoryEntry(
-                        mediaType: .image,
-                        id: entryId,
-                        page: coordinator.page + 1,
-                        chapter: coordinator.chapters[coordinator.chapter].chapter,
-                        volume: nil,
-                        timestamp: nil,
-                        episode: nil,
-                        rating: nil,
-                        status: nil,
-                        startTime: nil,
-                        lastTime: Float64(Date().timeIntervalSince1970),
-                        trackers: []
-                    ),
-                    returning: [.chapter],
-                    token: SoshikiAPI.shared.token
-                )
+            if let entry = coordinator.entry {
+                await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [
+                    .page(coordinator.page + 1),
+                    .chapter(coordinator.chapters[coordinator.chapter].chapter)
+                ] + (coordinator.chapters[coordinator.chapter].volume.flatMap({ [ .volume($0) ] as [SoshikiAPI.HistoryQuery] }) ?? []))
+                coordinator.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
             }
         }
     }

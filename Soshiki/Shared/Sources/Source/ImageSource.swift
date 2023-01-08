@@ -22,13 +22,13 @@ class ImageSource: Source {
                     return callback.resume(returning: dict.compactMap({ chapter in
                         if let id = chapter["id"] as? String,
                            let entryId = chapter["entryId"] as? String,
-                           let chapterNumber = chapter["chapter"] as? Float {
+                           let chapterNumber = chapter["chapter"] as? Double {
                             return ImageSourceChapter(
                                 id: id,
                                 entryId: entryId,
                                 name: chapter["name"] as? String,
                                 chapter: chapterNumber,
-                                volume: chapter["volume"] as? Float,
+                                volume: chapter["volume"] as? Double,
                                 translator: chapter["translator"] as? String
                             )
                         } else {

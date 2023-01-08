@@ -14,30 +14,7 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 Section(header: "Account") {
-                    if SoshikiAPI.shared.token.isEmpty {
-                        Button {
-                            loginViewPresented.toggle()
-                        } label: {
-                            Text("Login")
-                        }.sheet(isPresented: $loginViewPresented) {
-                            LoginView()
-                                .toolbar {
-                                    ToolbarItem(placement: .navigationBarTrailing) {
-                                        Button {
-                                            loginViewPresented.toggle()
-                                        } label: {
-                                            Text("Done").bold()
-                                        }
-                                    }
-                                }.toolbar(.hidden, for: .bottomBar)
-                        }
-                    } else {
-                        Button {
-                            SoshikiAPI.shared.token = ""
-                        } label: {
-                            Text("Logout")
-                        }
-                    }
+                    Link("Login", destination: SoshikiAPI.shared.loginUrl)
                 }
                 Section(header: "Sources") {
                     NavigationLink {
@@ -50,7 +27,7 @@ struct SettingsView: View {
                         Text("Sources")
                     }
                 }
-            }
+            }.navigationTitle("Settings")
         }
     }
 

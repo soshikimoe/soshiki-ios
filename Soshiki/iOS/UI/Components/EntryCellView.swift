@@ -9,15 +9,13 @@ import SwiftUI
 import NukeUI
 
 struct EntryCellView: View {
-    var title: String
-    var subtitle: String
-    var cover: String
+    let entry: UnifiedEntry
 
     var newCount = 0
     var unseenCount = 0
 
     var body: some View {
-        LazyImage(url: URL(string: cover)) { state in
+        LazyImage(url: URL(string: entry.cover)) { state in
             if let image = state.image {
                 image.resizingMode(.aspectFill)
             } else if state.error != nil {
@@ -60,7 +58,7 @@ struct EntryCellView: View {
                     }.padding(5)
                     VStack(alignment: .leading) {
                         Spacer()
-                        Text(title)
+                        Text(entry.title)
                             .lineLimit(3)
                             .foregroundColor(.white)
                             .bold()
