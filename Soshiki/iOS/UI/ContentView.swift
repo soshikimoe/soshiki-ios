@@ -29,62 +29,22 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gear")
                 }
         }.environmentObject(contentViewModel)
+            .environmentObject(SourceManager.shared)
+            .environmentObject(TrackerManager.shared)
     }
 }
 
 @MainActor class ContentViewModel: ObservableObject {
-    @Published var libraries: [Library] = []
-    @Published var currentCategory: Category = Category(name: nil, entries: nil)
-    @Published var currentMediaType: MediaType = .image
-
-    @Published var isUpdatingLibraryStatus = false
+    @Published var libraries: Libraries?
+    @AppStorage("app.session.mediaType") var mediaType: MediaType = .image
 
     func refreshLibraries() async {
-        let libraries = await GraphQL.query(QueryLibraries(), returning: SoshikiAPI.baseLibrariesQuery, token: SoshikiAPI.shared.token) ?? []
-        Task { [weak self] in
-            self?.libraries = libraries
-            if let currentCategory = self?.currentCategory, currentCategory.name == nil {
-                self?.currentCategory = libraries.first(where: { $0.mediaType == .image })?
-                    .categories?
-                    .first(where: { $0.name == "" }) ?? currentCategory
-            }
+        if let libraries = try? await SoshikiAPI.shared.getLibraries().get() {
+            self.libraries = libraries
         }
     }
 
-    func toggleLibraryStatus(for entry: Entry) {
-        Task {
-            isUpdatingLibraryStatus = true
-            if libraries.first(where: { $0.mediaType == currentMediaType })?
-                        .categories?.first(where: { $0.name == "" })?
-                        .entries?.contains(where: { $0.entry?.id == entry.id }) ?? false {
-                if let library = await GraphQL.mutation(
-                    MutationRemoveLibraryItem(
-                        mediaType: currentMediaType,
-                        id: entry.id!
-                    ),
-                    returning: SoshikiAPI.baseLibrariesQuery,
-                    token: SoshikiAPI.shared.token
-                ) {
-                    if let index = libraries.firstIndex(where: { $0.mediaType == library.mediaType }) {
-                        libraries[index] = library
-                    }
-                }
-            } else {
-                if let library = await GraphQL.mutation(
-                    MutationAddLibraryItem(
-                        mediaType: currentMediaType,
-                        id: entry.id!,
-                        category: nil
-                    ),
-                    returning: SoshikiAPI.baseLibrariesQuery,
-                    token: SoshikiAPI.shared.token
-                ) {
-                    if let index = libraries.firstIndex(where: { $0.mediaType == library.mediaType }) {
-                        libraries[index] = library
-                    }
-                }
-            }
-            isUpdatingLibraryStatus = false
-        }
+    func library(forMediaType mediaType: MediaType) -> FullLibrary? {
+        mediaType == .text ? libraries?.text : mediaType == .image ? libraries?.image : libraries?.video
     }
 }

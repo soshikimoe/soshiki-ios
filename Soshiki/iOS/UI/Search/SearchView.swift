@@ -28,106 +28,62 @@ struct SearchView: View {
                     searchViewModel.refreshSearch()
                 })
                 HStack {
-                    Text("Media Type")
-                    Picker("Media Type", selection: $contentViewModel.currentMediaType) {
-                        ForEach(MediaType.allCases, id: \.rawValue) { type in
-                            Text(type.rawValue.capitalized).tag(type)
-                        }
-                    }.padding(.leading, -8)
+                    Text("\(searchViewModel.searchResults.count) results")
                     Spacer()
-                }.padding(10)
-                LazyVGrid(columns: gridItems, spacing: 10) {
-                    ForEach(searchViewModel.searchResults.filter({ $0.id != nil }), id: \.id!) { item in
+                    Text("Media Type")
+                    Menu {
                         Button {
-                            if searchViewModel.selecting && searchViewModel.selections.contains(where: { $0.id == item.id }) {
-                                searchViewModel.selections.removeAll(where: { $0.id == item.id })
-                            } else {
-                                searchViewModel.selections.append(item)
-                            }
+                            contentViewModel.mediaType = .text
+                            searchViewModel.refreshSearch()
                         } label: {
-                            ZStack(alignment: .topTrailing) {
-                                NavigationLink {
-                                    EntryView(entry: item)
-                                } label: {
-                                    EntryCellView(
-                                        title: item.info?.title ?? "",
-                                        subtitle: "",
-                                        cover: item.info?.anilist?.coverImage?.large ?? item.info?.cover ?? ""
-                                    )
-                                }.allowsHitTesting(!searchViewModel.selecting)
-                                if searchViewModel.selecting {
-                                    if searchViewModel.selections.contains(where: { $0.id == item.id }) {
-                                        ZStack {
-                                            Image(systemName: "circle.fill")
-                                                .foregroundColor(.white)
-                                            Image(systemName: "checkmark.circle.fill")
-                                        }.padding(10)
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill()
-                                            .foregroundColor(.black.opacity(0.3))
-                                        Image(systemName: "circle")
-                                            .padding(10)
-                                            .foregroundColor(.white)
-                                    }
-                                }
+                            if contentViewModel.mediaType == .text {
+                                Label("Text", systemImage: "checkmark")
+                            } else {
+                                Text("Text")
+                            }
+                        }
+                        Button {
+                            contentViewModel.mediaType = .image
+                            searchViewModel.refreshSearch()
+                        } label: {
+                            if contentViewModel.mediaType == .image {
+                                Label("Image", systemImage: "checkmark")
+                            } else {
+                                Text("Image")
+                            }
+                        }
+                        Button {
+                            contentViewModel.mediaType = .video
+                            searchViewModel.refreshSearch()
+                        } label: {
+                            if contentViewModel.mediaType == .video {
+                                Label("Video", systemImage: "checkmark")
+                            } else {
+                                Text("Video")
+                            }
+                        }
+                    } label: {
+                        Text(contentViewModel.mediaType.rawValue.capitalized).padding(.trailing, -3)
+                        Image(systemName: "chevron.down")
+                    }
+                }.padding(.horizontal, 10)
+                LazyVGrid(columns: gridItems, spacing: 10) {
+                    ForEach(searchViewModel.searchResults, id: \._id) { entry in
+                        NavigationLink {
+                            EntryView(libraryViewModel: nil, entry: entry)
+                        } label: {
+                            EntryCellView(entry: entry.toUnifiedEntry())
+                        }.onAppear {
+                            if searchViewModel.searchResults.last?._id == entry._id,
+                               searchViewModel.searchTask == nil {
+                                searchViewModel.getNextPage()
                             }
                         }
                     }
                 }.padding(10)
             }.introspectScrollView { scrollView in
                 scrollView.refreshControl = searchViewModel.refreshControl
-            }.toolbar {
-                if searchViewModel.selecting {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button {
-                            searchViewModel.selecting = false
-                        } label: {
-                            Text("Done")
-                        }
-                    }
-                    ToolbarItem(placement: .bottomBar) {
-                        Menu {
-                            Button {
-                                Task {
-                                    if let newLibrary = await GraphQL.mutation(
-                                        MutationAddLibraryItems(
-                                            mediaType: contentViewModel.currentMediaType,
-                                            ids: searchViewModel.selections.map({ $0.id! }),
-                                            category: nil
-                                        ),
-                                        returning: SoshikiAPI.baseLibrariesQuery,
-                                        token: SoshikiAPI.shared.token
-                                    ) {
-                                        Task { @MainActor in
-                                            if let index = contentViewModel.libraries.firstIndex(where: {
-                                                $0.mediaType == contentViewModel.currentMediaType
-                                            }) {
-                                                contentViewModel.libraries[index] = newLibrary
-                                            }
-                                            searchViewModel.selecting = false
-                                        }
-                                    }
-                                }
-                            } label: {
-                                Label("Add to Library", systemImage: "plus")
-                            }
-                        } label: {
-                            Image(systemName: "plus")
-                        }
-                    }
-                } else {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button {
-                            searchViewModel.selecting = true
-                        } label: {
-                            Image(systemName: "checkmark.circle")
-                        }
-                    }
-                }
-            }.toolbar(searchViewModel.selecting ? .hidden : .visible, for: .tabBar)
-                .toolbar(searchViewModel.selecting ? .visible : .hidden, for: .bottomBar)
-                .navigationTitle("Search")
+            }.navigationTitle("Search")
         }.onAppear {
             searchViewModel.contentViewModel = contentViewModel
         }.task {
@@ -141,17 +97,11 @@ struct SearchView: View {
 
     var contentViewModel: ContentViewModel!
 
-    @Published var selecting: Bool = false {
-        didSet {
-            if !selecting {
-                selections = []
-            }
-        }
-    }
-    @Published var selections: [Entry] = []
-
     @Published var searchResults: [Entry] = []
     @Published var searchText = ""
+    @Published var searchTask: Task<Void, Never>?
+
+    var queryOffset = 0
 
     init() {
         refreshControl = UIRefreshControl()
@@ -159,14 +109,32 @@ struct SearchView: View {
     }
 
     @objc func refreshSearch() {
-        Task {
-            if let searchResults = await GraphQL.query(
-                QuerySearch(mediaType: contentViewModel.currentMediaType, query: self.searchText),
-                returning: SoshikiAPI.baseEntriesQuery,
-                token: SoshikiAPI.shared.token
-            ) {
+        queryOffset = 0
+        searchTask?.cancel()
+        searchTask = Task {
+            if let searchResults = try? await SoshikiAPI.shared.getEntries(mediaType: contentViewModel.mediaType, query: [
+                .title(searchText)
+                // .contentRating([.safe])
+            ]).get() {
                 self.searchResults = searchResults
             }
+            self.searchTask = nil
+        }
+    }
+
+    func getNextPage() {
+        guard searchResults.count % 100 == 0 else { return }
+        queryOffset += 100
+        searchTask?.cancel()
+        searchTask = Task {
+            if let searchResults = try? await SoshikiAPI.shared.getEntries(mediaType: contentViewModel.mediaType, query: [
+                .title(searchText),
+                .offset(queryOffset)
+                // .contentRating([.safe])
+            ]).get() {
+                self.searchResults.append(contentsOf: searchResults)
+            }
+            self.searchTask = nil
         }
     }
 }

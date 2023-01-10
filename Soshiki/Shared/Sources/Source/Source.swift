@@ -48,8 +48,16 @@ class Source: Identifiable, Equatable {
         } as @convention(block) (JSValue) -> Any?, forKeyedSubscript: "getStorageValue")
         context.objectForKeyedSubscript("globalThis").setObject({ key, value in
             guard let key = key.toString() else { return }
-            UserDefaults.standard.set(value.toObject(), forKey: key)
+            UserDefaults.standard.set(value.toObject(), forKey: "storage.source.\(manifest.id).\(key)")
         } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setStorageValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key in
+            guard let key = key.toString() else { return nil }
+            return KeychainManager.shared.get("keychain.source.\(manifest.id).\(key)")
+        } as @convention(block) (JSValue) -> String?, forKeyedSubscript: "getKeychainValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, value in
+            guard let key = key.toString(), let value = value.toString() else { return }
+            KeychainManager.shared.set(value, forKey: "keychain.source.\(manifest.id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setKeychainValue")
 
         context.evaluateScript(script)
         context.objectForKeyedSubscript("globalThis").setObject(

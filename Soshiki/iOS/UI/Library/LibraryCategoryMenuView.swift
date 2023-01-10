@@ -9,95 +9,94 @@ import SwiftUI
 
 struct LibraryCategoryMenuView: View {
     @EnvironmentObject var contentViewModel: ContentViewModel
+    @ObservedObject var libraryViewModel: LibraryViewModel
 
     var body: some View {
         Menu {
-            if let categories = contentViewModel.libraries.first(where: { $0.mediaType == .text })?.categories {
+            if let libraries = contentViewModel.libraries {
                 Menu {
-                    if let allCategory = categories.first(where: { $0.name == "" }) {
-                        Button {
-                            contentViewModel.currentCategory = allCategory
-                        } label: {
-                            if contentViewModel.currentCategory.name == allCategory.name && contentViewModel.currentMediaType == .text {
-                                Label("All", systemImage: "checkmark")
-                            } else {
-                                Text("All")
-                            }
+                    Button {
+                        contentViewModel.mediaType = .text
+                        libraryViewModel.setCategory(to: nil)
+                    } label: {
+                        if contentViewModel.mediaType == .text, libraryViewModel.category == nil {
+                            Label("All", systemImage: "checkmark")
+                        } else {
+                            Text("All")
                         }
                     }
-                    ForEach(categories.filter({ $0.name != "" }), id: \.name) { category in
+                    ForEach(libraries.text.categories, id: \.id) { category in
                         Button {
-                            contentViewModel.currentCategory = category
+                            contentViewModel.mediaType = .text
+                            libraryViewModel.setCategory(to: category.id)
                         } label: {
-                            if contentViewModel.currentCategory.name == category.name && contentViewModel.currentMediaType == .text {
-                                Label(category.name ?? "", systemImage: "checkmark")
+                            if contentViewModel.mediaType == .text, libraryViewModel.category == category.id {
+                                Label(category.name, systemImage: "checkmark")
                             } else {
-                                Text(category.name ?? "")
+                                Text(category.name)
                             }
                         }
                     }
                 } label: {
-                    Label("Text", systemImage: "doc.text")
+                    Text("Text")
                 }
-            }
-            if let categories = contentViewModel.libraries.first(where: { $0.mediaType == .image })?.categories {
                 Menu {
-                    if let allCategory = categories.first(where: { $0.name == "" }) {
-                        Button {
-                            contentViewModel.currentCategory = allCategory
-                        } label: {
-                            if contentViewModel.currentCategory.name == allCategory.name && contentViewModel.currentMediaType == .image {
-                                Label("All", systemImage: "checkmark")
-                            } else {
-                                Text("All")
-                            }
+                    Button {
+                        contentViewModel.mediaType = .image
+                        libraryViewModel.setCategory(to: nil)
+                    } label: {
+                        if contentViewModel.mediaType == .image, libraryViewModel.category == nil {
+                            Label("All", systemImage: "checkmark")
+                        } else {
+                            Text("All")
                         }
                     }
-                    ForEach(categories.filter({ $0.name != "" }), id: \.name) { category in
+                    ForEach(libraries.image.categories, id: \.id) { category in
                         Button {
-                            contentViewModel.currentCategory = category
+                            contentViewModel.mediaType = .image
+                            libraryViewModel.setCategory(to: category.id)
                         } label: {
-                            if contentViewModel.currentCategory.name == category.name && contentViewModel.currentMediaType == .image {
-                                Label(category.name ?? "", systemImage: "checkmark")
+                            if contentViewModel.mediaType == .image, libraryViewModel.category == category.id {
+                                Label(category.name, systemImage: "checkmark")
                             } else {
-                                Text(category.name ?? "")
+                                Text(category.name)
                             }
                         }
                     }
                 } label: {
-                    Label("Image", systemImage: "book")
+                    Text("Image")
                 }
-            }
-            if let categories = contentViewModel.libraries.first(where: { $0.mediaType == .video })?.categories {
                 Menu {
-                    if let allCategory = categories.first(where: { $0.name == "" }) {
-                        Button {
-                            contentViewModel.currentCategory = allCategory
-                        } label: {
-                            if contentViewModel.currentCategory.name == allCategory.name && contentViewModel.currentMediaType == .video {
-                                Label("All", systemImage: "checkmark")
-                            } else {
-                                Text("All")
-                            }
+                    Button {
+                        contentViewModel.mediaType = .video
+                        libraryViewModel.setCategory(to: nil)
+                    } label: {
+                        if contentViewModel.mediaType == .video, libraryViewModel.category == nil {
+                            Label("All", systemImage: "checkmark")
+                        } else {
+                            Text("All")
                         }
                     }
-                    ForEach(categories.filter({ $0.name != "" }), id: \.name) { category in
+                    ForEach(libraries.video.categories, id: \.id) { category in
                         Button {
-                            contentViewModel.currentCategory = category
+                            contentViewModel.mediaType = .video
+                            libraryViewModel.setCategory(to: category.id)
                         } label: {
-                            if contentViewModel.currentCategory.name == category.name && contentViewModel.currentMediaType == .video {
-                                Label(category.name ?? "", systemImage: "checkmark")
+                            if contentViewModel.mediaType == .video, libraryViewModel.category == category.id {
+                                Label(category.name, systemImage: "checkmark")
                             } else {
-                                Text(category.name ?? "")
+                                Text(category.name)
                             }
                         }
                     }
                 } label: {
-                    Label("Video", systemImage: "film")
+                    Text("Video")
                 }
             }
             Divider()
-            Button {} label: {
+            NavigationLink {
+                LibraryCategoryEditView()
+            } label: {
                 Label("Edit", systemImage: "pencil")
             }
         } label: {

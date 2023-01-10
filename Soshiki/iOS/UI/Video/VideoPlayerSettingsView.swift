@@ -46,8 +46,8 @@ struct VideoPlayerSettingsView: View {
         }
     }
 
-    func providerUrlsByQuality(_ providers: [VideoSourceEpisodeProvider]) -> [(quality: Float?, urls: [(provider: String, url: String)])] {
-        var byQuality = [(quality: Float?, urls: [(provider: String, url: String)])]()
+    func providerUrlsByQuality(_ providers: [VideoSourceEpisodeProvider]) -> [(quality: Double?, urls: [(provider: String, url: String)])] {
+        var byQuality = [(quality: Double?, urls: [(provider: String, url: String)])]()
         for provider in providers {
             for url in provider.urls {
                 if let index = byQuality.firstIndex(where: { $0.quality == url.quality }) {

@@ -20,4 +20,16 @@ struct SourceShortEntry {
     let title: String
     let subtitle: String
     let cover: String
+
+    func toUnifiedEntry() -> UnifiedEntry {
+        UnifiedEntry(
+            title: self.title,
+            cover: self.cover,
+            staff: [],
+            tags: [],
+            banner: nil,
+            color: nil,
+            description: nil
+        )
+    }
 }

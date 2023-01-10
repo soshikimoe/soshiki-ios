@@ -22,7 +22,7 @@ struct ImageReaderSettingsView: View {
                     Text("Pages to Preload")
                     Spacer()
                     InlineStepper(
-                        value: Binding(get: { Float(imageReaderViewModel.pagesToPreload) }, set: { imageReaderViewModel.pagesToPreload = Int($0) }),
+                        value: Binding(get: { Double(imageReaderViewModel.pagesToPreload) }, set: { imageReaderViewModel.pagesToPreload = Int($0) }),
                         lowerBound: 1,
                         upperBound: 5,
                         step: 1,

@@ -8,16 +8,16 @@
 import SwiftUI
 
 struct InlineStepper: View {
-    @Binding var value: Float
+    @Binding var value: Double
 
-    var lowerBound: Float
-    var upperBound: Float
-    var step: Float
+    var lowerBound: Double
+    var upperBound: Double
+    var step: Double
     var allowsCustomInput: Bool
 
     @State var currentInput: String
 
-    init(value: Binding<Float>, lowerBound: Float, upperBound: Float, step: Float, allowsCustomInput: Bool) {
+    init(value: Binding<Double>, lowerBound: Double, upperBound: Double, step: Double, allowsCustomInput: Bool) {
         self._value = value
         self.lowerBound = lowerBound
         self.upperBound = upperBound
@@ -39,7 +39,7 @@ struct InlineStepper: View {
                 .buttonStyle(.borderless)
             Divider()
             TextField("", text: $currentInput) {
-                value = Float(currentInput) ?? value
+                value = Double(currentInput) ?? value
             }.multilineTextAlignment(.center)
                 .lineLimit(1)
                 .onChange(of: value) { newValue in

@@ -13,9 +13,9 @@ struct VideoPlayerView: View {
 
     @StateObject var videoPlayerViewModel: VideoPlayerViewModel
 
-    init(episodes: [VideoSourceEpisode], episode: Int, source: VideoSource, linkedEntry: EntryConnection?, history: HistoryEntry?) {
+    init(episodes: [VideoSourceEpisode], episode: Int, source: VideoSource, entry: Entry?, history: History?) {
         self._videoPlayerViewModel = StateObject(
-            wrappedValue: VideoPlayerViewModel(episodes: episodes, episode: episode, source: source, linkedEntry: linkedEntry, history: history)
+            wrappedValue: VideoPlayerViewModel(episodes: episodes, episode: episode, source: source, entry: entry, history: history)
         )
     }
 
@@ -83,8 +83,8 @@ struct VideoPlayerView: View {
         .toolbar(.hidden, for: .tabBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .onAppear {
-            videoPlayerViewModel.startup()
+        .task {
+            await videoPlayerViewModel.startup()
         }
     }
 }
@@ -101,8 +101,8 @@ struct VideoPlayerView: View {
 
     @Published var settingsViewShown = false
 
-    var history: HistoryEntry?
-    var linkedEntry: EntryConnection?
+    var history: History?
+    var entry: Entry?
 
     @AppStorage("settings.video.autoPlay") var autoPlay = true
     @AppStorage("settings.video.autoNextEpisode") var autoNextEpisode = true
@@ -110,21 +110,19 @@ struct VideoPlayerView: View {
 
     var viewController = VideoPlayerViewController()
 
-    init(episodes: [VideoSourceEpisode], episode: Int, source: VideoSource, linkedEntry: EntryConnection?, history: HistoryEntry?) {
+    init(episodes: [VideoSourceEpisode], episode: Int, source: VideoSource, entry: Entry?, history: History?) {
         self.episodes = episodes
         self.episode = episode
         self.source = source
-        self.linkedEntry = linkedEntry
+        self.entry = entry
         self.history = history
     }
 
-    func startup() {
-        Task {
-            let episode = episodes[episode]
-            details = await source.getEpisodeDetails(id: episode.id, entryId: episode.entryId)
-            if let url = details?.providers[safe: 0]?.urls[safe: 0].flatMap({ URL(string: $0.url) }) {
-                await viewController.setUrl(url)
-            }
+    func startup() async {
+        let episode = episodes[episode]
+        details = await source.getEpisodeDetails(id: episode.id, entryId: episode.entryId)
+        if let url = details?.providers[safe: 0]?.urls[safe: 0].flatMap({ URL(string: $0.url) }) {
+            await viewController.setUrl(url)
         }
     }
 }

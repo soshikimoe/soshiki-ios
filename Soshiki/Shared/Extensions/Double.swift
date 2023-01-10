@@ -1,5 +1,5 @@
 //
-//  Float.swift
+//  Double.swift
 //  Soshiki
 //
 //  Created by Jim Phieffer on 12/2/22.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Float {
+extension Double {
     func toTruncatedString() -> String {
         let formatter = NumberFormatter()
         let number = NSNumber(value: self)

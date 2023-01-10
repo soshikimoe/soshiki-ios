@@ -13,7 +13,7 @@ struct LinkView: View {
 
     var entry: SourceEntry
     var source: Source
-    @Binding var linkedEntry: EntryConnection?
+    @Binding var linkedEntry: Entry?
 
     @State var results: [Entry] = []
 
@@ -24,49 +24,35 @@ struct LinkView: View {
         SearchBar(text: $searchText, onCommit: {
             searchTask?.cancel()
             searchTask = Task {
-                results = await GraphQL.query(
-                    QuerySearch(
-                        mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
-                        query: searchText
-                    ),
-                    returning: SoshikiAPI.baseEntriesQuery,
-                    token: SoshikiAPI.shared.token
-                ) ?? []
+                results = (try? await SoshikiAPI.shared.getEntries(
+                    mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
+                    query: [ .title(searchText) ]
+                ).get()) ?? []
             }
         })
-        List(results, id: \.id!) { entry in
+        List(results, id: \._id) { entry in
             Button {
-                linkedEntry = EntryConnection(id: entry.id, entry: entry)
+                linkedEntry = entry
                 Task {
-                    _ = await GraphQL.mutation(
-                        MutationSetLink(
-                            mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
-                            platform: "Soshiki",
-                            source: source.id,
-                            sourceId: self.entry.id,
-                            id: entry.id!
-                        ),
-                        returning: [.id],
-                        token: SoshikiAPI.shared.token
+                    await SoshikiAPI.shared.setLink(
+                        mediaType: entry.mediaType,
+                        id: entry._id,
+                        platformId: "soshiki",
+                        platformName: "Soshiki",
+                        sourceId: source.id,
+                        sourceName: source.name,
+                        entryId: self.entry.id
                     )
                     presentationMode.wrappedValue.dismiss()
                 }
             } label: {
-                EntryRowView(
-                    title: entry.info?.title ?? "",
-                    subtitle: entry.info?.author ?? "",
-                    cover: entry.info?.anilist?.coverImage?.large ?? entry.info?.cover ?? ""
-                )
+                EntryRowView(entry: entry.toUnifiedEntry())
             }
         }.task {
-            results = await GraphQL.query(
-                QuerySearch(
-                    mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
-                    query: entry.title
-                ),
-                returning: SoshikiAPI.baseEntriesQuery,
-                token: SoshikiAPI.shared.token
-            ) ?? []
+            results = (try? await SoshikiAPI.shared.getEntries(
+                mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
+                query: [ .title(entry.title) ]
+            ).get()) ?? []
         }
     }
 }

@@ -107,7 +107,7 @@ struct SourceSettingsView: View {
                     }))
                 case var numberFilter as SourceNumberFilter:
                     SourceNumberFilterView(filter: Binding(get: {
-                        if let value = UserDefaults.standard.value(forKey: "settings.source.\(source.id).\(numberFilter.id)") as? Float {
+                        if let value = UserDefaults.standard.value(forKey: "settings.source.\(source.id).\(numberFilter.id)") as? Double {
                             numberFilter.value = value
                         }
                         return numberFilter
@@ -117,7 +117,7 @@ struct SourceSettingsView: View {
                     }))
                 case var rangeFilter as SourceRangeFilter:
                     SourceRangeFilterView(filter: Binding(get: {
-                        if let value = UserDefaults.standard.value(forKey: "settings.source.\(source.id).\(rangeFilter.id)") as? (Float, Float) {
+                        if let value = UserDefaults.standard.value(forKey: "settings.source.\(source.id).\(rangeFilter.id)") as? (Double, Double) {
                             rangeFilter.value = value
                         }
                         return rangeFilter

@@ -53,6 +53,15 @@ struct VideoPlayerRepresentableView: UIViewControllerRepresentable {
         var source: VideoSource {
             parent.videoPlayerViewModel.source
         }
+
+        var entry: Entry? {
+            parent.videoPlayerViewModel.entry
+        }
+
+        var history: History? {
+            get { parent.videoPlayerViewModel.history }
+            set { parent.videoPlayerViewModel.history = newValue }
+        }
     }
 }
 
@@ -69,6 +78,7 @@ class VideoPlayerViewController: AVPlayerViewController {
 
     init() {
         super.init(nibName: nil, bundle: nil)
+        try? AVAudioSession.sharedInstance().setCategory(.playback)
     }
 
     required init?(coder: NSCoder) {
@@ -78,6 +88,9 @@ class VideoPlayerViewController: AVPlayerViewController {
     deinit {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
+        }
+        if let timeObserver {
+            self.player?.removeTimeObserver(timeObserver)
         }
     }
 
@@ -105,6 +118,11 @@ class VideoPlayerViewController: AVPlayerViewController {
         }
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        self.player?.pause()
+    }
+
     func setUrl(_ url: URL) async {
         if let endObserver {
             NotificationCenter.default.removeObserver(endObserver)
@@ -128,31 +146,22 @@ class VideoPlayerViewController: AVPlayerViewController {
         ) { [weak self] time in
             guard let self else { return }
             let timestamp = round(Double(time.value) / Double(time.timescale))
-            if let entryId = self.coordinator.parent.videoPlayerViewModel.linkedEntry?.id,
+            if let entry = self.coordinator.parent.videoPlayerViewModel.entry,
                self.lastRegisteredTimestamp != timestamp {
                 self.lastRegisteredTimestamp = timestamp
                 Task {
-                    await GraphQL.mutation(
-                        MutationSetHistoryEntry(
-                            mediaType: .video,
-                            id: entryId,
-                            page: nil,
-                            chapter: nil,
-                            volume: nil,
-                            timestamp: Int(timestamp),
-                            episode: self.coordinator.episodes[self.coordinator.episode].episode,
-                            rating: nil,
-                            status: nil,
-                            startTime: nil,
-                            lastTime: Float64(Date().timeIntervalSince1970),
-                            trackers: nil),
-                        returning: [ .episode ],
-                        token: SoshikiAPI.shared.token
-                    )
+                    await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [
+                        .timestamp(Int(timestamp)),
+                        .episode(self.coordinator.episodes[self.coordinator.episode].episode)
+                    ])
+                    if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                        self.coordinator.history = history
+                        await TrackerManager.shared.setHistory(entry: entry, history: history)
+                    }
                 }
             }
         }
-
+        self.player?.pause()
         self.player = player
         if coordinator.parent.videoPlayerViewModel.autoPlay {
             self.player?.play()

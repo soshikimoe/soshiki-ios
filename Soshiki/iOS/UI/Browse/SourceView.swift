@@ -60,7 +60,7 @@ struct SourceView: View {
                 }.padding(10)
             }.introspectScrollView { scrollView in
                 scrollView.refreshControl = sourceViewModel.refreshControl
-            }
+            }.navigationTitle(source.name)
         }.sheet(isPresented: $sourceViewModel.filterViewPresented) {
             NavigationView {
                 SourceFilterView(filters: $sourceViewModel.filters).toolbar {

@@ -33,6 +33,18 @@ struct SourceEntry: Equatable {
     static func == (lhs: SourceEntry, rhs: SourceEntry) -> Bool {
         lhs.id == rhs.id
     }
+
+    func toUnifiedEntry() -> UnifiedEntry {
+        UnifiedEntry(
+            title: self.title,
+            cover: self.cover,
+            staff: self.staff,
+            tags: self.tags,
+            banner: nil,
+            color: nil,
+            description: self.description
+        )
+    }
 }
 
 /*

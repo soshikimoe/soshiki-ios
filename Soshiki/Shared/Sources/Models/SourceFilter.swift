@@ -330,25 +330,25 @@ struct SourceAscendableSortFilter: SourceFilter, SourceMultiRowFilter {
 struct SourceNumberFilter: SourceFilter {
     init?(from object: [String: Any]) {
         guard let id = object["id"] as? String,
-              let value = object["value"] as? Float,
+              let value = object["value"] as? Double,
               let name = object["name"] as? String,
-              let lowerBound = object["lowerBound"] as? Float,
-              let upperBound = object["upperBound"] as? Float else { return nil }
+              let lowerBound = object["lowerBound"] as? Double,
+              let upperBound = object["upperBound"] as? Double else { return nil }
         self.id = id
         self.value = value
         self.name = name
         self.lowerBound = lowerBound
         self.upperBound = upperBound
-        self.step = object["step"] as? Float ?? 1
+        self.step = object["step"] as? Double ?? 1
         self.allowsCustomInput = object["allowsCustomInput"] as? Bool ?? false
     }
 
     let id: String
-    var value: Float
+    var value: Double
     let name: String
-    let lowerBound: Float
-    let upperBound: Float
-    let step: Float
+    let lowerBound: Double
+    let upperBound: Double
+    let step: Double
     let allowsCustomInput: Bool
 
     var object: [String: Any] {
@@ -367,24 +367,24 @@ struct SourceNumberFilter: SourceFilter {
 struct SourceRangeFilter: SourceFilter {
     init?(from object: [String: Any]) {
         guard let id = object["id"] as? String,
-              let value = object["value"] as? [Float], value.count == 2,
+              let value = object["value"] as? [Double], value.count == 2,
               let name = object["name"] as? String,
-              let lowerBound = object["lowerBound"] as? Float,
-              let upperBound = object["upperBound"] as? Float else { return nil }
+              let lowerBound = object["lowerBound"] as? Double,
+              let upperBound = object["upperBound"] as? Double else { return nil }
         self.id = id
         self.value = (value[0], value[1])
         self.name = name
         self.lowerBound = lowerBound
         self.upperBound = upperBound
-        self.step = object["step"] as? Float ?? 1
+        self.step = object["step"] as? Double ?? 1
     }
 
     let id: String
-    var value: (Float, Float)
+    var value: (Double, Double)
     let name: String
-    let lowerBound: Float
-    let upperBound: Float
-    let step: Float
+    let lowerBound: Double
+    let upperBound: Double
+    let step: Double
 
     var object: [String: Any] {
         [

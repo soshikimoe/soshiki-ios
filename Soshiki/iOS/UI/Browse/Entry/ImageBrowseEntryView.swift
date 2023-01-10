@@ -9,6 +9,8 @@ import NukeUI
 import SwiftUI
 
 struct ImageBrowseEntryView: View {
+    @Environment(\.presentationMode) var presentationMode
+
     var shortEntry: SourceShortEntry
     var source: ImageSource
 
@@ -17,59 +19,13 @@ struct ImageBrowseEntryView: View {
 
     @State var descriptionExpanded = false
 
-    @State var linkedEntry: EntryConnection?
-    @State var history: HistoryEntry?
+    @State var linkedEntry: Entry?
+    @State var history: History?
 
     var body: some View {
         ScrollView {
+            EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
             VStack(alignment: .leading) {
-                HStack(spacing: 20) {
-                    LazyImage(url: URL(string: entry?.cover ?? shortEntry.cover)) { state in
-                        if let image = state.image {
-                            image
-                        } else if state.error != nil {
-                            Rectangle()
-                                .overlay {
-                                    Image(systemName: "exclamationmark.triangle")
-                                }
-                                .foregroundColor(.gray)
-                        } else {
-                            Rectangle()
-                                .foregroundColor(.gray)
-                        }
-                    }.aspectRatio(1 / 1.5, contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                        .frame(width: 150, height: 225)
-                        .overlay(RoundedRectangle(cornerRadius: 20)
-                            .stroke(style: StrokeStyle(lineWidth: 0.25))
-                            .foregroundColor(.gray)
-                        )
-                    VStack(alignment: .leading) {
-                        Spacer(minLength: 0)
-                        Text(entry?.title ?? shortEntry.title)
-                            .font(.title2)
-                            .fontWeight(.heavy)
-                        Text(entry?.staff.first ?? shortEntry.title)
-                            .foregroundColor(.secondary)
-                            .font(.body)
-                            .fontWeight(.semibold)
-                    }
-                    Spacer(minLength: 0)
-                }
-                Text(entry?.description ?? "")
-                    .lineLimit(descriptionExpanded ? nil : 4)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .font(.subheadline)
-                HStack {
-                    Spacer()
-                    Button {
-                        descriptionExpanded.toggle()
-                    } label: {
-                        Text(descriptionExpanded ? "See Less" : "See More")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                    }
-                }
                 HStack(spacing: 10) {
                     NavigationLink {
                         ImageReaderView(
@@ -78,8 +34,8 @@ struct ImageBrowseEntryView: View {
                                 chapters.firstIndex(where: { $0.chapter == chapter })
                             }) ?? chapters.count - 1,
                             source: source,
-                            linkedEntry: linkedEntry,
-                            history: history
+                            entry: nil,
+                            history: nil
                         )
                     } label: {
                         ZStack {
@@ -90,8 +46,8 @@ struct ImageBrowseEntryView: View {
                         }
                     }.disabled(chapters.isEmpty)
                     NavigationLink {
-                        if let soshikiEntry = linkedEntry?.entry {
-                            EntryView(entry: soshikiEntry)
+                        if let entry = linkedEntry {
+                            EntryView(entry: entry)
                         } else if let entry {
                             LinkView(entry: entry, source: source, linkedEntry: $linkedEntry)
                         }
@@ -124,8 +80,8 @@ struct ImageBrowseEntryView: View {
                             chapters: chapters,
                             chapter: chapters.firstIndex(where: { $0.id == chapter.id })!,
                             source: source,
-                            linkedEntry: linkedEntry,
-                            history: history
+                            entry: nil,
+                            history: nil
                         )
                     } label: {
                         VStack(alignment: .leading) {
@@ -144,6 +100,17 @@ struct ImageBrowseEntryView: View {
                     }.buttonStyle(.plain)
                 }
             }.padding(10)
+        }.navigationBarTitleDisplayMode(.inline)
+        .edgesIgnoringSafeArea(.top)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .foregroundStyle(.white, .tint, .tint)
+                }
+            }
         }.task {
             let entry = await source.getEntry(id: shortEntry.id)
             let chapters = await source.getChapters(id: shortEntry.id)
@@ -151,23 +118,14 @@ struct ImageBrowseEntryView: View {
                 self.entry = entry
                 self.chapters = chapters
             }
-            linkedEntry = await GraphQL.query(
-                QueryLink(mediaType: .image, platform: "Soshiki", source: source.id, sourceId: shortEntry.id),
-                returning: [
-                    .id,
-                    .entry(SoshikiAPI.baseEntriesQuery)
-                ],
-                token: SoshikiAPI.shared.token
-            )
-            if let entryId = linkedEntry?.id {
-                history = await GraphQL.query(
-                    QueryHistoryEntry(mediaType: .image, id: entryId),
-                    returning: [
-                        .chapter,
-                        .page
-                    ],
-                    token: SoshikiAPI.shared.token
-                )
+            linkedEntry = (try? await SoshikiAPI.shared.getLink(
+                mediaType: .image,
+                platformId: "soshiki",
+                sourceId: source.id,
+                entryId: shortEntry.id
+            ).get())?.first
+            if let entry = linkedEntry {
+                history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
             }
         }
     }

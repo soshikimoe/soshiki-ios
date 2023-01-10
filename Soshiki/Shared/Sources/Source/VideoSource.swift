@@ -20,7 +20,7 @@ class VideoSource: Source {
                     return callback.resume(returning: dict.compactMap({ chapter in
                         if let id = chapter["id"] as? String,
                            let entryId = chapter["entryId"] as? String,
-                           let episodeNumber = chapter["episode"] as? Float,
+                           let episodeNumber = chapter["episode"] as? Double,
                            let type = (chapter["type"] as? String).flatMap({ VideoSourceEpisodeType(rawValue: $0) }) {
                             return VideoSourceEpisode(
                                 id: id,
@@ -77,7 +77,7 @@ class VideoSource: Source {
                                             return VideoSourceEpisodeUrl(
                                                 type: type,
                                                 url: urlString,
-                                                quality: url["quality"] as? Float
+                                                quality: url["quality"] as? Double
                                             )
                                         } else {
                                             return nil

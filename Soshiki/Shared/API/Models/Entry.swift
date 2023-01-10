@@ -2,155 +2,117 @@
 //  Entry.swift
 //  Soshiki
 //
-//  Created by Jim Phieffer on 11/18/22.
+//  Created by Jim Phieffer on 1/4/23.
 //
 
-enum MediaType: String, Codable, StringRepresentable, Sendable, CaseIterable {
+import Foundation
+
+enum MediaType: String, Codable, StringRepresentable, Sendable, CaseIterable, Equatable {
     case text = "TEXT"
     case image = "IMAGE"
     case video = "VIDEO"
 }
 
-struct EntryConnection: Codable, Sendable {
-    let id: String?
-    let entry: Entry?
-}
+struct Entry: Codable {
+    let _id: String
+    let mediaType: MediaType
+    let title: String
+    let alternativeTitles: [Entry.AlternativeTitle]
+    let staff: [Entry.Staff]
+    let covers: [Entry.Image]
+    let color: String?
+    let banners: [Entry.Image]
+    let score: Double?
+    let contentRating: Entry.ContentRating
+    let status: Entry.Status
+    let tags: [Entry.Tag]
+    let links: [Entry.Link]
+    let platforms: [Entry.Platform]
+    let trackers: [Entry.Tracker]
 
-struct Entry: Codable, Sendable {
-    let id: String?
-    let info: EntryInfo?
-    let trackers: [Tracker]?
-    let platforms: [_Platform]?
-    let history: EmbeddedHistoryEntry?
-}
-
-struct Tracker: Codable, Sendable {
-    let name: String?
-    let id: String?
-    let user: String?
-}
-
-struct _Platform: Codable, Sendable { // swiftlint:disable:this type_name
-    let name: String?
-    let sources: [_Source]?
-}
-
-struct _Source: Codable, Sendable { // swiftlint:disable:this type_name
-    let name: String?
-    let id: String?
-    let user: String?
-}
-
-struct EntryInfo: Codable, Sendable {
-    let nsfw: Bool?
-    let cover: String?
-    let title: String?
-    let author: String?
-    let altTitles: [String]?
-    let mal: MALEntry?
-    let anilist: AnilistEntry?
-}
-
-enum EntryConnectionOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
-
-    case id
-    case entry([EntryOutput])
-
-    var rawValue: String {
-        switch self {
-        case .id: return "id"
-        case .entry(let value): return value.graphql("entry")
-        }
+    struct AlternativeTitle: Codable {
+        let title: String
+        let type: String?
     }
-}
 
-enum EntryOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
-
-    case id
-    case info([EntryInfoOutput])
-    case trackers([TrackerOutput])
-    case platforms([PlatformOutput])
-    case history([EmbeddedHistoryEntryOutput])
-
-    var rawValue: String {
-        switch self {
-        case .id: return "id"
-        case .info(let value): return value.graphql("info")
-        case .trackers(let value): return value.graphql("trackers")
-        case .platforms(let value): return value.graphql("platforms")
-        case .history(let value): return value.graphql("history")
-        }
+    struct Staff: Codable {
+        let name: String
+        let role: String
+        let image: String?
     }
-}
 
-enum TrackerOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
-
-    case name
-    case id
-    case user
-
-    var rawValue: String {
-        switch self {
-        case .name: return "name"
-        case .id: return "id"
-        case .user: return "user"
-        }
+    struct Image: Codable {
+        let image: String
+        let quality: Entry.ImageQuality
     }
-}
 
-enum PlatformOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
-
-    case name
-    case sources([SourceOutput])
-
-    var rawValue: String {
-        switch self {
-        case .name: return "name"
-        case .sources(let value): return value.graphql("sources")
-        }
+    enum ImageQuality: String, Codable {
+        case low = "LOW"
+        case medium = "MEDIUM"
+        case high = "HIGH"
+        case full = "FULL"
+        case unknown = "UNKNOWN"
     }
-}
 
-enum SourceOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
-
-    case name
-    case id
-    case user
-
-    var rawValue: String {
-        switch self {
-        case .name: return "name"
-        case .id: return "id"
-        case .user: return "user"
-        }
+    enum ContentRating: String, Codable {
+        case safe = "SAFE"
+        case suggestive = "SUGGESTIVE"
+        case nsfw = "NSFW"
+        case unknown = "UNKNOWN"
     }
-}
 
-enum EntryInfoOutput: StringRepresentable, Sendable {
-    init?(rawValue: String) { nil }
+    enum Status: String, Codable {
+        case completed = "COMPLETED"
+        case releasing = "RELEASING"
+        case unreleased = "UNRELEASED"
+        case hiatus = "HIATUS"
+        case cancelled = "CANCELLED"
+        case unknown = "UNKNOWN"
+    }
 
-    case nsfw
-    case cover
-    case title
-    case author
-    case altTitles
-    case mal([MALEntryOutput])
-    case anilist([AnilistEntryOutput])
+    struct Tag: Codable {
+        let name: String
+    }
 
-    var rawValue: String {
-        switch self {
-        case .nsfw: return "nsfw"
-        case .cover: return "cover"
-        case .title: return "title"
-        case .author: return "author"
-        case .altTitles: return "altTitles"
-        case .mal(let value): return value.graphql("mal")
-        case .anilist(let value): return value.graphql("anilist")
-        }
+    struct Link: Codable {
+        let site: String
+        let url: String
+    }
+
+    struct Platform: Codable {
+        let id: String
+        let name: String
+        let sources: [Entry.Source]
+    }
+
+    struct Source: Codable {
+        let id: String
+        let name: String
+        let entryId: String
+        let user: String?
+    }
+
+    struct Tracker: Codable {
+        let id: String
+        let name: String
+        let entryId: String
+    }
+
+    func toUnifiedEntry() -> UnifiedEntry {
+        UnifiedEntry(
+            title: self.title,
+            cover: self.covers.min(by: { cover1, cover2 in
+                let priority = ["FULL", "HIGH", "UNKNOWN", "MEDIUM", "LOW"]
+                return (priority.firstIndex(of: cover1.quality.rawValue) ?? 5) < (priority.firstIndex(of: cover2.quality.rawValue) ?? 5)
+            })?.image ?? "",
+            staff: staff.map({ $0.name }),
+            tags: tags.map({ $0.name }),
+            banner: self.banners.min(by: { banner1, banner2 in
+                let priority = ["FULL", "HIGH", "UNKNOWN", "MEDIUM", "LOW"]
+                return (priority.firstIndex(of: banner1.quality.rawValue) ?? 5) < (priority.firstIndex(of: banner2.quality.rawValue) ?? 5)
+            })?.image,
+            color: self.color,
+            description: nil
+        )
     }
 }

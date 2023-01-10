@@ -8,55 +8,50 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject var sourceManager: SourceManager
+
     @State var loginViewPresented = false
+
+    @State var loggedIn = SoshikiAPI.shared.token != nil
 
     var body: some View {
         NavigationStack {
             List {
                 Section(header: "Account") {
-                    if SoshikiAPI.shared.token.isEmpty {
+                    if loggedIn {
+                        Button {
+                            SoshikiAPI.shared.logout()
+                            loggedIn = false
+                        } label: {
+                            Text("Logout")
+                        }
+                    } else {
                         Button {
                             loginViewPresented.toggle()
                         } label: {
                             Text("Login")
                         }.sheet(isPresented: $loginViewPresented) {
-                            LoginView()
-                                .toolbar {
-                                    ToolbarItem(placement: .navigationBarTrailing) {
-                                        Button {
-                                            loginViewPresented.toggle()
-                                        } label: {
-                                            Text("Done").bold()
-                                        }
-                                    }
-                                }.toolbar(.hidden, for: .bottomBar)
-                        }
-                    } else {
-                        Button {
-                            SoshikiAPI.shared.token = ""
-                        } label: {
-                            Text("Logout")
+                            WebView(url: SoshikiAPI.shared.loginUrl, safariViewController: SoshikiAPI.shared.loginViewController)
                         }
                     }
+                }.onChange(of: loginViewPresented) { _ in
+                    loggedIn = SoshikiAPI.shared.token != nil
                 }
                 Section(header: "Sources") {
                     NavigationLink {
-                        List {
-                            ForEach(SourceManager.shared.sources, id: \.id) { source in
-                                SourceCardView(source: source)
-                            }.onDelete(perform: deleteSource)
-                        }
+                        SourcesView()
                     } label: {
                         Text("Sources")
                     }
                 }
-            }
-        }
-    }
-
-    func deleteSource(at offsets: IndexSet) {
-        for offset in offsets {
-            SourceManager.shared.removeSource(id: SourceManager.shared.sources[offset].id)
+                Section(header: "Trackers") {
+                    NavigationLink {
+                        TrackersView()
+                    } label: {
+                        Text("Trackers")
+                    }
+                }
+            }.navigationTitle("Settings")
         }
     }
 }
