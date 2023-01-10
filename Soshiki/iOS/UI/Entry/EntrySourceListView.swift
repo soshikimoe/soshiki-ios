@@ -174,7 +174,9 @@ struct EntrySourceListView: View {
                             VStack(alignment: .leading) {
                                 Text(chapter.toListString())
                                     .font(.headline)
-                                    .foregroundColor((history?.chapter ?? -1) > chapter.chapter ? .secondary : .primary)
+                                    .foregroundColor(
+                                        (history?.chapter ?? -1) > chapter.chapter - (history?.page == nil ? 1 : 0) ? .secondary : .primary
+                                    )
                                 let chapterProgressString = (history?.page).flatMap({
                                     chapter.chapter == history?.chapter ? "\($0) pages read" : nil
                                 })
@@ -199,7 +201,9 @@ struct EntrySourceListView: View {
                             VStack(alignment: .leading) {
                                 Text(episode.toListString())
                                     .font(.headline)
-                                    .foregroundColor((history?.episode ?? -1) > episode.episode ? .secondary : .primary)
+                                    .foregroundColor(
+                                        (history?.episode ?? -1) > episode.episode - (history?.timestamp == nil ? 1 : 0)  ? .secondary : .primary
+                                    )
                                 let episodeProgressString = (history?.timestamp).flatMap({
                                     episode.episode == history?.episode ? "\($0.toMinuteSecondString()) watched" : nil
                                 })

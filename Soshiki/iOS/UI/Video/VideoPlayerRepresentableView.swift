@@ -154,7 +154,10 @@ class VideoPlayerViewController: AVPlayerViewController {
                         .timestamp(Int(timestamp)),
                         .episode(self.coordinator.episodes[self.coordinator.episode].episode)
                     ])
-                    self.coordinator.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                    if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                        self.coordinator.history = history
+                        await TrackerManager.shared.setHistory(entry: entry, history: history)
+                    }
                 }
             }
         }

@@ -16,12 +16,12 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Soshiki Platform</string>
+			<string>Soshiki Tracker</string>
 			<key>LSHandlerRank</key>
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>moe.soshiki.soshikiplatform</string>
+				<string>moe.soshiki.soshikitracker</string>
 			</array>
 		</dict>
 	</array>
@@ -55,7 +55,7 @@
 			<key>UTTypeIconFiles</key>
 			<array/>
 			<key>UTTypeIdentifier</key>
-			<string>moe.soshiki.soshikiplatform</string>
+			<string>moe.soshiki.soshikisource</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -70,16 +70,16 @@
 				<string>public.zip-archive</string>
 			</array>
 			<key>UTTypeDescription</key>
-			<string>Soshiki Platform</string>
+			<string>Soshiki Tracker</string>
 			<key>UTTypeIconFiles</key>
 			<array/>
 			<key>UTTypeIdentifier</key>
-			<string>moe.soshiki.soshikiplatform</string>
+			<string>moe.soshiki.soshikitracker</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
 				<array>
-					<string>soshikiplatform</string>
+					<string>soshikitracker</string>
 				</array>
 			</dict>
 		</dict>

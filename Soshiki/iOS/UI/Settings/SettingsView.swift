@@ -14,9 +14,6 @@ struct SettingsView: View {
 
     @State var loggedIn = SoshikiAPI.shared.token != nil
 
-    @State var addSourceAlertPresented = false
-    @State var addSourceAlertTextContent = ""
-
     var body: some View {
         NavigationStack {
             List {
@@ -42,44 +39,19 @@ struct SettingsView: View {
                 }
                 Section(header: "Sources") {
                     NavigationLink {
-                        List {
-                            ForEach(sourceManager.sources, id: \.id) { source in
-                                SourceCardView(source: source)
-                            }.onDelete(perform: deleteSource)
-                        }.toolbar {
-                            ToolbarItem(placement: .navigationBarTrailing) {
-                                Button {
-                                    addSourceAlertPresented.toggle()
-                                } label: {
-                                    Image(systemName: "plus")
-                                }
-                            }
-                        }.alert("Install a Source", isPresented: $addSourceAlertPresented) {
-                            TextField("Source URL", text: $addSourceAlertTextContent)
-                                .autocorrectionDisabled(true)
-                                .textInputAutocapitalization(.never)
-                            Button("Install", role: .cancel) {
-                                if let url = URL(string: addSourceAlertTextContent), url.pathExtension == "soshikisource" {
-                                    Task {
-                                        await sourceManager.installSource(url)
-                                    }
-                                }
-                                addSourceAlertTextContent = ""
-                            }
-                        } message: {
-                            Text("Enter a source URL below to install it.")
-                        }
+                        SourcesView()
                     } label: {
                         Text("Sources")
                     }
                 }
+                Section(header: "Trackers") {
+                    NavigationLink {
+                        TrackersView()
+                    } label: {
+                        Text("Trackers")
+                    }
+                }
             }.navigationTitle("Settings")
-        }
-    }
-
-    func deleteSource(at offsets: IndexSet) {
-        for offset in offsets {
-            sourceManager.removeSource(id: sourceManager.sources[offset].id)
         }
     }
 }

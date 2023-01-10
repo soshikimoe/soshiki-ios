@@ -25,6 +25,19 @@ struct History: Codable {
         case paused = "PAUSED"
         case unknown = "UNKNOWN"
     }
+
+    func withId(_ newId: String) -> History {
+        History(
+            id: newId,
+            page: self.page,
+            chapter: self.chapter,
+            volume: self.volume,
+            timestamp: self.timestamp,
+            episode: self.episode,
+            score: self.score,
+            status: self.status
+        )
+    }
 }
 
 struct Histories: Codable {

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		370CB2B52968E72D00435F17 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370CB2B42968E72D00435F17 /* KeychainManager.swift */; };
+		3715DDE1296CA22500F173EA /* TrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3715DDE0296CA22500F173EA /* TrackerView.swift */; };
+		3715DDE3296CA58000F173EA /* EntryTrackersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3715DDE2296CA58000F173EA /* EntryTrackersView.swift */; };
+		3715DDE6296CA63D00F173EA /* EntryTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3715DDE5296CA63D00F173EA /* EntryTrackerView.swift */; };
 		3733CCDB29296D4500901DA6 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 3733CCDA29296D4500901DA6 /* Nuke */; };
 		3733CCDD29296D4500901DA6 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3733CCDC29296D4500901DA6 /* NukeUI */; };
 		3733CCDF29296E9D00901DA6 /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3733CCDE29296E9D00901DA6 /* String.swift */; };
@@ -36,12 +39,15 @@
 		3733CD25293D8F3F00901DA6 /* UICircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3733CD24293D8F3F00901DA6 /* UICircularProgressView.swift */; };
 		373F6BFA2968F452009F268A /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 373F6BF92968F452009F268A /* KeychainSwift */; };
 		373F6BFC296A4000009F268A /* LibraryCategoryEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6BFB296A4000009F268A /* LibraryCategoryEditView.swift */; };
+		373F6BFE296BC3A1009F268A /* TrackerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6BFD296BC3A1009F268A /* TrackerManager.swift */; };
+		373F6C00296BC497009F268A /* SourcesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6BFF296BC496009F268A /* SourcesView.swift */; };
+		373F6C02296BC51B009F268A /* TrackerCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6C01296BC51B009F268A /* TrackerCardView.swift */; };
+		373F6C04296BC553009F268A /* TrackersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6C03296BC553009F268A /* TrackersView.swift */; };
 		37612AA8292323E500E55BFF /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37612AA7292323E500E55BFF /* LibraryView.swift */; };
 		37612AAF2923280B00E55BFF /* EntryCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37612AAE2923280B00E55BFF /* EntryCellView.swift */; };
 		37661CC22922BD0D0052C629 /* SoshikiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37661CC12922BD0D0052C629 /* SoshikiApp.swift */; };
 		37661CC42922BD0D0052C629 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37661CC32922BD0D0052C629 /* ContentView.swift */; };
 		37661CC62922BD120052C629 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 37661CC52922BD120052C629 /* Assets.xcassets */; };
-		37661CC92922BD120052C629 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 37661CC82922BD120052C629 /* Preview Assets.xcassets */; };
 		37A02EDD2923D87E0020B817 /* Introspect in Frameworks */ = {isa = PBXBuildFile; productRef = 37A02EDC2923D87E0020B817 /* Introspect */; };
 		37A02EE32923F6420020B817 /* LibraryCellMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A02EE22923F6420020B817 /* LibraryCellMenuView.swift */; };
 		37A02EE52923F8190020B817 /* LibraryCategoryMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A02EE42923F8190020B817 /* LibraryCategoryMenuView.swift */; };
@@ -88,6 +94,9 @@
 
 /* Begin PBXFileReference section */
 		370CB2B42968E72D00435F17 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		3715DDE0296CA22500F173EA /* TrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerView.swift; sourceTree = "<group>"; };
+		3715DDE2296CA58000F173EA /* EntryTrackersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryTrackersView.swift; sourceTree = "<group>"; };
+		3715DDE5296CA63D00F173EA /* EntryTrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryTrackerView.swift; sourceTree = "<group>"; };
 		3733CCDE29296E9D00901DA6 /* String.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
 		3733CCE12929991400901DA6 /* EntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryView.swift; sourceTree = "<group>"; };
 		3733CCE32929B85300901DA6 /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
@@ -112,13 +121,16 @@
 		3733CD22293D8ECB00901DA6 /* UIImageReaderPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageReaderPageView.swift; sourceTree = "<group>"; };
 		3733CD24293D8F3F00901DA6 /* UICircularProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UICircularProgressView.swift; sourceTree = "<group>"; };
 		373F6BFB296A4000009F268A /* LibraryCategoryEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCategoryEditView.swift; sourceTree = "<group>"; };
+		373F6BFD296BC3A1009F268A /* TrackerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerManager.swift; sourceTree = "<group>"; };
+		373F6BFF296BC496009F268A /* SourcesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesView.swift; sourceTree = "<group>"; };
+		373F6C01296BC51B009F268A /* TrackerCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerCardView.swift; sourceTree = "<group>"; };
+		373F6C03296BC553009F268A /* TrackersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackersView.swift; sourceTree = "<group>"; };
 		37612AA7292323E500E55BFF /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		37612AAE2923280B00E55BFF /* EntryCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryCellView.swift; sourceTree = "<group>"; };
 		37661CBE2922BD0D0052C629 /* Soshiki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Soshiki.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37661CC12922BD0D0052C629 /* SoshikiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoshikiApp.swift; sourceTree = "<group>"; };
 		37661CC32922BD0D0052C629 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		37661CC52922BD120052C629 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		37661CC82922BD120052C629 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		37A02EE22923F6420020B817 /* LibraryCellMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCellMenuView.swift; sourceTree = "<group>"; };
 		37A02EE42923F8190020B817 /* LibraryCategoryMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCategoryMenuView.swift; sourceTree = "<group>"; };
 		37A02EEA292410B90020B817 /* SoshikiAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoshikiAPI.swift; sourceTree = "<group>"; };
@@ -179,9 +191,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3715DDE4296CA63200F173EA /* Trackers */ = {
+			isa = PBXGroup;
+			children = (
+				3715DDE2296CA58000F173EA /* EntryTrackersView.swift */,
+				3715DDE5296CA63D00F173EA /* EntryTrackerView.swift */,
+			);
+			path = Trackers;
+			sourceTree = "<group>";
+		};
 		3733CCE02929990900901DA6 /* Entry */ = {
 			isa = PBXGroup;
 			children = (
+				3715DDE4296CA63200F173EA /* Trackers */,
 				3733CCE12929991400901DA6 /* EntryView.swift */,
 				37E8D82E2967CCD800AC7D47 /* EntryHeaderView.swift */,
 				37E8D8302967D02A00AC7D47 /* EntrySourceListView.swift */,
@@ -235,6 +257,9 @@
 			isa = PBXGroup;
 			children = (
 				3733CCFD292EDAE000901DA6 /* SettingsView.swift */,
+				373F6BFF296BC496009F268A /* SourcesView.swift */,
+				373F6C03296BC553009F268A /* TrackersView.swift */,
+				3715DDE0296CA22500F173EA /* TrackerView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -264,6 +289,7 @@
 				37D6814C296157BF00583A2F /* EntryRowView.swift */,
 				37D681672963B4AA00583A2F /* WebView.swift */,
 				37E8D82A2967C4EE00AC7D47 /* AwaitableView.swift */,
+				373F6C01296BC51B009F268A /* TrackerCardView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -319,17 +345,8 @@
 				37661CD42922D3720052C629 /* iOS */,
 				37661CC12922BD0D0052C629 /* SoshikiApp.swift */,
 				37661CC52922BD120052C629 /* Assets.xcassets */,
-				37661CC72922BD120052C629 /* Preview Content */,
 			);
 			path = Soshiki;
-			sourceTree = "<group>";
-		};
-		37661CC72922BD120052C629 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				37661CC82922BD120052C629 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 		37661CD42922D3720052C629 /* iOS */ = {
@@ -469,6 +486,7 @@
 			children = (
 				37DC3BC529686BF900E84A9B /* Models */,
 				37DC3BC129686BD800E84A9B /* Tracker */,
+				373F6BFD296BC3A1009F268A /* TrackerManager.swift */,
 			);
 			path = Trackers;
 			sourceTree = "<group>";
@@ -560,7 +578,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				37E7BB302958D98100FBDAC3 /* .swiftlint.yml in Resources */,
-				37661CC92922BD120052C629 /* Preview Assets.xcassets in Resources */,
 				37661CC62922BD120052C629 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -598,6 +615,8 @@
 				37D6814F2961F3B800583A2F /* TextSource.swift in Sources */,
 				3733CCE8292AA39700901DA6 /* SearchView.swift in Sources */,
 				3733CCE42929B85300901DA6 /* Color.swift in Sources */,
+				3715DDE1296CA22500F173EA /* TrackerView.swift in Sources */,
+				3715DDE3296CA58000F173EA /* EntryTrackersView.swift in Sources */,
 				37A02F0E292942A50020B817 /* Collection.swift in Sources */,
 				3733CD122937AFE000901DA6 /* SourceView.swift in Sources */,
 				37A02EE32923F6420020B817 /* LibraryCellMenuView.swift in Sources */,
@@ -620,6 +639,7 @@
 				37D681532961F4BD00583A2F /* SourceSettingsView.swift in Sources */,
 				37A02EEB292410B90020B817 /* SoshikiAPI.swift in Sources */,
 				370CB2B52968E72D00435F17 /* KeychainManager.swift in Sources */,
+				373F6BFE296BC3A1009F268A /* TrackerManager.swift in Sources */,
 				37D6814529612FB400583A2F /* InlineStepper.swift in Sources */,
 				3733CD172937B36600901DA6 /* SourceEntryResults.swift in Sources */,
 				37D6814D296157BF00583A2F /* EntryRowView.swift in Sources */,
@@ -635,15 +655,18 @@
 				37A02EE52923F8190020B817 /* LibraryCategoryMenuView.swift in Sources */,
 				3733CCDF29296E9D00901DA6 /* String.swift in Sources */,
 				37DF5D2C294264B20072A7BB /* UIImageReaderInfoPageView.swift in Sources */,
+				373F6C04296BC553009F268A /* TrackersView.swift in Sources */,
 				37A5E5C82966663900453DF3 /* History.swift in Sources */,
 				3733CD152937B01900901DA6 /* SourceCardView.swift in Sources */,
 				37A02F10292944C30020B817 /* StringRepresentable.swift in Sources */,
 				37D68143296129EA00583A2F /* ImageSource.swift in Sources */,
+				373F6C00296BC497009F268A /* SourcesView.swift in Sources */,
 				37E8D82F2967CCD800AC7D47 /* EntryHeaderView.swift in Sources */,
 				37D681512961F3C100583A2F /* VideoSource.swift in Sources */,
 				37E8D8312967D02A00AC7D47 /* EntrySourceListView.swift in Sources */,
 				37E8D82D2967CB2D00AC7D47 /* UnifiedEntry.swift in Sources */,
 				3733CCEE292ADE5300901DA6 /* ImageReaderView.swift in Sources */,
+				373F6C02296BC51B009F268A /* TrackerCardView.swift in Sources */,
 				3733CD192937D97B00901DA6 /* SourceEntryCellView.swift in Sources */,
 				3733CD102937AF8F00901DA6 /* BrowseView.swift in Sources */,
 				37D681642963424000583A2F /* VideoPlayerSettingsView.swift in Sources */,
@@ -651,6 +674,7 @@
 				37612AA8292323E500E55BFF /* LibraryView.swift in Sources */,
 				37A02EEE29241EEA0020B817 /* JSONAny.swift in Sources */,
 				37661CC22922BD0D0052C629 /* SoshikiApp.swift in Sources */,
+				3715DDE6296CA63D00F173EA /* EntryTrackerView.swift in Sources */,
 				37D6813D295D42B500583A2F /* SourceFilterView.swift in Sources */,
 				3733CCF6292BD25E00901DA6 /* Source.swift in Sources */,
 				3733CD1F293A815E00901DA6 /* Double.swift in Sources */,

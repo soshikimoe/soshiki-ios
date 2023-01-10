@@ -24,8 +24,8 @@ struct ImageBrowseEntryView: View {
 
     var body: some View {
         ScrollView {
+            EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
             VStack(alignment: .leading) {
-                EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
                 HStack(spacing: 10) {
                     NavigationLink {
                         ImageReaderView(
@@ -100,7 +100,9 @@ struct ImageBrowseEntryView: View {
                     }.buttonStyle(.plain)
                 }
             }.padding(10)
-        }.toolbar {
+        }.navigationBarTitleDisplayMode(.inline)
+        .edgesIgnoringSafeArea(.top)
+        .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     presentationMode.wrappedValue.dismiss()

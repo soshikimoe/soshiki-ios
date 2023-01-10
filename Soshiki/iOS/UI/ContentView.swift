@@ -30,6 +30,7 @@ struct ContentView: View {
                 }
         }.environmentObject(contentViewModel)
             .environmentObject(SourceManager.shared)
+            .environmentObject(TrackerManager.shared)
     }
 }
 

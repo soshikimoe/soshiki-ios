@@ -18,11 +18,11 @@ class Tracker {
     static func load(directory: URL) -> Tracker? {
         let manifestFile = directory.appendingPathComponent("manifest.json", conformingTo: .json)
         guard let manifestData = try? Data(contentsOf: manifestFile),
-              let manifest = try? JSONDecoder().decode(SourceManifest.self, from: manifestData) else { return nil }
+              let manifest = try? JSONDecoder().decode(TrackerManifest.self, from: manifestData) else { return nil }
 
-        let sourceFile = directory.appendingPathComponent("source.js", conformingTo: .javaScript)
-        guard let sourceData = try? Data(contentsOf: sourceFile),
-              let script = String(data: sourceData, encoding: .utf8) else { return nil }
+        let trackerFile = directory.appendingPathComponent("tracker.js", conformingTo: .javaScript)
+        guard let trackerData = try? Data(contentsOf: trackerFile),
+              let script = String(data: trackerData, encoding: .utf8) else { return nil }
 
         guard let context = JSContext() else { return nil }
         context.objectForKeyedSubscript("console").setObject({ value in
@@ -80,10 +80,10 @@ class Tracker {
         )
     }
 
-    static func manifest(directory: URL) -> SourceManifest? {
+    static func manifest(directory: URL) -> TrackerManifest? {
         let manifestFile = directory.appendingPathComponent("manifest.json", conformingTo: .json)
         guard let manifestData = try? Data(contentsOf: manifestFile),
-              let manifest = try? JSONDecoder().decode(SourceManifest.self, from: manifestData) else { return nil }
+              let manifest = try? JSONDecoder().decode(TrackerManifest.self, from: manifestData) else { return nil }
         return manifest
     }
 
@@ -96,8 +96,8 @@ class Tracker {
         self.context = context
     }
 
-    var authUrl: URL? {
-        self.context.objectForKeyedSubscript(self.id)?.objectForKeyedSubscript("authUrl")?.toString().flatMap({ URL(string: $0) })
+    func getAuthUrl() -> URL? {
+        self.context.objectForKeyedSubscript(self.id)?.invokeMethod("_getAuthUrl", withArguments: []).toString().flatMap({ URL(string: $0) })
     }
 
     func handleResponse(url: URL) async {
@@ -181,4 +181,111 @@ class Tracker {
             object.invokeMethod("_getSearchResults", withArguments: [callbackValue, errorValue, metadata, mediaType.rawValue.uppercased(), query])
         }
     }
+
+    func getHistory(mediaType: MediaType, id: String) async -> History? {
+        await withCheckedContinuation { [weak self] callback in
+            guard let self = self else { return callback.resume(returning: nil) }
+            let callbackId = "getHistoryCallback_\(String.random())"
+            let errorId = "getHistoryError_\(String.random())"
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] entryResults in
+                guard let self = self else { return callback.resume(returning: nil) }
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                if let dict = entryResults.toDictionary() as? [String: Any],
+                   let id = dict["id"] as? String,
+                   let status = (dict["status"] as? String).flatMap({ History.Status(rawValue: $0) }) {
+                    return callback.resume(returning: History(
+                        id: id,
+                        page: dict["page"] as? Int,
+                        chapter: dict["chapter"] as? Double,
+                        volume: dict["volume"] as? Double,
+                        timestamp: dict["timestamp"] as? Int,
+                        episode: dict["episode"] as? Double,
+                        score: dict["score"] as? Double,
+                        status: status
+                    ))
+                }
+                return callback.resume(returning: nil)
+            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                print(error.toString() ?? "JSContext Error")
+                return callback.resume(returning: nil)
+            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
+            guard let object = self.context.objectForKeyedSubscript(self.id),
+                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
+                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
+                return callback.resume(returning: nil)
+            }
+            object.invokeMethod("_getHistory", withArguments: [callbackValue, errorValue, mediaType.rawValue.uppercased(), id])
+        }
+    }
+
+    func setHistory(mediaType: MediaType, id: String, history: History) async {
+        await withCheckedContinuation { [weak self] callback in
+            guard let self = self else { return callback.resume(returning: ()) }
+            let callbackId = "setHistoryCallback_\(String.random())"
+            let errorId = "setHistoryError_\(String.random())"
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] in
+                guard let self = self else { return callback.resume(returning: ()) }
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                return callback.resume(returning: ())
+            } as @convention(block) () -> Void, forKeyedSubscript: callbackId as NSString)
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                print(error.toString() ?? "JSContext Error")
+                return callback.resume(returning: ())
+            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
+            guard let object = self.context.objectForKeyedSubscript(self.id),
+                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
+                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
+                return callback.resume(returning: ())
+            }
+            var dict: [String: Any] = ["id": history.id, "status": history.status.rawValue]
+            if let page = history.page { dict["page"] = page }
+            if let chapter = history.chapter { dict["chapter"] = chapter }
+            if let volume = history.volume { dict["volume"] = volume }
+            if let timestamp = history.timestamp { dict["timestamp"] = timestamp }
+            if let episode = history.episode { dict["episode"] = episode }
+            if let score = history.score { dict["score"] = score }
+            object.invokeMethod("_setHistory", withArguments: [callbackValue, errorValue, mediaType.rawValue, id, dict])
+        }
+    }
+
+    func deleteHistory(mediaType: MediaType, id: String) async {
+        await withCheckedContinuation { [weak self] callback in
+            guard let self = self else { return callback.resume(returning: ()) }
+            let callbackId = "deleteHistoryCallback_\(String.random())"
+            let errorId = "deleteHistoryError_\(String.random())"
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] in
+                guard let self = self else { return callback.resume(returning: ()) }
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                return callback.resume(returning: ())
+            } as @convention(block) () -> Void, forKeyedSubscript: callbackId as NSString)
+            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+                print(error.toString() ?? "JSContext Error")
+                return callback.resume(returning: ())
+            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
+            guard let object = self.context.objectForKeyedSubscript(self.id),
+                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
+                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
+                return callback.resume(returning: ())
+            }
+            object.invokeMethod("_deleteHistory", withArguments: [callbackValue, errorValue, mediaType.rawValue, id])
+        }
+    }
+}
+
+struct TrackerManifest: Codable {
+    let id: String
+    let name: String
+    let author: String
+    let icon: String
+    let version: String
 }

@@ -57,6 +57,7 @@ class SourceManager: ObservableObject {
             guard let items = try? FileManager.default.contentsOfDirectory(at: temporaryDirectory, includingPropertiesForKeys: nil) else { return }
             if FileManager.default.fileExists(atPath: sourceDirectory.path) {
                 guard (try? FileManager.default.removeItem(at: sourceDirectory)) != nil else { return }
+                sources.removeAll(where: { $0.id == manifest.id })
             }
             guard (try? FileManager.default.createDirectory(at: sourceDirectory, withIntermediateDirectories: true)) != nil else { return }
             for item in items {

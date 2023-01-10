@@ -26,7 +26,10 @@ struct LibraryCellMenuView: View {
                 Button {
                     Task {
                         await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .status(.completed) ])
-                        history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                            self.history = history
+                            await TrackerManager.shared.setHistory(entry: entry, history: history)
+                        }
                     }
                 } label: {
                     if history?.status == .completed {
@@ -38,7 +41,10 @@ struct LibraryCellMenuView: View {
                 Button {
                     Task {
                         await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .status(.inProgress) ])
-                        history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                            self.history = history
+                            await TrackerManager.shared.setHistory(entry: entry, history: history)
+                        }
                     }
                 } label: {
                     if history?.status == .inProgress {
@@ -50,7 +56,10 @@ struct LibraryCellMenuView: View {
                 Button {
                     Task {
                         await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .status(.dropped) ])
-                        history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                            self.history = history
+                            await TrackerManager.shared.setHistory(entry: entry, history: history)
+                        }
                     }
                 } label: {
                     if history?.status == .dropped {
@@ -62,7 +71,10 @@ struct LibraryCellMenuView: View {
                 Button {
                     Task {
                         await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .status(.planned) ])
-                        history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                            self.history = history
+                            await TrackerManager.shared.setHistory(entry: entry, history: history)
+                        }
                     }
                 } label: {
                     if history?.status == .planned {
@@ -74,7 +86,10 @@ struct LibraryCellMenuView: View {
                 Button {
                     Task {
                         await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .status(.paused) ])
-                        history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                            self.history = history
+                            await TrackerManager.shared.setHistory(entry: entry, history: history)
+                        }
                     }
                 } label: {
                     if history?.status == .paused {
@@ -91,7 +106,10 @@ struct LibraryCellMenuView: View {
                     Button {
                         Task {
                             await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [ .score(Double(score)/2) ])
-                            history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                            if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                                self.history = history
+                                await TrackerManager.shared.setHistory(entry: entry, history: history)
+                            }
                         }
                     } label: {
                         if history?.score == Double(score)/2 {

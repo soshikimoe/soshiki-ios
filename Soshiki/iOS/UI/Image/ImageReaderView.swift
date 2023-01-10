@@ -43,6 +43,9 @@ struct ImageReaderView: View {
                                     [ .volume($0) ] as [SoshikiAPI.HistoryQuery]
                                 }) ?? [])
                             )
+                            if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                                await TrackerManager.shared.setHistory(entry: entry, history: history)
+                            }
                         }
                     }
                     presentationMode.wrappedValue.dismiss()
@@ -527,7 +530,10 @@ class ImageReaderViewController: UIPageViewController {
                     .page(coordinator.page + 1),
                     .chapter(coordinator.chapters[coordinator.chapter].chapter)
                 ] + (coordinator.chapters[coordinator.chapter].volume.flatMap({ [ .volume($0) ] as [SoshikiAPI.HistoryQuery] }) ?? []))
-                coordinator.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+                    self.coordinator.history = history
+                    await TrackerManager.shared.setHistory(entry: entry, history: history)
+                }
             }
         }
     }

@@ -25,8 +25,8 @@ struct VideoBrowseEntryView: View {
 
     var body: some View {
         ScrollView {
+            EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
             VStack(alignment: .leading) {
-                EntryHeaderView(entry: entry?.toUnifiedEntry() ?? shortEntry.toUnifiedEntry())
                 HStack(spacing: 10) {
                     NavigationLink {
                         if !episodes.isEmpty {
@@ -96,20 +96,14 @@ struct VideoBrowseEntryView: View {
                     }.buttonStyle(.plain)
                 }
             }.padding(10)
-        }.toolbar {
+        }.navigationBarTitleDisplayMode(.inline)
+        .edgesIgnoringSafeArea(.top)
+        .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     presentationMode.wrappedValue.dismiss()
                 } label: {
                     Image(systemName: "chevron.left.circle.fill")
-                        .foregroundStyle(.white, .tint, .tint)
-                }
-            }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-
-                } label: {
-                    Image(systemName: "ellipsis.circle.fill")
                         .foregroundStyle(.white, .tint, .tint)
                 }
             }
