@@ -7,7 +7,7 @@
 
 import JavaScriptCore
 
-class VideoSource: Source {
+class JSVideoSource: JSSource {
     func getEpisodes(id: String) async -> [VideoSourceEpisode] {
         await withCheckedContinuation { [weak self] callback in
             guard let self = self else { return callback.resume(returning: []) }

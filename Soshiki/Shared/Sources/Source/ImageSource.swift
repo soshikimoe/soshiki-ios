@@ -9,7 +9,7 @@ import Foundation
 import JavaScriptCore
 import NukeUI
 
-class ImageSource: Source {
+class JSImageSource: JSSource {
     func getChapters(id: String) async -> [ImageSourceChapter] {
         await withCheckedContinuation { [weak self] callback in
             guard let self = self else { return callback.resume(returning: []) }

@@ -8,7 +8,11 @@
 import Foundation
 import JavaScriptCore
 
-class Source: Identifiable, Equatable {
+//protocol Source {
+//
+//}
+
+class JSSource: Identifiable, Equatable {
     let id: String
     let name: String
     let author: String
@@ -16,7 +20,7 @@ class Source: Identifiable, Equatable {
     let image: URL
     let context: JSContext
 
-    static func load(directory: URL) -> Source? {
+    static func load(directory: URL) -> JSSource? {
         let manifestFile = directory.appendingPathComponent("manifest.json", conformingTo: .json)
         guard let manifestData = try? Data(contentsOf: manifestFile),
               let manifest = try? JSONDecoder().decode(SourceManifest.self, from: manifestData) else { return nil }
@@ -394,7 +398,7 @@ class Source: Identifiable, Equatable {
         }
     }
 
-    static func == (lhs: Source, rhs: Source) -> Bool {
+    static func == (lhs: JSSource, rhs: JSSource) -> Bool {
         lhs.id == rhs.id && type(of: lhs) == type(of: rhs)
     }
 }
