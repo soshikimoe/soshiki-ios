@@ -19,7 +19,7 @@ enum SourceEntryContentRating: String {
     case nsfw = "NSFW"
 }
 
-struct SourceEntry: Equatable {
+struct SourceEntry: Hashable {
     let id: String
     let title: String
     let staff: [String]
@@ -30,12 +30,9 @@ struct SourceEntry: Equatable {
     let url: String
     let description: String
 
-    static func == (lhs: SourceEntry, rhs: SourceEntry) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    func toUnifiedEntry() -> UnifiedEntry {
-        UnifiedEntry(
+    func toLocalEntry() -> LocalEntry {
+        LocalEntry(
+            id: self.id,
             title: self.title,
             cover: self.cover,
             staff: self.staff,
@@ -44,6 +41,14 @@ struct SourceEntry: Equatable {
             color: nil,
             description: self.description
         )
+    }
+
+    static func == (lhs: SourceEntry, rhs: SourceEntry) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }
 

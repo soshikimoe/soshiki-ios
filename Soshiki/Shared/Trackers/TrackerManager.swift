@@ -9,16 +9,16 @@ import Foundation
 import ZIPFoundation
 import SafariServices
 
-class TrackerManager: ObservableObject {
+class TrackerManager {
     static let shared = TrackerManager()
 
-    @Published var trackers: [Tracker] = []
+    var trackers: [Tracker] = []
 
     var currentLoginInformation: (tracker: Tracker, viewController: SFSafariViewController)?
 
     func startup() {
-        let trackersDirectory = FileManager.default.documentDirectory.appending(component: "Trackers")
-        if !FileManager.default.fileExists(atPath: trackersDirectory.path()) {
+        let trackersDirectory = FileManager.default.documentDirectory.appendingPathComponent("Trackers")
+        if !FileManager.default.fileExists(atPath: trackersDirectory.path) {
             guard (try? FileManager.default.createDirectory(at: trackersDirectory, withIntermediateDirectories: true)) != nil else { return }
         }
         guard let trackers = try? FileManager.default.contentsOfDirectory(at: trackersDirectory, includingPropertiesForKeys: nil) else { return }
@@ -64,10 +64,11 @@ class TrackerManager: ObservableObject {
             }
             guard (try? FileManager.default.createDirectory(at: trackerDirectory, withIntermediateDirectories: true)) != nil else { return }
             for item in items {
-                _ = try? FileManager.default.moveItem(at: item, to: trackerDirectory.appending(component: item.lastPathComponent))
+                _ = try? FileManager.default.moveItem(at: item, to: trackerDirectory.appendingPathComponent(item.lastPathComponent))
             }
             if let tracker = Tracker.load(directory: trackerDirectory) {
                 self.trackers.append(tracker)
+                NotificationCenter.default.post(name: .init(TrackerManager.Keys.update), object: nil)
             }
         }
     }
@@ -78,6 +79,7 @@ class TrackerManager: ObservableObject {
         let trackerDirectory = trackersDirectory.appendingPathComponent(id, conformingTo: .folder)
         guard (try? FileManager.default.removeItem(at: trackerDirectory)) != nil else { return }
         self.trackers.removeAll(where: { $0.id == id })
+        NotificationCenter.default.post(name: .init(TrackerManager.Keys.update), object: nil)
     }
 
     func installTrackers(_ url: URL) {
@@ -89,7 +91,7 @@ class TrackerManager: ObservableObject {
             Task {
                 await currentLoginInformation.tracker.handleResponse(url: url)
             }
-            currentLoginInformation.viewController.dismiss()
+            currentLoginInformation.viewController.dismiss(animated: true)
             self.currentLoginInformation = nil
         }
     }
@@ -102,5 +104,11 @@ class TrackerManager: ObservableObject {
                 await tracker.setHistory(mediaType: entry.mediaType, id: id, history: history)
             }
         }
+    }
+}
+
+extension TrackerManager {
+    class Keys {
+        static let update = "app.trackers.update"
     }
 }

@@ -17,7 +17,9 @@ struct SourcesView: View {
         NavigationStack {
             List {
                 ForEach(sourceManager.sources, id: \.id) { source in
-                    SourceCardView(source: source)
+                    if let source = source as? NetworkSource {
+                        SourceCardView(source: source)
+                    }
                 }.onDelete(perform: deleteSource)
             }.toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

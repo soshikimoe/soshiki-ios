@@ -9,8 +9,4 @@ extension Int {
     func toMinuteSecondString() -> String {
         "\(self / 60):\((self % 60 < 10) ? "0\(self % 60)" : "\(self % 60)")"
     }
-
-    func clamped(to range: Range<Int>) -> Int {
-        self < range.lowerBound ? range.lowerBound : self >= range.upperBound ? range.upperBound : self
-    }
 }

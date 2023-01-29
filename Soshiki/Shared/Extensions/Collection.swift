@@ -18,3 +18,9 @@ extension Collection {
         indices.contains(index) ? self[index] : nil
     }
 }
+
+extension Collection where Element: Equatable, Self.Index == Int {
+    func removingDuplicates() -> Self {
+        self.enumerated().filter({ self.firstIndex(of: $0.element) == $0.offset }).map({ $0.element }) as? Self ?? self
+    }
+}

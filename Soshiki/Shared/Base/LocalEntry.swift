@@ -1,5 +1,5 @@
 //
-//  UnifiedEntry.swift
+//  LocalEntry.swift
 //  Soshiki
 //
 //  Created by Jim Phieffer on 1/5/23.
@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct UnifiedEntry {
+struct LocalEntry: Codable, Hashable {
+    let id: String
     let title: String
     let cover: String
     let staff: [String]
@@ -15,4 +16,8 @@ struct UnifiedEntry {
     let banner: String?
     let color: String?
     let description: String?
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }

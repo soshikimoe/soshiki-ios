@@ -6,13 +6,13 @@
 //
 
 import SwiftUI
-import SwiftUIX
 
+/*
 struct LinkView: View {
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
 
     var entry: SourceEntry
-    var source: Source
+    var source: any Source
     @Binding var linkedEntry: Entry?
 
     @State var results: [Entry] = []
@@ -25,7 +25,7 @@ struct LinkView: View {
             searchTask?.cancel()
             searchTask = Task {
                 results = (try? await SoshikiAPI.shared.getEntries(
-                    mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
+                    mediaType: source is (any TextSource) ? .text : source is (any ImageSource) ? .image : .video,
                     query: [ .title(searchText) ]
                 ).get()) ?? []
             }
@@ -34,7 +34,7 @@ struct LinkView: View {
             Button {
                 linkedEntry = entry
                 Task {
-                    await SoshikiAPI.shared.setLink(
+                    let res = await SoshikiAPI.shared.setLink(
                         mediaType: entry.mediaType,
                         id: entry._id,
                         platformId: "soshiki",
@@ -43,16 +43,18 @@ struct LinkView: View {
                         sourceName: source.name,
                         entryId: self.entry.id
                     )
+                    print(res)
                     presentationMode.wrappedValue.dismiss()
                 }
             } label: {
-                EntryRowView(entry: entry.toUnifiedEntry())
+                EntryRowView(entry: entry.toLocalEntry())
             }
         }.task {
             results = (try? await SoshikiAPI.shared.getEntries(
-                mediaType: source is TextSource ? .text : source is ImageSource ? .image : .video,
+                mediaType: source is (any TextSource) ? .text : source is (any ImageSource) ? .image : .video,
                 query: [ .title(entry.title) ]
             ).get()) ?? []
         }
     }
 }
+*/

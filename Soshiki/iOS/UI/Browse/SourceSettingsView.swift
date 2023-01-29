@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SourceSettingsView: View {
-    var source: Source
+    var source: any Source
     @Binding var settings: [any SourceFilter]
 
     var body: some View {

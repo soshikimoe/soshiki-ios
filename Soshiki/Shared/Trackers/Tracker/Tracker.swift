@@ -68,7 +68,7 @@ class Tracker {
         )
         context.objectForKeyedSubscript("globalThis").setObject([:], forKeyedSubscript: "__callbacks__")
 
-        let image = directory.appending(component: manifest.icon, directoryHint: .notDirectory)
+        let image = directory.appendingPathComponent(manifest.icon)
         guard FileManager.default.fileExists(atPath: image.path) else { return nil }
         return Tracker(
             id: manifest.id,
@@ -201,6 +201,7 @@ class Tracker {
                         volume: dict["volume"] as? Double,
                         timestamp: dict["timestamp"] as? Int,
                         episode: dict["episode"] as? Double,
+                        percent: dict["percent"] as? Double,
                         score: dict["score"] as? Double,
                         status: status
                     ))

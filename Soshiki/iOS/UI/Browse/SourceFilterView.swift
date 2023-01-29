@@ -102,7 +102,7 @@ struct SourceSelectFilterView: View {
                     filter.value = filter.value == selection ? nil : selection
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if filter.value == selection {
                             Image(systemName: "checkmark")
@@ -137,7 +137,7 @@ struct SourceExcludableSelectFilterView: View {
                     filter.value = (filter.value?.0 == selection ? (filter.value?.1 == true ? nil : ((selection, true))) : (selection, false))
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if filter.value?.0 == selection {
                             Image(systemName: filter.value?.1 == true ? "xmark" : "checkmark")
@@ -176,7 +176,7 @@ struct SourceMultiSelectFilterView: View {
                     }
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if filter.value.contains(selection) {
                             Image(systemName: "checkmark")
@@ -219,7 +219,7 @@ struct SourceExcludableMultiSelectFilterView: View {
                     }
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if let item = filter.value.first(where: { $0.0 == selection }) {
                             Image(systemName: item.1 ? "xmark" : "checkmark")
@@ -254,7 +254,7 @@ struct SourceSortFilterView: View {
                     filter.value = filter.value == selection ? nil : selection
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if filter.value == selection {
                             Image(systemName: "chevron.down")
@@ -289,7 +289,7 @@ struct SourceAscendableSortFilterView: View {
                     filter.value = (filter.value?.0 == selection ? (filter.value?.1 == true ? nil : ((selection, true))) : (selection, false))
                 } label: {
                     HStack {
-                        Text(selection).foregroundColor(.white)
+                        Text(selection).foregroundColor(.primary)
                         Spacer()
                         if filter.value?.0 == selection {
                             Image(systemName: filter.value?.1 == true ? "chevron.up" : "chevron.down")

@@ -8,8 +8,9 @@
 import SwiftUI
 import SwiftUIX
 
+/*
 struct SourceView: View {
-    var source: Source
+    var source: any Source
 
     @AppStorage("settings.library.itemsPerRow") var itemsPerRow: Int = 3
 
@@ -17,7 +18,7 @@ struct SourceView: View {
 
     @StateObject var sourceViewModel: SourceViewModel
 
-    init(source: Source) {
+    init(source: any Source) {
         self.source = source
         self._sourceViewModel = StateObject(wrappedValue: SourceViewModel(source: source))
         gridItems = .init(repeating: .init(.flexible(), spacing: 10), count: itemsPerRow)
@@ -44,9 +45,11 @@ struct SourceView: View {
                 LazyVGrid(columns: gridItems, spacing: 10) {
                     ForEach(sourceViewModel.searchResults?.entries ?? [], id: \.id) { item in
                         NavigationLink {
-                            if let imageSource = source as? ImageSource {
+                            if let textSource = source as? any TextSource {
+                                TextBrowseEntryView(shortEntry: item, source: textSource)
+                            } else if let imageSource = source as? any ImageSource {
                                 ImageBrowseEntryView(shortEntry: item, source: imageSource)
-                            } else if let videoSource = source as? VideoSource {
+                            } else if let videoSource = source as? any VideoSource {
                                 VideoBrowseEntryView(shortEntry: item, source: videoSource)
                             }
                         } label: {
@@ -55,11 +58,17 @@ struct SourceView: View {
                             if sourceViewModel.searchResults?.entries.last?.id == item.id, sourceViewModel.loadingTask == nil {
                                 sourceViewModel.getNextPage()
                             }
+                        }.contextMenu {
+                            if let source = source as? any LocalSource {
+                                Button(role: .destructive) {
+                                    source.delete(id: item.id)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                 }.padding(10)
-            }.introspectScrollView { scrollView in
-                scrollView.refreshControl = sourceViewModel.refreshControl
             }.navigationTitle(source.name)
         }.sheet(isPresented: $sourceViewModel.filterViewPresented) {
             NavigationView {
@@ -112,7 +121,7 @@ struct SourceView: View {
 }
 
 @MainActor class SourceViewModel: ObservableObject {
-    let source: Source
+    let source: any Source
 
     let refreshControl: UIRefreshControl
 
@@ -133,9 +142,8 @@ struct SourceView: View {
         case listing
         case search
     }
-    var resultsType: ResultsType = .listing
 
-    init(source: Source) {
+    init(source: any Source) {
         self.source = source
         refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
@@ -159,6 +167,7 @@ struct SourceView: View {
 
     func getNextPage() {
         guard let searchResults, searchResults.hasMore else { return }
+        loadingTask?.cancel()
         loadingTask = Task {
             let newSearchResults: SourceEntryResults?
             if resultsType == .search {
@@ -189,8 +198,9 @@ struct SourceView: View {
     }
 
     func refreshSearch() {
+        loadingTask?.cancel()
         loadingTask = Task {
-            if let searchResults = await source.getSearchResults(query: self.searchText, filters: self.filters) {
+            if let searchResults = await source.getSearchResults(query: self.searchText, filters: self.filters, previousResultsInfo: nil) {
                 Task { @MainActor in
                     self.searchResults = searchResults
                     loadingTask = nil
@@ -203,8 +213,9 @@ struct SourceView: View {
     }
 
     func refreshListing() {
+        loadingTask?.cancel()
         loadingTask = Task {
-            if let listingResults = await source.getListing(listing: selectedListing) {
+            if let listingResults = await source.getListing(listing: selectedListing, previousResultsInfo: nil) {
                 Task { @MainActor in
                     self.searchResults = listingResults
                     loadingTask = nil
@@ -216,3 +227,4 @@ struct SourceView: View {
         }
     }
 }
+*/
