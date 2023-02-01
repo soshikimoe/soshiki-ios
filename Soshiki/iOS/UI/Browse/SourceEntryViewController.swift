@@ -6,8 +6,11 @@
 //
 
 import UIKit
+import SafariServices
 
 class SourceEntryViewController: UITableViewController {
+    var observers: [NSObjectProtocol] = []
+
     let sourceShortEntry: SourceShortEntry
     let source: any Source
     var sourceEntry: SourceEntry?
@@ -31,17 +34,6 @@ class SourceEntryViewController: UITableViewController {
 
         self.navigationItem.largeTitleDisplayMode = .never
 
-        let headerView = UIView()
-        headerView.translatesAutoresizingMaskIntoConstraints = false
-        self.tableView.tableHeaderView = headerView
-
-        entryHeaderView.translatesAutoresizingMaskIntoConstraints = false
-        headerView.addSubview(entryHeaderView)
-        entryHeaderView.widthAnchor.constraint(equalTo: self.tableView.widthAnchor).isActive = true
-
-        headerView.widthAnchor.constraint(equalTo: self.tableView.widthAnchor).isActive = true
-        headerView.heightAnchor.constraint(equalTo: entryHeaderView.heightAnchor).isActive = true
-
         Task {
             switch source {
             case let source as any TextSource:
@@ -55,26 +47,24 @@ class SourceEntryViewController: UITableViewController {
             self.tableView.reloadData()
         }
 
-        self.entryHeaderView.continueAction = { [weak self] in
-            if let history = self?.history {
-                switch self?.source {
-                case is any TextSource:
-                    if let index = self?.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
-                        self?.openViewer(to: index)
+        self.entryHeaderView.delegate = self
+
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("app.link.update"), object: nil, queue: nil) { [weak self] notification in
+                guard let self, let id = notification.object as? String, sourceShortEntry.id == id else { return }
+                Task {
+                    self.entry = (try? await SoshikiAPI.shared.getLink(
+                        mediaType: self.source is any TextSource ? .text : self.source is any ImageSource ? .image : .video,
+                        platformId: "soshiki",
+                        sourceId: self.source.id,
+                        entryId: self.sourceShortEntry.id
+                    ).get())?.first
+                    if let sourceEntry = self.sourceEntry, let entry = self.entry {
+                        self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: entry)
                     }
-                case is any ImageSource:
-                    if let index = self?.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
-                        self?.openViewer(to: index)
-                    }
-                case is any TextSource:
-                    if let index = self?.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
-                        self?.openViewer(to: index)
-                    }
-                default:
-                    break
                 }
             }
-        }
+        )
 
         Task {
             self.sourceEntry = await source.getEntry(id: sourceShortEntry.id)
@@ -86,7 +76,6 @@ class SourceEntryViewController: UITableViewController {
                 entryId: sourceEntry.id
             ).get())?.first
             self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: self.entry)
-            self.entryHeaderView.linkUrl = URL(string: sourceEntry.url)
             guard let entry else { return }
             self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
             self.entryHeaderView.canContinue = source is any VideoSource ? history?.episode != nil : history?.chapter != nil
@@ -96,6 +85,26 @@ class SourceEntryViewController: UITableViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    deinit {
+        for observer in observers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let headerView = UIView()
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        self.tableView.tableHeaderView = headerView
+
+        entryHeaderView.translatesAutoresizingMaskIntoConstraints = false
+        headerView.addSubview(entryHeaderView)
+        entryHeaderView.widthAnchor.constraint(equalTo: self.tableView.widthAnchor).isActive = true
+
+        headerView.widthAnchor.constraint(equalTo: self.tableView.widthAnchor).isActive = true
+        headerView.heightAnchor.constraint(equalTo: entryHeaderView.heightAnchor).isActive = true
     }
 
     func openViewer(to index: Int) {
@@ -241,5 +250,67 @@ extension SourceEntryViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         self.openViewer(to: indexPath.item)
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+}
+
+extension SourceEntryViewController: EntryHeaderViewDelegate {
+    func bookmarkButtonPressed() {
+        guard let entry else { return }
+        if LibraryManager.shared.library(forMediaType: entry.mediaType)?.all.ids.contains(entry._id) == true {
+            Task {
+                await LibraryManager.shared.remove(entry: entry)
+            }
+        } else {
+            Task {
+                await LibraryManager.shared.add(entry: entry)
+            }
+        }
+    }
+
+    func linkButtonPressed() {
+        if let sourceEntry {
+            self.navigationController?.pushViewController(LinkViewController(source: source, entry: sourceEntry), animated: true)
+        }
+    }
+
+    func webViewButtonPressed() {
+        if let url = sourceEntry.flatMap({ URL(string: $0.url) }) {
+            self.present(SFSafariViewController(url: url), animated: true)
+        }
+    }
+
+    func continueButtonPressed() {
+        switch self.source {
+        case is any TextSource:
+            if let history = self.history,
+               let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
+                self.openViewer(to: index)
+            } else if !self.textChapters.isEmpty {
+                self.openViewer(to: 0)
+            }
+        case is any ImageSource:
+            if let history = self.history,
+               let index = self.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
+                self.openViewer(to: index)
+            } else if !self.imageChapters.isEmpty {
+                self.openViewer(to: 0)
+            }
+        case is any VideoSource:
+            if let history = self.history,
+               let index = self.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
+                self.openViewer(to: index)
+            } else if !self.videoEpisodes.isEmpty {
+                self.openViewer(to: 0)
+            }
+        default:
+            break
+        }
+    }
+
+    func sizeDidChange() {
+        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView {
+            self.tableView.tableHeaderView?.layoutIfNeeded()
+            self.tableView.tableHeaderView = self.tableView.tableHeaderView
+        }
     }
 }

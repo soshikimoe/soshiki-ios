@@ -7,6 +7,7 @@
 
 import UIKit
 import Nuke
+import SafariServices
 
 class EntryViewController: UITableViewController {
     let entry: Entry
@@ -145,6 +146,8 @@ class EntryViewController: UITableViewController {
 
         self.navigationItem.largeTitleDisplayMode = .never
 
+        self.entryHeaderView.delegate = self
+
         let headerView = UIView()
         headerView.translatesAutoresizingMaskIntoConstraints = false
         self.tableView.tableHeaderView = headerView
@@ -161,28 +164,6 @@ class EntryViewController: UITableViewController {
         self.tableView.refreshControl = refreshControl
 
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "gear"), menu: settingsMenu)
-
-        self.entryHeaderView.continueAction = { [weak self] in
-            if let history = self?.history {
-                switch self?.source {
-                case is any TextSource:
-                    if let index = self?.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
-                        self?.openViewer(to: index)
-                    }
-                case is any ImageSource:
-                    if let index = self?.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
-                        self?.openViewer(to: index)
-                    }
-                case is any TextSource:
-                    if let index = self?.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
-                        self?.openViewer(to: index)
-                    }
-                default:
-                    break
-                }
-            }
-        }
-        self.entryHeaderView.linkUrl = (self.entry.links.first?.url).flatMap({ URL(string: $0) })
 
         Task {
             self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
@@ -388,5 +369,60 @@ extension EntryViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         self.openViewer(to: indexPath.item)
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+}
+
+extension EntryViewController: EntryHeaderViewDelegate {
+    func bookmarkButtonPressed() {
+        if LibraryManager.shared.library(forMediaType: entry.mediaType)?.all.ids.contains(entry._id) == true {
+            Task {
+                await LibraryManager.shared.remove(entry: entry)
+            }
+        } else {
+            Task {
+                await LibraryManager.shared.add(entry: entry)
+            }
+        }
+    }
+
+    func webViewButtonPressed() {
+        if let url = (self.entry.links.first?.url).flatMap({ URL(string: $0) }) {
+            self.present(SFSafariViewController(url: url), animated: true)
+        }
+    }
+
+    func continueButtonPressed() {
+        switch self.source {
+        case is any TextSource:
+            if let history = self.history,
+               let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
+                self.openViewer(to: index)
+            } else if !self.textChapters.isEmpty {
+                self.openViewer(to: 0)
+            }
+        case is any ImageSource:
+            if let history = self.history,
+               let index = self.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
+                self.openViewer(to: index)
+            } else if !self.imageChapters.isEmpty {
+                self.openViewer(to: 0)
+            }
+        case is any VideoSource:
+            if let history = self.history,
+               let index = self.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
+                self.openViewer(to: index)
+            } else if !self.videoEpisodes.isEmpty {
+                self.openViewer(to: 0)
+            }
+        default:
+            break
+        }
+    }
+
+    func sizeDidChange() {
+        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView {
+            self.tableView.tableHeaderView?.layoutIfNeeded()
+            self.tableView.tableHeaderView = self.tableView.tableHeaderView
+        }
     }
 }

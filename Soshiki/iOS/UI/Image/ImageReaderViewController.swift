@@ -192,13 +192,47 @@ class ImageReaderViewController: UIPageViewController {
 
     // swiftlint:disable:next cyclomatic_complexity
     func setChapter(to chapterIndex: Int, direction: Direction) async {
-        if let chapter = self.chapters[safe: chapterIndex] {
-            let details: ImageSourceChapterDetails!
-            if let previousDetails, previousDetails.id == chapter.id {
-                nextDetails = self.details
-                details = previousDetails
-                Task { [weak self] in
-                    guard let self, let previousChapter = self.chapters[safe: chapterIndex + 1] else { return }
+        guard let chapter = self.chapters[safe: chapterIndex] else { return }
+        let details: ImageSourceChapterDetails!
+        if let previousDetails, previousDetails.id == chapter.id {
+            nextDetails = self.details
+            details = previousDetails
+            Task { [weak self] in
+                guard let self, let previousChapter = self.chapters[safe: chapterIndex + 1] else { return }
+                self.previousDetails = await self.source.getChapterDetails(
+                    id: previousChapter.id, entryId: previousChapter.entryId
+                )
+                if let preloadedPageView = pageViewControllers[
+                    safe: self.readingMode == .rtl ? pageViewControllers.count - 1 : 0
+                ]?.view as? ImageReaderPageView,
+                   let lastPage = self.previousDetails?.pages.last?.url {
+                    preloadedPageView.setImage(lastPage)
+                }
+            }
+        } else if let nextDetails, nextDetails.id == chapter.id {
+            previousDetails = self.details
+            details = nextDetails
+            Task { [weak self] in
+                guard let self, let nextChapter = self.chapters[safe: chapterIndex - 1] else { return }
+                self.nextDetails = await self.source.getChapterDetails(
+                    id: nextChapter.id, entryId: nextChapter.entryId
+                )
+                if let preloadedPageView = pageViewControllers[
+                    safe: self.readingMode == .rtl ? 0 : pageViewControllers.count - 1
+                ]?.view as? ImageReaderPageView,
+                   let firstPage = self.nextDetails?.pages.first?.url {
+                    preloadedPageView.setImage(firstPage)
+                }
+            }
+        } else {
+            guard let fetchedDetails = await self.source.getChapterDetails(
+                id: chapter.id,
+                entryId: chapter.entryId
+            ) else { return }
+            details = fetchedDetails
+            Task { [weak self] in
+                guard let self else { return }
+                if let previousChapter = self.chapters[safe: chapterIndex + 1] {
                     self.previousDetails = await self.source.getChapterDetails(
                         id: previousChapter.id, entryId: previousChapter.entryId
                     )
@@ -209,11 +243,7 @@ class ImageReaderViewController: UIPageViewController {
                         preloadedPageView.setImage(lastPage)
                     }
                 }
-            } else if let nextDetails, nextDetails.id == chapter.id {
-                previousDetails = self.details
-                details = nextDetails
-                Task { [weak self] in
-                    guard let self, let nextChapter = self.chapters[safe: chapterIndex - 1] else { return }
+                if let nextChapter = self.chapters[safe: chapterIndex - 1] {
                     self.nextDetails = await self.source.getChapterDetails(
                         id: nextChapter.id, entryId: nextChapter.entryId
                     )
@@ -224,116 +254,89 @@ class ImageReaderViewController: UIPageViewController {
                         preloadedPageView.setImage(firstPage)
                     }
                 }
-            } else {
-                guard let fetchedDetails = await self.source.getChapterDetails(
-                    id: chapter.id,
-                    entryId: chapter.entryId
-                ) else { return }
-                details = fetchedDetails
-                Task { [weak self] in
-                    guard let self else { return }
-                    if let previousChapter = self.chapters[safe: chapterIndex + 1] {
-                        self.previousDetails = await self.source.getChapterDetails(
-                            id: previousChapter.id, entryId: previousChapter.entryId
-                        )
-                        if let preloadedPageView = pageViewControllers[
-                            safe: self.readingMode == .rtl ? pageViewControllers.count - 1 : 0
-                        ]?.view as? ImageReaderPageView,
-                           let lastPage = self.previousDetails?.pages.last?.url {
-                            preloadedPageView.setImage(lastPage)
-                        }
-                    }
-                    if let nextChapter = self.chapters[safe: chapterIndex - 1] {
-                        self.nextDetails = await self.source.getChapterDetails(
-                            id: nextChapter.id, entryId: nextChapter.entryId
-                        )
-                        if let preloadedPageView = pageViewControllers[
-                            safe: self.readingMode == .rtl ? 0 : pageViewControllers.count - 1
-                        ]?.view as? ImageReaderPageView,
-                           let firstPage = self.nextDetails?.pages.first?.url {
-                            preloadedPageView.setImage(firstPage)
-                        }
-                    }
+            }
+        }
+
+        self.pages = details.pages.compactMap({ $0.url })
+        self.chapter = chapterIndex
+        self.details = details
+
+        if direction == .none {
+            pageViewControllers = []
+            if self.readingMode == .rtl ? hasNextChapter : hasPreviousChapter {
+                pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
+            }
+            pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
+                previous: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter + 1],
+                next: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter
+            )))
+            for _ in 0..<pages.count {
+                pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
+            }
+            pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
+                previous: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter,
+                next: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter - 1]
+            )))
+            if self.readingMode == .rtl ? hasPreviousChapter : hasNextChapter {
+                pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
+            }
+            self.setViewControllers([pageViewControllers[
+                self.readingMode == .rtl
+                    ? pageViewControllers.count - self.page - (hasPreviousChapter ? 3 : 2)
+                    : self.page + (hasPreviousChapter ? 2 : 1)
+            ]], direction: .forward, animated: false)
+            loadPages((self.page - self.pagesToPreload)..<(self.page + self.pagesToPreload + 1))
+        } else if (direction == .forward) == (self.readingMode == .ltr) { // if forward in ltr, or backward in rtl
+            for viewController in pageViewControllers.dropLast(3) {
+                viewController.view.removeFromSuperview()
+                viewController.removeFromParent()
+            }
+            pageViewControllers.removeFirst(pageViewControllers.count - 3)
+            (pageViewControllers[safe: 2]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? pages.count - 1 : 0])
+            if !pages.isEmpty {
+                for _ in 0..<(pages.count - 1) {
+                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
                 }
             }
-
-            self.pages = details.pages.compactMap({ $0.url })
-            self.chapter = chapterIndex
-            self.details = details
-
-            if direction == .none {
-                pageViewControllers = []
-                if self.readingMode == .rtl ? hasNextChapter : hasPreviousChapter {
-                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
-                }
-                pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
-                    previous: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter + 1],
-                    next: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter
-                )))
-                for _ in 0..<pages.count {
-                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
-                }
-                pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
-                    previous: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter,
-                    next: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter - 1]
-                )))
-                if self.readingMode == .rtl ? hasPreviousChapter : hasNextChapter {
-                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
-                }
-                self.setViewControllers([pageViewControllers[
-                    self.readingMode == .rtl
-                        ? pageViewControllers.count - self.page - (hasPreviousChapter ? 3 : 2)
-                        : self.page + (hasPreviousChapter ? 2 : 1)
-                ]], direction: .forward, animated: false)
-                loadPages((self.page - self.pagesToPreload)..<(self.page + self.pagesToPreload + 1))
-            } else if (direction == .forward) == (self.readingMode == .ltr) { // if forward in ltr, or backward in rtl
-                for viewController in pageViewControllers.dropLast(3) {
-                    viewController.view.removeFromSuperview()
-                    viewController.removeFromParent()
-                }
-                pageViewControllers.removeFirst(pageViewControllers.count - 3)
-                (pageViewControllers[safe: 2]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? pages.count - 1 : 0])
-                for _ in 0..<(pages.count - 1) {
-                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
-                }
-                pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
-                    previous: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter,
-                    next: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter - 1]
-                )))
-                if self.readingMode == .rtl ? hasPreviousChapter : hasNextChapter {
-                    pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
-                }
-                self.setViewControllers([pageViewControllers[2]], direction: .forward, animated: false)
-                self.page = self.readingMode == .rtl ? details.pages.count - 1 : 0
-                if self.readingMode == .rtl {
-                    loadPages((self.page - self.pagesToPreload)..<(self.page + 1 + 1))
-                } else {
-                    loadPages((self.page - 1)..<(self.page + self.pagesToPreload + 1))
-                }
-            } else if (direction == .backward) == (self.readingMode == .ltr) { // if backward in ltr, or forward in rtl
-                for viewController in pageViewControllers.dropFirst(3) {
-                    viewController.view.removeFromSuperview()
-                    viewController.removeFromParent()
-                }
-                pageViewControllers.removeLast(pageViewControllers.count - 3)
-                (pageViewControllers[safe: 0]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? 0 : pages.count - 1])
+            pageViewControllers.append(UIViewController(ImageReaderInfoPageView(
+                previous: self.readingMode == .rtl ? self.chapters[safe: self.chapter + 1] : chapter,
+                next: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter - 1]
+            )))
+            if self.readingMode == .rtl ? hasPreviousChapter : hasNextChapter {
+                pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
+            }
+            self.setViewControllers([pageViewControllers[2]], direction: .forward, animated: false)
+            self.page = self.readingMode == .rtl ? details.pages.count - 1 : 0
+            if self.readingMode == .rtl {
+                loadPages((self.page - self.pagesToPreload)..<(self.page + 1 + 1))
+            } else {
+                loadPages((self.page - 1)..<(self.page + self.pagesToPreload + 1))
+            }
+        } else if (direction == .backward) == (self.readingMode == .ltr) { // if backward in ltr, or forward in rtl
+            for viewController in pageViewControllers.dropFirst(3) {
+                viewController.view.removeFromSuperview()
+                viewController.removeFromParent()
+            }
+            pageViewControllers.removeLast(pageViewControllers.count - 3)
+            (pageViewControllers[safe: 0]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? 0 : pages.count - 1])
+            if !pages.isEmpty {
                 for _ in 0..<(pages.count - 1) {
                     pageViewControllers.insert(UIViewController(ImageReaderPageView(source: self.source)), at: 0)
                 }
-                pageViewControllers.insert(UIViewController(ImageReaderInfoPageView(
-                    previous: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter + 1],
-                    next: self.readingMode == .rtl ? self.chapters[safe: self.chapter - 1] : chapter
-                )), at: 0)
-                if self.readingMode == .rtl ? hasNextChapter : hasPreviousChapter {
-                    pageViewControllers.insert(UIViewController(ImageReaderPageView(source: self.source)), at: 0)
-                }
-                self.setViewControllers([self.pageViewControllers[pageViewControllers.count - 3]], direction: .reverse, animated: false)
-                self.page = self.readingMode == .rtl ? 0 : details.pages.count - 1
-                if self.readingMode == .rtl {
-                    loadPages((self.page - 1)..<(self.page + self.pagesToPreload + 1))
-                } else {
-                    loadPages((self.page - self.pagesToPreload)..<(self.page + 1 + 1))
-                }
+            }
+            pageViewControllers.insert(UIViewController(ImageReaderInfoPageView(
+                previous: self.readingMode == .rtl ? chapter : self.chapters[safe: self.chapter + 1],
+                next: self.readingMode == .rtl ? self.chapters[safe: self.chapter - 1] : chapter
+            )), at: 0)
+            if self.readingMode == .rtl ? hasNextChapter : hasPreviousChapter {
+                pageViewControllers.insert(UIViewController(ImageReaderPageView(source: self.source)), at: 0)
+            }
+            self.setViewControllers([self.pageViewControllers[pageViewControllers.count - 3]], direction: .reverse, animated: false)
+            self.page = self.readingMode == .rtl ? 0 : details.pages.count - 1
+            if self.readingMode == .rtl {
+                loadPages((self.page - 1)..<(self.page + self.pagesToPreload + 1))
+            } else {
+                loadPages((self.page - self.pagesToPreload)..<(self.page + 1 + 1))
             }
         }
         Task {

@@ -7,19 +7,15 @@
 
 import UIKit
 import Nuke
-import SafariServices
 
 class EntryHeaderView: UIView {
     var observers: [NSObjectProtocol] = []
 
+    weak var delegate: (any EntryHeaderViewDelegate)?
+
     let mediaType: MediaType
     var localEntry: LocalEntry?
     var entry: Entry?
-    var linkUrl: URL? {
-        didSet {
-            self.linkButton.isEnabled = linkUrl != nil
-        }
-    }
 //    let bannerImageView = UIImageView()
 //    let bannerGradientLayer = CAGradientLayer()
     let headerStackView = UIStackView()
@@ -53,7 +49,6 @@ class EntryHeaderView: UIView {
             }
         }
     }
-    var continueAction: (() -> Void)?
 
     var descriptionExpanded = false
 
@@ -120,7 +115,7 @@ class EntryHeaderView: UIView {
         continueButton.tintColor = .white
         continueButton.layer.cornerRadius = 10
         continueButton.clipsToBounds = true
-        continueButton.addTarget(self, action: #selector(continueButtonPressed), for: .touchUpInside)
+        continueButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.continueButtonPressed), for: .touchUpInside)
 
         bookmarkButton.translatesAutoresizingMaskIntoConstraints = false
         bookmarkButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -133,7 +128,7 @@ class EntryHeaderView: UIView {
         bookmarkButton.tintColor = .white
         bookmarkButton.layer.cornerRadius = 10
         bookmarkButton.clipsToBounds = true
-        bookmarkButton.addTarget(self, action: #selector(bookmarkButtonPressed), for: .touchUpInside)
+        bookmarkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.bookmarkButtonPressed), for: .touchUpInside)
 
         linkButton.translatesAutoresizingMaskIntoConstraints = false
         linkButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -146,7 +141,7 @@ class EntryHeaderView: UIView {
         linkButton.tintColor = .white
         linkButton.layer.cornerRadius = 10
         linkButton.clipsToBounds = true
-        linkButton.addTarget(self, action: #selector(linkButtonPressed), for: .touchUpInside)
+        linkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.linkButtonPressed), for: .touchUpInside)
 
         webViewButton.translatesAutoresizingMaskIntoConstraints = false
         webViewButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -159,7 +154,7 @@ class EntryHeaderView: UIView {
         webViewButton.tintColor = .white
         webViewButton.layer.cornerRadius = 10
         webViewButton.clipsToBounds = true
-        webViewButton.addTarget(self, action: #selector(webViewButtonPressed), for: .touchUpInside)
+        webViewButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.webViewButtonPressed), for: .touchUpInside)
 
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(LibraryManager.Keys.libraries), object: nil, queue: nil) { [weak self] _ in
@@ -322,33 +317,16 @@ class EntryHeaderView: UIView {
                 for: .normal
             )
         }
+        self.invalidateIntrinsicContentSize()
         descriptionExpanded = !descriptionExpanded
+        delegate?.sizeDidChange?()
     }
+}
 
-    @objc func continueButtonPressed() {
-        continueAction?()
-    }
-
-    @objc func bookmarkButtonPressed() {
-        guard let entry else { return }
-        if LibraryManager.shared.library(forMediaType: mediaType)?.all.ids.contains(entry._id) == true {
-            Task {
-                await LibraryManager.shared.remove(entry: entry)
-            }
-        } else {
-            Task {
-                await LibraryManager.shared.add(entry: entry)
-            }
-        }
-    }
-
-    @objc func linkButtonPressed() {
-
-    }
-
-    @objc func webViewButtonPressed() {
-        if let linkUrl {
-            self.nearestViewController?.present(SFSafariViewController(url: linkUrl), animated: true)
-        }
-    }
+@objc protocol EntryHeaderViewDelegate {
+    @objc optional func webViewButtonPressed()
+    @objc optional func linkButtonPressed()
+    @objc optional func bookmarkButtonPressed()
+    @objc optional func continueButtonPressed()
+    @objc optional func sizeDidChange()
 }

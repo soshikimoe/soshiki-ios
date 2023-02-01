@@ -76,6 +76,8 @@
 		37AAC9ED29863EB400EF9A57 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 37AAC9EC29863EB400EF9A57 /* Nuke */; };
 		37AAC9EF2986409D00EF9A57 /* UIResponder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9EE2986409D00EF9A57 /* UIResponder.swift */; };
 		37AAC9F12986B8C900EF9A57 /* EntryTrackersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9F02986B8C900EF9A57 /* EntryTrackersViewController.swift */; };
+		37AAC9F3298ABBD200EF9A57 /* LinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9F2298ABBD200EF9A57 /* LinkViewController.swift */; };
+		37AAC9F5298AC10000EF9A57 /* EntryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9F4298AC10000EF9A57 /* EntryTableViewCell.swift */; };
 		37D68139295D285200583A2F /* SourceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68138295D285200583A2F /* SourceFilter.swift */; };
 		37D6813B295D3D5400583A2F /* SourceListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D6813A295D3D5400583A2F /* SourceListing.swift */; };
 		37D68143296129EA00583A2F /* ImageSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68142296129EA00583A2F /* ImageSource.swift */; };
@@ -166,6 +168,8 @@
 		37AAC9E829863D9300EF9A57 /* CircularProgressView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
 		37AAC9EE2986409D00EF9A57 /* UIResponder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIResponder.swift; sourceTree = "<group>"; };
 		37AAC9F02986B8C900EF9A57 /* EntryTrackersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryTrackersViewController.swift; sourceTree = "<group>"; };
+		37AAC9F2298ABBD200EF9A57 /* LinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkViewController.swift; sourceTree = "<group>"; };
+		37AAC9F4298AC10000EF9A57 /* EntryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryTableViewCell.swift; sourceTree = "<group>"; };
 		37D68138295D285200583A2F /* SourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilter.swift; sourceTree = "<group>"; };
 		37D6813A295D3D5400583A2F /* SourceListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceListing.swift; sourceTree = "<group>"; };
 		37D68142296129EA00583A2F /* ImageSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSource.swift; sourceTree = "<group>"; };
@@ -335,6 +339,7 @@
 				37AAC9D129857DCC00EF9A57 /* ColorPickerTableViewCell.swift */,
 				37AAC9DA298601F600EF9A57 /* FilterTableViewCell.swift */,
 				37AAC9DE29861B1C00EF9A57 /* StringSelectViewController.swift */,
+				37AAC9F4298AC10000EF9A57 /* EntryTableViewCell.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -493,6 +498,7 @@
 			isa = PBXGroup;
 			children = (
 				37D681492961556800583A2F /* LinkView.swift */,
+				37AAC9F2298ABBD200EF9A57 /* LinkViewController.swift */,
 			);
 			path = Link;
 			sourceTree = "<group>";
@@ -670,11 +676,13 @@
 				37AAC9E42986352A00EF9A57 /* SourceSettingsViewController.swift in Sources */,
 				3715DDFC2974771F00F173EA /* JSSource.swift in Sources */,
 				3733CD23293D8ECB00901DA6 /* ImageReaderPageView.swift in Sources */,
+				37AAC9F5298AC10000EF9A57 /* EntryTableViewCell.swift in Sources */,
 				37EBD6762958F37600371978 /* UIViewController.swift in Sources */,
 				3733CD03292EDD0600901DA6 /* SourceManager.swift in Sources */,
 				37D681662963B19500583A2F /* Int.swift in Sources */,
 				3733CD1B293A420D00901DA6 /* ImageSourceChapter.swift in Sources */,
 				37AAC9D229857DCC00EF9A57 /* ColorPickerTableViewCell.swift in Sources */,
+				37AAC9F3298ABBD200EF9A57 /* LinkViewController.swift in Sources */,
 				37AAC9AD297F787200EF9A57 /* SourceTableViewCell.swift in Sources */,
 				3715DDEE297463F100F173EA /* TextReaderViewController.swift in Sources */,
 				3715DDF02974738000F173EA /* TextSourceChapter.swift in Sources */,
@@ -855,7 +863,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -898,7 +906,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;

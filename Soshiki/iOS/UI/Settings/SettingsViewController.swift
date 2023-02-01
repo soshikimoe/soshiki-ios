@@ -17,12 +17,16 @@ class SettingsViewController: UITableViewController {
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(SoshikiAPI.Keys.loggedIn), object: nil, queue: nil) { [weak self] _ in
-                self?.tableView.reloadData()
+                Task { @MainActor in
+                    self?.tableView.reloadData()
+                }
             }
         )
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(SoshikiAPI.Keys.loggedOut), object: nil, queue: nil) { [weak self] _ in
-                self?.tableView.reloadData()
+                Task { @MainActor in
+                    self?.tableView.reloadData()
+                }
             }
         )
     }

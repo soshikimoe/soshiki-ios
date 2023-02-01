@@ -43,6 +43,7 @@ class TextReaderViewController: UIViewController {
     lazy var singleTapGestureRecognizer: UITapGestureRecognizer = {
         let single = UITapGestureRecognizer(target: self, action: #selector(singleTap))
         single.numberOfTapsRequired = 1
+        single.delegate = self
         return single
     }()
 
@@ -180,6 +181,11 @@ class TextReaderViewController: UIViewController {
         self.view.addGestureRecognizer(singleTapGestureRecognizer)
     }
 
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.view.backgroundColor = backgroundColor
+    }
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         let appearance = UINavigationBarAppearance()
@@ -203,6 +209,7 @@ class TextReaderViewController: UIViewController {
     }
 
     func setChapter(to chapter: Int) async {
+        guard chapters.indices.contains(chapter) else { return }
         if chapter == self.chapter - 1,
            let nextDetails,
            nextDetails.id == chapters[chapter].id {
@@ -298,5 +305,14 @@ extension TextReaderViewController {
                 self.navigationController?.navigationBar.isHidden = true
             }
         }
+    }
+}
+
+extension TextReaderViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
     }
 }

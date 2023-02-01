@@ -40,6 +40,7 @@ class VideoPlayerViewController: AVPlayerViewController {
     lazy var singleTapGestureRecognizer: UITapGestureRecognizer = {
         let single = UITapGestureRecognizer(target: self, action: #selector(singleTap))
         single.numberOfTapsRequired = 1
+        single.delegate = self
         return single
     }()
 
@@ -57,7 +58,7 @@ class VideoPlayerViewController: AVPlayerViewController {
         self.navigationItem.hidesBackButton = true
         self.navigationItem.largeTitleDisplayMode = .never
 
-        self.view.addGestureRecognizer(singleTapGestureRecognizer)
+        // self.view.addGestureRecognizer(singleTapGestureRecognizer)
 
         let closeViewerButton = UIBarButtonItem(
             image: UIImage(systemName: "xmark"), style: .plain, target: self, action: #selector(closeViewer)
@@ -294,5 +295,14 @@ extension VideoPlayerViewController {
                 self.navigationController?.navigationBar.isHidden = true
             }
         }
+    }
+}
+
+extension VideoPlayerViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+    ) -> Bool {
+        true
     }
 }
