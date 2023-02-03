@@ -65,6 +65,8 @@ protocol SourceFilter<ValueType>: JSObjectCodable {
     var id: String { get }
     var value: ValueType { get set }
     var name: String { get }
+
+    mutating func trySetValue(to value: Any)
 }
 
 protocol SourceMultiRowFilter {
@@ -95,6 +97,12 @@ struct SourceTextFilter: SourceFilter {
             "placeholder": placeholder
         ]
     }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? String {
+            self.value = value
+        }
+    }
 }
 
 struct SourceToggleFilter: SourceFilter {
@@ -117,6 +125,12 @@ struct SourceToggleFilter: SourceFilter {
             "value": value,
             "name": name
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? Bool {
+            self.value = value
+        }
     }
 }
 
@@ -145,16 +159,21 @@ struct SourceSegmentFilter: SourceFilter {
             "selections": selections
         ]
     }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? String {
+            self.value = value
+        }
+    }
 }
 
 struct SourceSelectFilter: SourceFilter, SourceMultiRowFilter {
     init?(from object: [String: Any]) {
         guard let id = object["id"] as? String,
-              let value = object["value"] as? String?,
               let name = object["name"] as? String,
               let selections = object["selections"] as? [String] else { return nil }
         self.id = id
-        self.value = value
+        self.value = object["value"] as? String
         self.name = name
         self.selections = selections
     }
@@ -171,6 +190,12 @@ struct SourceSelectFilter: SourceFilter, SourceMultiRowFilter {
             "name": name,
             "selections": selections
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? String? {
+            self.value = value
+        }
     }
 }
 
@@ -205,6 +230,12 @@ struct SourceExcludableSelectFilter: SourceFilter, SourceMultiRowFilter {
             "selections": selections
         ]
     }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? (String, Bool)? {
+            self.value = value
+        }
+    }
 }
 
 struct SourceMultiSelectFilter: SourceFilter, SourceMultiRowFilter {
@@ -231,6 +262,12 @@ struct SourceMultiSelectFilter: SourceFilter, SourceMultiRowFilter {
             "name": name,
             "selections": selections
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? [String] {
+            self.value = value
+        }
     }
 }
 
@@ -265,16 +302,21 @@ struct SourceExcludableMultiSelectFilter: SourceFilter, SourceMultiRowFilter {
             "selections": selections
         ]
     }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? [(String, Bool)] {
+            self.value = value
+        }
+    }
 }
 
 struct SourceSortFilter: SourceFilter, SourceMultiRowFilter {
     init?(from object: [String: Any]) {
         guard let id = object["id"] as? String,
-              let value = object["value"] as? String?,
               let name = object["name"] as? String,
               let selections = object["selections"] as? [String] else { return nil }
         self.id = id
-        self.value = value
+        self.value = object["value"] as? String
         self.name = name
         self.selections = selections
     }
@@ -291,6 +333,12 @@ struct SourceSortFilter: SourceFilter, SourceMultiRowFilter {
             "name": name,
             "selections": selections
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? String? {
+            self.value = value
+        }
     }
 }
 
@@ -324,6 +372,12 @@ struct SourceAscendableSortFilter: SourceFilter, SourceMultiRowFilter {
             "name": name,
             "selections": selections
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? (String, Bool)? {
+            self.value = value
+        }
     }
 }
 
@@ -362,6 +416,12 @@ struct SourceNumberFilter: SourceFilter {
             "allowsCustomInput": allowsCustomInput
         ]
     }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? Double {
+            self.value = value
+        }
+    }
 }
 
 struct SourceRangeFilter: SourceFilter {
@@ -395,5 +455,11 @@ struct SourceRangeFilter: SourceFilter {
             "upperBound": upperBound,
             "step": step
         ]
+    }
+
+    mutating func trySetValue(to value: Any) {
+        if let value = value as? (Double, Double) {
+            self.value = value
+        }
     }
 }

@@ -11,7 +11,7 @@ class JSFetch {
     static func inject(into context: JSContext) {
         let fetch: @convention(block) (String, JSValue, JSValue, JSValue) -> Void = { urlString, optionsValue, resolve, reject in
             guard let url = URL(string: urlString) else {
-                reject.call(withArguments: ["Invalid URL"])
+                reject.call(withArguments: ["Invalid URL: \(urlString)"])
                 return
             }
             guard let options = optionsValue.toDictionary() as? [String: Any] else {

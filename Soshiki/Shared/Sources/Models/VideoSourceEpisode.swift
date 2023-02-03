@@ -22,7 +22,7 @@ struct VideoSourceEpisode: Sendable {
 
     func toListString() -> String {
         let episodeString = "Episode \(episode.toTruncatedString())"
-        let nameString = name.flatMap({ ": \($0)" }) ?? ""
+        let nameString: String = name.flatMap({ $0.isEmpty ? "" : ": \($0)" }) ?? ""
         return episodeString + nameString
     }
 }

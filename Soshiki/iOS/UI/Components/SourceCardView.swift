@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct SourceCardView: View {
-    var source: Source
+    var source: any Source
     var body: some View {
         HStack {
-            if let uiImage = UIImage(contentsOfFile: source.image.path()) {
+            if let source = source as? NetworkSource, let uiImage = UIImage(contentsOfFile: source.image.path) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .frame(width: 50, height: 50)
@@ -20,8 +20,10 @@ struct SourceCardView: View {
             VStack(alignment: .leading) {
                 Text(source.name)
                     .fontWeight(.semibold)
-                Text(source.author)
-                    .foregroundColor(.secondary)
+                if let source = source as? NetworkSource {
+                    Text(source.author)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }

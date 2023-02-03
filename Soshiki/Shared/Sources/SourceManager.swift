@@ -7,20 +7,31 @@
 
 import Foundation
 import ZIPFoundation
+import JavaScriptCore
 
-class SourceManager: ObservableObject {
+class SourceManager {
     static let shared = SourceManager()
 
-    @Published var sources: [Source] = []
+    var sources: [any Source] = []
+
+    var textSources: [any TextSource] {
+        sources.compactMap({ $0 as? any TextSource })
+    }
+    var imageSources: [any ImageSource] {
+        sources.compactMap({ $0 as? any ImageSource })
+    }
+    var videoSources: [any VideoSource] {
+        sources.compactMap({ $0 as? any VideoSource })
+    }
 
     func startup() {
-        let sourcesDirectory = FileManager.default.documentDirectory.appending(component: "Sources")
-        if !FileManager.default.fileExists(atPath: sourcesDirectory.path()) {
+        let sourcesDirectory = FileManager.default.documentDirectory.appendingPathComponent("Sources")
+        if !FileManager.default.fileExists(atPath: sourcesDirectory.path) {
             guard (try? FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)) != nil else { return }
         }
         guard let sources = try? FileManager.default.contentsOfDirectory(at: sourcesDirectory, includingPropertiesForKeys: nil) else { return }
         for source in sources {
-            if let source = Source.load(directory: source) {
+            if let source = JSSource.load(directory: source) {
                 self.sources.append(source)
             }
         }
@@ -48,7 +59,7 @@ class SourceManager: ObservableObject {
             }
         }
         guard (try? FileManager.default.unzipItem(at: url, to: temporaryDirectory)) != nil else { return }
-        if let manifest = Source.manifest(directory: temporaryDirectory) {
+        if let manifest = JSSource.manifest(directory: temporaryDirectory) {
             let sourcesDirectory = FileManager.default.documentDirectory.appendingPathComponent("Sources", conformingTo: .folder)
             if !FileManager.default.fileExists(atPath: sourcesDirectory.path) {
                 guard (try? FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)) != nil else { return }
@@ -61,10 +72,11 @@ class SourceManager: ObservableObject {
             }
             guard (try? FileManager.default.createDirectory(at: sourceDirectory, withIntermediateDirectories: true)) != nil else { return }
             for item in items {
-                _ = try? FileManager.default.moveItem(at: item, to: sourceDirectory.appending(component: item.lastPathComponent))
+                _ = try? FileManager.default.moveItem(at: item, to: sourceDirectory.appendingPathComponent(item.lastPathComponent))
             }
-            if let source = Source.load(directory: sourceDirectory) {
+            if let source = JSSource.load(directory: sourceDirectory) {
                 self.sources.append(source)
+                NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
             }
         }
     }
@@ -75,9 +87,16 @@ class SourceManager: ObservableObject {
         let sourceDirectory = sourcesDirectory.appendingPathComponent(id, conformingTo: .folder)
         guard (try? FileManager.default.removeItem(at: sourceDirectory)) != nil else { return }
         self.sources.removeAll(where: { $0.id == id })
+        NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
     }
 
     func installSources(_ url: URL) {
 
+    }
+}
+
+extension SourceManager {
+    class Keys {
+        static let update = "app.sources.update"
     }
 }

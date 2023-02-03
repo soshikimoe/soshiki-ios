@@ -41,7 +41,7 @@ struct SourceEntryCellView: View {
                         Text(entry.title)
                             .lineLimit(3)
                             .foregroundColor(.white)
-                            .bold()
+                            .font(.body, weight: .bold)
                             .multilineTextAlignment(.leading)
                         Spacer(minLength: 0)
                     }

@@ -32,6 +32,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Entry.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -64,6 +67,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([Entry].self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -113,6 +119,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -138,6 +147,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([Entry].self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -166,6 +178,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(User.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -191,6 +206,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(History.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -214,6 +232,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([History].self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -237,6 +258,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Histories.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -260,6 +284,7 @@ class SoshikiAPI {
                 case .timestamp(let timestamp): queryItems.append("timestamp=\(timestamp)")
                 case .episode(let episode): queryItems.append("episode=\(episode)")
                 case .score(let score): queryItems.append("score=\(score)")
+                case .percent(let percent): queryItems.append("percent=\(percent)")
                 case .status(let status): queryItems.append("status=\(status.rawValue)")
                 }
             }
@@ -272,6 +297,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -287,6 +315,7 @@ class SoshikiAPI {
         case volume(Double)
         case timestamp(Int)
         case episode(Double)
+        case percent(Double)
         case score(Double)
         case status(History.Status)
     }
@@ -307,6 +336,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -332,6 +364,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(LibraryCategory.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -355,6 +390,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Library.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -378,6 +416,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(FullLibrary.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -401,6 +442,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Libraries.self, from: data))
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -426,6 +470,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -451,6 +498,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -476,6 +526,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -501,6 +554,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -526,6 +582,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -551,6 +610,9 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
             if response.statusCode == 200 {
                 return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                return .failure(UnauthorizedError())
             } else {
                 let error = String(data: data, encoding: .utf8)
                 return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
@@ -577,8 +639,9 @@ class SoshikiAPI {
         UserDefaults.standard.set(id, forKey: "user.id")
         UserDefaults.standard.set(discord, forKey: "user.discord")
         self.token = access
-        loginViewController.dismiss()
+        loginViewController.dismiss(animated: true)
         loginViewController = SFSafariViewController(url: loginUrl)
+        NotificationCenter.default.post(name: .init(SoshikiAPI.Keys.loggedIn), object: nil)
     }
 
     func logout() {
@@ -587,6 +650,7 @@ class SoshikiAPI {
         UserDefaults.standard.removeObject(forKey: "user.id")
         UserDefaults.standard.removeObject(forKey: "user.discord")
         token = nil
+        NotificationCenter.default.post(name: .init(SoshikiAPI.Keys.loggedOut), object: nil)
     }
 
     @discardableResult
@@ -610,6 +674,7 @@ class SoshikiAPI {
                 KeychainManager.shared.set(refreshResponse.refresh, forKey: "soshiki.api.refresh")
                 UserDefaults.standard.set(refreshResponse.id, forKey: "user.id")
                 UserDefaults.standard.set(refreshResponse.discord, forKey: "user.discord")
+                NotificationCenter.default.post(name: .init(SoshikiAPI.Keys.loggedIn), object: nil)
                 return .success(())
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -639,4 +704,11 @@ class APIError: Error, CustomStringConvertible {
 
 class UnauthorizedError: Error, CustomStringConvertible {
     var description: String = "Unauthorized."
+}
+
+extension SoshikiAPI {
+    class Keys {
+        static let loggedIn = "api.user.loggedIn"
+        static let loggedOut = "api.user.loggedOut"
+    }
 }

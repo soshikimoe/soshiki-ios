@@ -18,7 +18,7 @@ struct ImageSourceChapter: Sendable {
     func toListString() -> String {
         let volumeString = volume.flatMap({ !$0.isNaN ? "Volume \($0.toTruncatedString()) " : nil }) ?? ""
         let chapterString = "Chapter \(chapter.toTruncatedString())"
-        let nameString = name.flatMap({ ": \($0)" }) ?? ""
+        let nameString: String = name.flatMap({ $0.isEmpty ? "" : ": \($0)" }) ?? ""
         return volumeString + chapterString + nameString
     }
 }

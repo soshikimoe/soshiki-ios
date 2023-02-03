@@ -9,7 +9,7 @@ import SwiftUI
 import NukeUI
 
 struct EntryRowView: View {
-    let entry: UnifiedEntry
+    let entry: LocalEntry
 
     var newCount = 0
     var unseenCount = 0
@@ -44,8 +44,8 @@ struct EntryRowView: View {
                     HStack {
                         Text(entry.title)
                             .lineLimit(2)
-                            .foregroundColor(.white)
-                            .bold()
+                            .foregroundColor(.primary)
+                            .font(.body, weight: .bold)
                             .multilineTextAlignment(.leading)
                             .padding(.top)
                         Spacer()
@@ -53,14 +53,14 @@ struct EntryRowView: View {
                             Text(newCount >= 100 ? "99+" : " \(newCount) ")
                                 .background(.blue)
                                 .foregroundColor(.white)
-                                .bold()
+                                .font(.body, weight: .bold)
                                 .clipShape(RoundedRectangle(cornerRadius: 5))
                         }
                         if unseenCount != 0 {
                             Text(unseenCount >= 100 ? " 99+ " : " \(unseenCount) ")
                                 .background(.red)
                                 .foregroundColor(.white)
-                                .bold()
+                                .font(.body, weight: .bold)
                                 .clipShape(RoundedRectangle(cornerRadius: 5))
                         }
                     }

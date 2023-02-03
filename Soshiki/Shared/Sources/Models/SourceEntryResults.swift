@@ -15,14 +15,15 @@ struct SourceEntryResults {
     let entries: [SourceShortEntry]
 }
 
-struct SourceShortEntry {
+struct SourceShortEntry: Hashable {
     let id: String
     let title: String
     let subtitle: String
     let cover: String
 
-    func toUnifiedEntry() -> UnifiedEntry {
-        UnifiedEntry(
+    func toLocalEntry() -> LocalEntry {
+        LocalEntry(
+            id: self.id,
             title: self.title,
             cover: self.cover,
             staff: [],
@@ -31,5 +32,13 @@ struct SourceShortEntry {
             color: nil,
             description: nil
         )
+    }
+
+    static func == (lhs: SourceShortEntry, rhs: SourceShortEntry) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }

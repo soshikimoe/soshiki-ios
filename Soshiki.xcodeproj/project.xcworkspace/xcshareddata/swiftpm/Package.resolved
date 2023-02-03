@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Nuke",
       "state" : {
-        "branch" : "master",
-        "revision" : "bc2f94b267d2b2514e5a21352012786f66429cc7"
+        "revision" : "7f73ceaeacd5df75a7994cd82e165ad9ff1815db",
+        "version" : "9.6.1"
       }
     },
     {
@@ -25,33 +25,6 @@
       "state" : {
         "revision" : "6778575285177365cbad3e5b8a72f2a20583cfec",
         "version" : "2.4.3"
-      }
-    },
-    {
-      "identity" : "swiftui-introspect",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/siteline/SwiftUI-Introspect.git",
-      "state" : {
-        "branch" : "master",
-        "revision" : "d3cbf32788250741d397cfb5bcd532c37aa1096d"
-      }
-    },
-    {
-      "identity" : "swiftui-sliders",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/spacenation/swiftui-sliders",
-      "state" : {
-        "revision" : "d5a7d856655d5c91f891c2b69d982c30fd5c7bdf",
-        "version" : "2.1.0"
-      }
-    },
-    {
-      "identity" : "swiftuix",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/SwiftUIX/SwiftUIX",
-      "state" : {
-        "branch" : "master",
-        "revision" : "e7c69accfa1964f47023938102ebbee02db57cde"
       }
     },
     {

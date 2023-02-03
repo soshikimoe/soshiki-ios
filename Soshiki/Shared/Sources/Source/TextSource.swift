@@ -7,6 +7,7 @@
 
 import Foundation
 
-class TextSource: Source {
-
+protocol TextSource: Source {
+    func getChapters(id: String) async -> [TextSourceChapter]
+    func getChapterDetails(id: String, entryId: String) async -> TextSourceChapterDetails?
 }

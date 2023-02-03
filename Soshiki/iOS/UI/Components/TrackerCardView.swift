@@ -11,7 +11,7 @@ struct TrackerCardView: View {
     var tracker: Tracker
     var body: some View {
         HStack {
-            if let uiImage = UIImage(contentsOfFile: tracker.image.path()) {
+            if let uiImage = UIImage(contentsOfFile: tracker.image.path) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .frame(width: 50, height: 50)

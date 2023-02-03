@@ -13,11 +13,12 @@ enum MediaType: String, Codable, StringRepresentable, Sendable, CaseIterable, Eq
     case video = "VIDEO"
 }
 
-struct Entry: Codable {
+struct Entry: Codable, Hashable {
     let _id: String
     let mediaType: MediaType
     let title: String
     let alternativeTitles: [Entry.AlternativeTitle]
+    let description: String?
     let staff: [Entry.Staff]
     let covers: [Entry.Image]
     let color: String?
@@ -70,8 +71,16 @@ struct Entry: Codable {
         case unknown = "UNKNOWN"
     }
 
-    struct Tag: Codable {
+    struct Tag: Codable, Hashable {
         let name: String
+
+        static func == (lhs: Entry.Tag, rhs: Entry.Tag) -> Bool {
+            lhs.name == rhs.name
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(name)
+        }
     }
 
     struct Link: Codable {
@@ -98,8 +107,9 @@ struct Entry: Codable {
         let entryId: String
     }
 
-    func toUnifiedEntry() -> UnifiedEntry {
-        UnifiedEntry(
+    func toLocalEntry() -> LocalEntry {
+        LocalEntry(
+            id: self._id,
             title: self.title,
             cover: self.covers.min(by: { cover1, cover2 in
                 let priority = ["FULL", "HIGH", "UNKNOWN", "MEDIUM", "LOW"]
@@ -112,7 +122,15 @@ struct Entry: Codable {
                 return (priority.firstIndex(of: banner1.quality.rawValue) ?? 5) < (priority.firstIndex(of: banner2.quality.rawValue) ?? 5)
             })?.image,
             color: self.color,
-            description: nil
+            description: self.description
         )
+    }
+
+    static func == (lhs: Entry, rhs: Entry) -> Bool {
+        lhs._id == rhs._id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(self._id)
     }
 }
