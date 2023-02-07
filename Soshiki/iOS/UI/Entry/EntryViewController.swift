@@ -11,8 +11,8 @@ import SafariServices
 
 class EntryViewController: UITableViewController {
     let entry: Entry
-    let sources: [any Source]
-    var source: (any Source)?
+    let entrySources: [Entry.Source]
+    var source: Entry.Source?
     var history: History?
 
     let entryHeaderView: EntryHeaderView
@@ -23,9 +23,9 @@ class EntryViewController: UITableViewController {
 
     lazy var settingsMenu = {
         var actions: [UIMenuElement] = [
-            UIAction(title: "Trackers", image: UIImage(systemName: "location.fill")) { [weak self] _ in
+            UIAction(title: "Settings", image: UIImage(systemName: "gear")) { [weak self] _ in
                 guard let self else { return }
-                self.navigationController?.pushViewController(EntryTrackersViewController(entry: self.entry), animated: true)
+                self.navigationController?.pushViewController(EntrySettingsViewController(entry: self.entry), animated: true)
             },
             UIMenu(title: "Status", image: UIImage(systemName: "ellipsis"), children: History.Status.allCases.map({ status in
                 UIAction(
@@ -126,19 +126,19 @@ class EntryViewController: UITableViewController {
 
         switch entry.mediaType {
         case .text:
-            self.sources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.compactMap({ source in
-                SourceManager.shared.textSources.first(where: { $0.id == source.id })
+            self.entrySources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.filter({ source in
+                SourceManager.shared.textSources.contains(where: { $0.id == source.id })
             }) ?? []
         case .image:
-            self.sources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.compactMap({ source in
-                SourceManager.shared.imageSources.first(where: { $0.id == source.id })
+            self.entrySources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.filter({ source in
+                SourceManager.shared.imageSources.contains(where: { $0.id == source.id })
             }) ?? []
         case .video:
-            self.sources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.compactMap({ source in
-                SourceManager.shared.videoSources.first(where: { $0.id == source.id })
+            self.entrySources = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.filter({ source in
+                SourceManager.shared.videoSources.contains(where: { $0.id == source.id })
             }) ?? []
         }
-        self.source = sources.first
+        self.source = entrySources.first
 
         super.init(style: .plain)
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
@@ -167,6 +167,7 @@ class EntryViewController: UITableViewController {
 
         Task {
             self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+            self.entryHeaderView.setEntry(to: entry.toLocalEntry(), with: entry, history: history)
             self.entryHeaderView.canContinue = entry.mediaType == .video ? history?.episode != nil : history?.chapter != nil
             self.tableView.reloadData()
         }
@@ -180,27 +181,29 @@ class EntryViewController: UITableViewController {
 
     @objc func refresh(_ sender: UIRefreshControl? = nil) {
         Task {
-            guard let source else { return }
-            if let id = entry.platforms.first(where: { $0.id == "soshiki" })?.sources.first(where: { $0.id == source.id })?.entryId {
-                switch source {
-                case let source as any TextSource:
-                    self.textChapters = await source.getChapters(id: id)
-                case let source as any ImageSource:
-                    self.imageChapters = await source.getChapters(id: id)
-                case let source as any VideoSource:
-                    self.videoEpisodes = await source.getEpisodes(id: id)
-                default: break
-                }
-                self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
-                self.entryHeaderView.canContinue = entry.mediaType == .video ? history?.episode != nil : history?.chapter != nil
-                self.tableView.reloadData()
+            guard let id = self.source?.entryId,
+                  let source = SourceManager.shared.sources.first(where: { $0.id == self.source?.id }) else { return }
+            switch source {
+            case let source as any TextSource:
+                self.textChapters = await source.getChapters(id: id)
+            case let source as any ImageSource:
+                self.imageChapters = await source.getChapters(id: id)
+            case let source as any VideoSource:
+                self.videoEpisodes = await source.getEpisodes(id: id)
+            default: break
             }
+            self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+            if let history {
+                self.entryHeaderView.setEntry(to: entry.toLocalEntry(), with: entry, history: history)
+            }
+            self.entryHeaderView.canContinue = entry.mediaType == .video ? history?.episode != nil : history?.chapter != nil
+            self.tableView.reloadData()
             sender?.endRefreshing()
         }
     }
 
     func openViewer(to index: Int) {
-        switch source {
+        switch SourceManager.shared.sources.first(where: { $0.id == self.source?.id }) {
         case let source as any TextSource:
             if textChapters.indices.contains(index) {
                 navigationController?.pushViewController(
@@ -309,7 +312,7 @@ extension EntryViewController {
                 content.secondaryText = components.joined(separator: " • ")
             }
         }
-        content.textProperties.font = .systemFont(ofSize: 17, weight: .bold)
+        content.textProperties.font = .systemFont(ofSize: 17, weight: .semibold)
         if seen {
             content.textProperties.color = .secondaryLabel
         }
@@ -333,8 +336,11 @@ extension EntryViewController {
         content.textProperties.font = .systemFont(ofSize: 17, weight: .bold)
         content.textProperties.color = .label
 
-        let actions = sources.map({ source in
-            UIAction(title: source.name, image: self.source?.id == source.id ? UIImage(systemName: "checkmark") : nil) { [weak self] _ in
+        let actions = entrySources.map({ source in
+            UIAction(
+                title: source.name,
+                image: self.source == source ? UIImage(systemName: "checkmark") : nil
+            ) { [weak self] _ in
                 self?.source = source
                 self?.refresh()
             }
@@ -392,7 +398,7 @@ extension EntryViewController: EntryHeaderViewDelegate {
     }
 
     func continueButtonPressed() {
-        switch self.source {
+        switch SourceManager.shared.sources.first(where: { $0.id == self.source?.id }) {
         case is any TextSource:
             if let history = self.history,
                let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {

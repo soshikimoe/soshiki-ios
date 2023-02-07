@@ -94,11 +94,15 @@ struct Entry: Codable, Hashable {
         let sources: [Entry.Source]
     }
 
-    struct Source: Codable {
+    struct Source: Codable, Equatable {
         let id: String
         let name: String
         let entryId: String
         let user: String?
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.id == rhs.id && lhs.entryId == rhs.entryId
+        }
     }
 
     struct Tracker: Codable {

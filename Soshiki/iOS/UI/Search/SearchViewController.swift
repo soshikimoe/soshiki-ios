@@ -28,10 +28,11 @@ class SearchViewController: UICollectionViewController {
 
     init() {
         let layout = UICollectionViewCompositionalLayout(sectionProvider: { _, environment in
+            let itemsPerRow = UserDefaults.standard.object(forKey: "app.settings.itemsPerRow") as? Int ?? 3
             let item = NSCollectionLayoutItem(
                 layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(3)),
-                    heightDimension: .fractionalWidth(CGFloat(1) / CGFloat(2))
+                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
+                    heightDimension: .fractionalWidth(CGFloat(1.5) / CGFloat(itemsPerRow))
                 )
             )
             item.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -41,7 +42,7 @@ class SearchViewController: UICollectionViewController {
                     heightDimension: .estimated(environment.container.contentSize.width * 3 / 2)
                 ),
                 subitem: item,
-                count: 3
+                count: itemsPerRow
             )
             let section = NSCollectionLayoutSection(group: group)
             section.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -83,7 +84,7 @@ class SearchViewController: UICollectionViewController {
             headerView.addSubview(titleLabel)
             headerView.addSubview(self.mediaTypeLabel)
             headerView.addSubview(self.mediaTypeButton)
-            titleLabel.leadingAnchor.constraint(equalTo: headerView.layoutMarginsGuide.leadingAnchor).isActive = true
+            titleLabel.leadingAnchor.constraint(equalTo: headerView.layoutMarginsGuide.leadingAnchor, constant: 8).isActive = true
             titleLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
             self.mediaTypeLabel.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 5).isActive = true
             self.mediaTypeLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
@@ -118,6 +119,14 @@ class SearchViewController: UICollectionViewController {
         reloadMediaTypeMenu()
 
         refresh()
+
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("app.settings.itemsPerRow"), object: nil, queue: nil) { [weak self] _ in
+                Task { @MainActor in
+                    self?.collectionViewLayout.invalidateLayout()
+                }
+            }
+        )
     }
 
     required init?(coder: NSCoder) {

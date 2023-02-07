@@ -7,7 +7,9 @@
 
 import Foundation
 import SafariServices
+import Network
 
+// swiftlint:disable:next type_body_length
 class SoshikiAPI {
     static let shared = SoshikiAPI()
 
@@ -26,20 +28,30 @@ class SoshikiAPI {
     func getEntry(mediaType: MediaType, id: String) async -> Result<Entry, Error> {
         do {
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)") else {
-                return .failure(APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)'."))
+                throw APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)'.")
             }
             let (data, response) = try await URLSession.shared.data(from: url)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode(Entry.self, from: data))
+                let entry = try JSONDecoder().decode(Entry.self, from: data)
+//                if let localEntry = DataManager.shared.getEntry(mediaType: entry.mediaType, id: entry._id) {
+//                    localEntry.set(entry, context: DataManager.shared.container.viewContext)
+//                    DataManager.shared.save()
+//                } else {
+//                    DataManager.shared.addEntry(entry: entry, save: true)
+//                }
+                return .success(entry)
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
+//            if let localEntry = DataManager.shared.getEntry(mediaType: mediaType, id: id) {
+//                return .success(localEntry.get())
+//            }
             return .failure(error)
         }
     }
@@ -59,22 +71,43 @@ class SoshikiAPI {
                 }
             }
             guard let url = URL(string: urlString + (queryItems.isEmpty ? "" : ("?" + queryItems.joined(separator: "&")))) else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(urlString + (queryItems.isEmpty ? "" : ("?" + queryItems.joined(separator: "&"))))'."
-                ))
+                )
             }
             let (data, response) = try await URLSession.shared.data(from: url)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode([Entry].self, from: data))
+                let entries = try JSONDecoder().decode([Entry].self, from: data)
+//                for entry in entries {
+//                    if let localEntry = DataManager.shared.getEntry(mediaType: entry.mediaType, id: entry._id) {
+//                        localEntry.set(entry, context: DataManager.shared.container.viewContext)
+//                    } else {
+//                        DataManager.shared.addEntry(entry: entry, save: false)
+//                    }
+//                }
+//                DataManager.shared.save()
+                return .success(entries)
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
+            let fetchRequest = EntryObject.fetchRequest()
+            for item in query {
+                switch item {
+                case .ids(let ids): fetchRequest.predicate = NSPredicate(format: "id IN %@", ids)
+                case .limit(let limit): fetchRequest.fetchLimit = limit
+                case .offset(let offset): fetchRequest.fetchOffset = offset
+                default: break
+                }
+            }
+//            if let results = try? DataManager.shared.container.viewContext.fetch(fetchRequest).map({ $0.get() }) {
+//                return .success(results)
+//            }
             return .failure(error)
         }
     }
@@ -98,8 +131,8 @@ class SoshikiAPI {
         sourceName: String,
         entryId: String
     ) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             let query = [
                 "platformId=" + platformId,
                 "platformName=" + platformName,
@@ -108,23 +141,23 @@ class SoshikiAPI {
                 "entryId=" + entryId
             ].joined(separator: "&")
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)/link?\(query)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)/link?\(query)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -139,20 +172,20 @@ class SoshikiAPI {
                 "entryId=" + entryId
             ].joined(separator: "&")
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/link?\(query)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/link?\(query)'."
-                ))
+                )
             }
             let (data, response) = try await URLSession.shared.data(from: url)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([Entry].self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -163,27 +196,34 @@ class SoshikiAPI {
 
     func getUser(id: String = "me") async -> Result<User, Error> {
         do {
-            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/user/\(id)") else {
-                return .failure(APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/user/\(id)'."))
+            let query = [
+                "includes[]=history",
+                "includes[]=library",
+                "includes[]=connections",
+                "includes[]=devices",
+                "includes[]=trackers"
+            ]
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/user/\(id)?\(query.joined(separator: "&"))") else {
+                throw APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/user/\(id)?\(query.joined(separator: "&"))'.")
             }
             var request = URLRequest(url: url)
             if id == "me" {
                 if let token {
                     request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
                 } else {
-                    return .failure(UnauthorizedError())
+                    throw UnauthorizedError()
                 }
             }
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(User.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -193,25 +233,25 @@ class SoshikiAPI {
     // MARK: - History
 
     func getHistory(mediaType: MediaType, id: String) async -> Result<History, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(History.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -219,25 +259,25 @@ class SoshikiAPI {
     }
 
     func getHistories(mediaType: MediaType) async -> Result<[History], Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([History].self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -245,25 +285,25 @@ class SoshikiAPI {
     }
 
     func getAllHistories() async -> Result<Histories, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/history'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Histories.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -272,8 +312,8 @@ class SoshikiAPI {
 
     @discardableResult
     func setHistory(mediaType: MediaType, id: String, query: [HistoryQuery]) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             var urlString = "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)"
             var queryItems: [String] = []
             for item in query {
@@ -289,20 +329,20 @@ class SoshikiAPI {
                 }
             }
             urlString += queryItems.isEmpty ? "" : ("?" + queryItems.joined(separator: "&"))
-            guard let url = URL(string: urlString) else { return .failure(APIError("Could not create URL from '\(urlString)'.")) }
+            guard let url = URL(string: urlString) else { throw APIError("Could not create URL from '\(urlString)'.") }
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -322,26 +362,26 @@ class SoshikiAPI {
 
     @discardableResult
     func deleteHistory(mediaType: MediaType, id: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "DELETE"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -351,25 +391,25 @@ class SoshikiAPI {
     // MARK: - Library
 
     func getLibraryCategory(mediaType: MediaType, id: String) async -> Result<LibraryCategory, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(LibraryCategory.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -377,25 +417,25 @@ class SoshikiAPI {
     }
 
     func getLibrary(mediaType: MediaType) async -> Result<Library, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Library.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -403,25 +443,25 @@ class SoshikiAPI {
     }
 
     func getFullLibrary(mediaType: MediaType) async -> Result<FullLibrary, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(FullLibrary.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -429,25 +469,25 @@ class SoshikiAPI {
     }
 
     func getLibraries() async -> Result<Libraries, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Libraries.self, from: data))
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -456,26 +496,26 @@ class SoshikiAPI {
 
     @discardableResult
     func addEntryToLibraryCategory(mediaType: MediaType, id: String, entryId: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)/\(entryId)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)/\(entryId)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -484,26 +524,26 @@ class SoshikiAPI {
 
     @discardableResult
     func addEntryToLibrary(mediaType: MediaType, entryId: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all/\(entryId)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all/\(entryId)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -512,26 +552,26 @@ class SoshikiAPI {
 
     @discardableResult
     func addLibraryCategory(mediaType: MediaType, id: String, name: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)?name=\(name)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)?name=\(name)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "PUT"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -540,26 +580,26 @@ class SoshikiAPI {
 
     @discardableResult
     func deleteEntryFromLibraryCategory(mediaType: MediaType, id: String, entryId: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)/\(entryId)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)/\(entryId)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "DELETE"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -568,26 +608,26 @@ class SoshikiAPI {
 
     @discardableResult
     func deleteEntryFromLibrary(mediaType: MediaType, entryId: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all/\(entryId)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/all/\(entryId)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "DELETE"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -596,26 +636,26 @@ class SoshikiAPI {
 
     @discardableResult
     func deleteLibraryCategory(mediaType: MediaType, id: String) async -> Result<Void, Error> {
-        guard let token else { return .failure(UnauthorizedError()) }
         do {
+            guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/library/\(mediaType.rawValue.lowercased())/category/\(id)'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.httpMethod = "DELETE"
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
                 await refreshToken()
-                return .failure(UnauthorizedError())
+                throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -657,17 +697,17 @@ class SoshikiAPI {
     func refreshToken() async -> Result<Void, Error> {
         do {
             guard let token = KeychainManager.shared.get("soshiki.api.refresh") else {
-                return .failure(APIError("Could not get refresh token."))
+                throw APIError("Could not get refresh token.")
             }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/oauth2/refresh") else {
-                return .failure(APIError(
+                throw APIError(
                     "Could not create URL from '\(SoshikiAPI.baseUrl)/oauth2/refresh'."
-                ))
+                )
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let response = response as? HTTPURLResponse else { return .failure(APIError("Could not parse response.")) }
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 let refreshResponse = try JSONDecoder().decode(SoshikiAPI.RefreshResponse.self, from: data)
                 KeychainManager.shared.set(refreshResponse.access, forKey: "soshiki.api.access")
@@ -678,7 +718,7 @@ class SoshikiAPI {
                 return .success(())
             } else {
                 let error = String(data: data, encoding: .utf8)
-                return .failure(APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "")."))
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
             return .failure(error)
@@ -691,6 +731,202 @@ class SoshikiAPI {
         let expiresIn: Double
         let id: String
         let discord: String
+    }
+
+    // MARK: - Notifications
+
+    func addNotificationDevice(id: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/notifications/\(id)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/notifications/\(id)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func removeNotificationDevice(id: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/notifications/\(id)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/notifications/\(id)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func addNotificationEntry(mediaType: MediaType, id: String, source: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let deviceId = UserDefaults.standard.string(forKey: "app.notification.id") else { throw APIError("Could not get device ID") }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/\(mediaType.rawValue.lowercased())/\(id)/\(source)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/\(mediaType.rawValue.lowercased())/\(id)/\(source)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func removeNotificationEntry(mediaType: MediaType, id: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let deviceId = UserDefaults.standard.string(forKey: "app.notification.id") else { throw APIError("Could not get device ID") }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/\(mediaType.rawValue.lowercased())/\(id)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/\(mediaType.rawValue.lowercased())/\(id)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func setNotificationBadge(count: Int) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let deviceId = UserDefaults.standard.string(forKey: "app.notification.id") else { throw APIError("Could not get device ID") }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/badge/\(count)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/notifications/\(deviceId)/badge/\(count)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    // MARK: - Trackers
+
+    func addTracker(mediaType: MediaType, id: String, trackerId: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/trackers/\(mediaType.rawValue.lowercased())/\(id)/\(trackerId)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/trackers/\(mediaType.rawValue.lowercased())/\(id)/\(trackerId)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    func removeTracker(mediaType: MediaType, id: String, trackerId: String) async -> Result<Void, Error> {
+        do {
+            guard let token else { throw UnauthorizedError() }
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/trackers/\(mediaType.rawValue.lowercased())/\(id)/\(trackerId)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/trackers/\(mediaType.rawValue.lowercased())/\(id)/\(trackerId)'."
+                )
+            }
+            var request = URLRequest(url: url)
+            request.httpMethod = "DELETE"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(())
+            } else if response.statusCode == 401 {
+                await refreshToken()
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
     }
 }
 

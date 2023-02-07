@@ -16,6 +16,7 @@ class EntryHeaderView: UIView {
     let mediaType: MediaType
     var localEntry: LocalEntry?
     var entry: Entry?
+    var history: History?
 //    let bannerImageView = UIImageView()
 //    let bannerGradientLayer = CAGradientLayer()
     let headerStackView = UIStackView()
@@ -24,10 +25,18 @@ class EntryHeaderView: UIView {
     let titleStackView = UIStackView()
     let titleView = UILabel()
     let subtitleView = UILabel()
+    let starImageViews = [ UIImageView(), UIImageView(), UIImageView(), UIImageView(), UIImageView() ]
+    let starSpacerView = UIView()
+    let starStackView = UIStackView()
+    let statusLabelView = UILabel()
+    let statusTitleView = UILabel()
+    let statusSpacerView = UIView()
+    let statusStackView = UIStackView()
     let tagScrollView = UIScrollView()
     let tagStackView = UIStackView()
-    let descriptionView = UILabel()
+    let descriptionLabelView = UILabel()
     let seeMoreButton = UIButton()
+    let descriptionView = UIView()
     let continueButton = UIButton(type: .roundedRect)
     let bookmarkButton = UIButton(type: .roundedRect)
     let linkButton = UIButton(type: .roundedRect)
@@ -72,8 +81,9 @@ class EntryHeaderView: UIView {
         coverImageView.heightAnchor.constraint(equalToConstant: 225).isActive = true
 
         titleStackView.axis = .vertical
+        titleStackView.spacing = 5
 
-        titleView.font = .systemFont(ofSize: 22, weight: .heavy)
+        titleView.font = .systemFont(ofSize: 22, weight: .bold)
         titleView.numberOfLines = 3
         titleView.minimumScaleFactor = 0.5
 
@@ -82,16 +92,32 @@ class EntryHeaderView: UIView {
         subtitleView.numberOfLines = 3
         subtitleView.minimumScaleFactor = 0.5
 
+        starStackView.axis = .horizontal
+        starStackView.alignment = .leading
+
+        statusTitleView.text = "Status"
+        statusTitleView.textColor = .secondaryLabel
+        statusTitleView.font = .systemFont(ofSize: 15)
+
+        statusLabelView.font = .systemFont(ofSize: 15, weight: .semibold)
+
+        statusStackView.axis = .horizontal
+        statusStackView.spacing = 5
+        statusStackView.alignment = .leading
+
         tagStackView.axis = .horizontal
         tagStackView.spacing = 8
         tagStackView.translatesAutoresizingMaskIntoConstraints = false
 
-        descriptionView.numberOfLines = 4
-        descriptionView.font = .systemFont(ofSize: 15)
+        descriptionLabelView.numberOfLines = 4
+        descriptionLabelView.font = .systemFont(ofSize: 15)
+        descriptionLabelView.translatesAutoresizingMaskIntoConstraints = false
 
         seeMoreButton.setTitleColor(.tintColor, for: .normal)
         seeMoreButton.addTarget(self, action: #selector(toggleDescription), for: .touchUpInside)
         seeMoreButton.translatesAutoresizingMaskIntoConstraints = false
+
+        descriptionView.translatesAutoresizingMaskIntoConstraints = false
 
         headerStackView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -188,9 +214,10 @@ class EntryHeaderView: UIView {
         }
     }
 
-    func setEntry(to entry: LocalEntry, with databaseEntry: Entry? = nil) {
+    func setEntry(to entry: LocalEntry, with databaseEntry: Entry? = nil, history: History? = nil) {
         self.localEntry = entry
         self.entry = databaseEntry
+        self.history = history
 
         self.subviews.forEach({ $0.removeFromSuperview() })
 
@@ -232,6 +259,38 @@ class EntryHeaderView: UIView {
         subtitleView.text = entry.staff.first
         titleStackView.addArrangedSubview(subtitleView)
 
+        if let history {
+            if let score = history.score {
+                for (index, starImageView) in starImageViews.enumerated() {
+                    starImageView.image = UIImage(
+                        systemName: Int(round(score)) >= index * 2 + 2
+                            ? "star.fill"
+                            : Int(round(score)) >= index * 2 + 1 ? "star.leadinghalf.filled" : "star"
+                    )
+                    starImageView.tintColor = .label
+                    starImageView.preferredSymbolConfiguration = .init(pointSize: 15, weight: .semibold)
+                    starStackView.addArrangedSubview(starImageView)
+                }
+            } else {
+                for starImageView in starImageViews {
+                    starImageView.image = UIImage(systemName: "star")
+                    starImageView.tintColor = .secondaryLabel
+                    starImageView.preferredSymbolConfiguration = .init(pointSize: 15, weight: .semibold)
+                    starStackView.addArrangedSubview(starImageView)
+                }
+            }
+            starStackView.addArrangedSubview(starSpacerView)
+
+            statusLabelView.text = history.status.prettyName
+
+            statusStackView.addArrangedSubview(statusTitleView)
+            statusStackView.addArrangedSubview(statusLabelView)
+            statusStackView.addArrangedSubview(statusSpacerView)
+
+            titleStackView.addArrangedSubview(statusStackView)
+            titleStackView.addArrangedSubview(starStackView)
+        }
+
         titleCoverStackView.addArrangedSubview(titleStackView)
 
         headerStackView.addArrangedSubview(titleCoverStackView)
@@ -271,14 +330,23 @@ class EntryHeaderView: UIView {
         headerStackView.addArrangedSubview(tagScrollView)
 
         if let description = entry.description {
-            descriptionView.text = description
-            headerStackView.addArrangedSubview(descriptionView)
+            descriptionLabelView.text = description
 
             seeMoreButton.setAttributedTitle(
                 NSAttributedString(string: "See More", attributes: [.font: UIFont.systemFont(ofSize: 15, weight: .bold)]),
                 for: .normal
             )
-            headerStackView.addArrangedSubview(seeMoreButton)
+
+            descriptionView.addSubview(descriptionLabelView)
+            descriptionView.addSubview(seeMoreButton)
+            descriptionLabelView.topAnchor.constraint(equalTo: descriptionView.topAnchor).isActive = true
+            descriptionLabelView.leadingAnchor.constraint(equalTo: descriptionView.leadingAnchor).isActive = true
+            descriptionLabelView.trailingAnchor.constraint(equalTo: descriptionView.trailingAnchor).isActive = true
+            seeMoreButton.topAnchor.constraint(equalTo: descriptionLabelView.bottomAnchor, constant: -5).isActive = true
+            seeMoreButton.trailingAnchor.constraint(equalTo: descriptionView.trailingAnchor).isActive = true
+            seeMoreButton.bottomAnchor.constraint(equalTo: descriptionView.bottomAnchor).isActive = true
+
+            headerStackView.addArrangedSubview(descriptionView)
         }
 
         if let databaseEntry, LibraryManager.shared.library(forMediaType: mediaType)?.all.ids.contains(databaseEntry._id) == true {
@@ -301,17 +369,19 @@ class EntryHeaderView: UIView {
         self.headerStackView.leadingAnchor.constraint(equalTo: self.layoutMarginsGuide.leadingAnchor).isActive = true
         self.headerStackView.trailingAnchor.constraint(equalTo: self.layoutMarginsGuide.trailingAnchor).isActive = true
         self.heightAnchor.constraint(equalTo: self.headerStackView.heightAnchor).isActive = true
+        self.invalidateIntrinsicContentSize()
+        delegate?.sizeDidChange?()
     }
 
     @objc func toggleDescription() {
         if descriptionExpanded {
-            descriptionView.numberOfLines = 4
+            descriptionLabelView.numberOfLines = 4
             seeMoreButton.setAttributedTitle(
                 NSAttributedString(string: "See More", attributes: [.font: UIFont.systemFont(ofSize: 15, weight: .bold)]),
                 for: .normal
             )
         } else {
-            descriptionView.numberOfLines = 0
+            descriptionLabelView.numberOfLines = 0
             seeMoreButton.setAttributedTitle(
                 NSAttributedString(string: "See Less", attributes: [.font: UIFont.systemFont(ofSize: 15, weight: .bold)]),
                 for: .normal

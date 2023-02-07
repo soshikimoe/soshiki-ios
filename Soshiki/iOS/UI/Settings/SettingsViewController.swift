@@ -7,25 +7,67 @@
 
 import UIKit
 
-class SettingsViewController: UITableViewController {
+class SettingsViewController: SettingTableViewController {
     var observers: [NSObjectProtocol] = []
 
-    init() {
-        super.init(style: .insetGrouped)
-        self.title = "Settings"
+    var settingGroups: [SettingGroup] {
+        [
+            SettingGroup(id: "account", header: "Account", items: [
+                ButtonSettingItem(id: "loginout", title: SoshikiAPI.shared.token == nil ? "Login" : "Logout") { [weak self] _ in
+                    guard let self else { return }
+                    if SoshikiAPI.shared.token == nil {
+                        self.present(SoshikiAPI.shared.loginViewController, animated: true)
+                    } else {
+                        SoshikiAPI.shared.logout()
+                    }
+                }
+            ]),
+            SettingGroup(id: "general", header: "General", items: [
+                NumberSettingItem(
+                    id: "itemsPerRow",
+                    title: "Items Per Row",
+                    value: Double(UserDefaults.standard.object(forKey: "app.settings.itemsPerRow") as? Int ?? 3),
+                    lowerBound: 2,
+                    upperBound: 8,
+                    step: 1
+                ) { newValue in
+                    UserDefaults.standard.set(Int(newValue), forKey: "app.settings.itemsPerRow")
+                    NotificationCenter.default.post(name: .init("app.settings.itemsPerRow"), object: nil)
+                }
+            ]),
+            SettingGroup(id: "sources", header: "Sources", items: [
+                ButtonSettingItem(id: "sources", title: "Sources", presentsView: true) { [weak self] _ in
+                    self?.navigationController?.pushViewController(SourcesViewController(), animated: true)
+                }
+            ]),
+            SettingGroup(id: "trackers", header: "Trackers", items: [
+                ButtonSettingItem(id: "trackers", title: "Trackers", presentsView: true) { [weak self] _ in
+                    self?.navigationController?.pushViewController(TrackersViewController(), animated: true)
+                }
+            ])
+        ]
+    }
 
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
+    init() {
+        super.init(title: "Settings")
+
+        self.groups = settingGroups
+
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(SoshikiAPI.Keys.loggedIn), object: nil, queue: nil) { [weak self] _ in
+                guard let self else { return }
                 Task { @MainActor in
-                    self?.tableView.reloadData()
+                    self.groups = self.settingGroups
+                    self.tableView.reloadData()
                 }
             }
         )
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(SoshikiAPI.Keys.loggedOut), object: nil, queue: nil) { [weak self] _ in
+                guard let self else { return }
                 Task { @MainActor in
-                    self?.tableView.reloadData()
+                    self.groups = self.settingGroups
+                    self.tableView.reloadData()
                 }
             }
         )
@@ -39,63 +81,5 @@ class SettingsViewController: UITableViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-}
-
-extension SettingsViewController {
-    override func numberOfSections(in tableView: UITableView) -> Int { 3 }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        switch section {
-        case 0: return 1
-        case 1: return 1
-        case 2: return 1
-        default: return 0
-        }
-    }
-
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch section {
-        case 0: return "Account"
-        case 1: return "Sources"
-        case 2: return "Trackers"
-        default: return nil
-        }
-    }
-
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "UITableViewCell", for: indexPath)
-        var content = cell.defaultContentConfiguration()
-        switch indexPath.section {
-        case 0:
-            content.text = SoshikiAPI.shared.token == nil ? "Login" : "Logout"
-            content.textProperties.color = .tintColor
-        case 1:
-            content.text = "Sources"
-            cell.accessoryType = .disclosureIndicator
-        case 2:
-            content.text = "Trackers"
-            cell.accessoryType = .disclosureIndicator
-        default: break
-        }
-        cell.contentConfiguration = content
-        return cell
-    }
-
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        switch indexPath.section {
-        case 0:
-            if SoshikiAPI.shared.token == nil {
-                present(SoshikiAPI.shared.loginViewController, animated: true)
-            } else {
-                SoshikiAPI.shared.logout()
-            }
-        case 1:
-            navigationController?.pushViewController(SourcesViewController(), animated: true)
-        case 2:
-            navigationController?.pushViewController(TrackersViewController(), animated: true)
-        default: break
-        }
-        tableView.deselectRow(at: indexPath, animated: true)
     }
 }

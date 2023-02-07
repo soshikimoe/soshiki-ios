@@ -45,7 +45,14 @@ class EntryTrackersViewController: UITableViewController {
 
     @objc func trackingStatusDidChange(_ sender: UISwitch) {
         guard let tracker = trackers[safe: sender.tag] else { return }
-        UserDefaults.standard.set(sender.isOn, forKey: "user.trackers.\(tracker.id).\(entry._id).isTracking")
+        Task {
+            if sender.isOn {
+                _ = await SoshikiAPI.shared.addTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
+            } else {
+                _ = await SoshikiAPI.shared.removeTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
+            }
+            await LibraryManager.shared.refreshUser()
+        }
         if sender.isOn {
             let alert = UIAlertController(
                 title: "Enable Tracker",
@@ -116,8 +123,7 @@ extension EntryTrackersViewController {
         if let tracker = trackers[safe: indexPath.row] {
             let cell = TrackerTableViewCell(tracker: tracker, reuseIdentifier: "TrackerTableViewCell")
             let toggleView = UISwitch()
-            toggleView.isOn = UserDefaults.standard.object(forKey: "user.trackers.\(tracker.id).\(entry._id).isTracking") as? Bool
-                ?? UserDefaults.standard.object(forKey: "settings.tracker.\(tracker.id).automaticallyTrack") as? Bool ?? false
+            toggleView.isOn = LibraryManager.shared.isTracking(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
             toggleView.tag = indexPath.row
             toggleView.addTarget(self, action: #selector(trackingStatusDidChange(_:)), for: .valueChanged)
             cell.accessoryView = toggleView

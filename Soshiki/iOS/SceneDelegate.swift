@@ -30,8 +30,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 Task {
                     await TrackerManager.shared.installTracker(url)
                 }
-            } else if url.pathExtension == "soshikisources" {
-                SourceManager.shared.installSources(url)
             } else if url.pathExtension == "epub" {
                 // TODO: add
             } else if url.scheme == "soshiki" {
@@ -39,6 +37,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                     SoshikiAPI.shared.loginCallback(url)
                 } else if url.host == "tracker" {
                     TrackerManager.shared.loginCallback(url)
+                } else if url.host == "addSources" {
+                    guard let url = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: {
+                        $0.name == "url"
+                    })?.value?.removingPercentEncoding.flatMap({ URL(string: $0) }) else { return }
+                    Task {
+                        await SourceManager.shared.installSources(url)
+                    }
+                } else if url.host == "addSource" {
+                    guard let url = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: {
+                        $0.name == "url"
+                    })?.value?.removingPercentEncoding.flatMap({ URL(string: $0) }) else { return }
+                    Task {
+                        await SourceManager.shared.installSource(url)
+                    }
+                } else if url.host == "addTrackers" {
+                    guard let url = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: {
+                        $0.name == "url"
+                    })?.value?.removingPercentEncoding.flatMap({ URL(string: $0) }) else { return }
+                    Task {
+                        await TrackerManager.shared.installTrackers(url)
+                    }
+                } else if url.host == "addTracker" {
+                    guard let url = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: {
+                        $0.name == "url"
+                    })?.value?.removingPercentEncoding.flatMap({ URL(string: $0) }) else { return }
+                    Task {
+                        await TrackerManager.shared.installTracker(url)
+                    }
                 }
             }
         }

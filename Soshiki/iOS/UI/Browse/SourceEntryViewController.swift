@@ -75,11 +75,12 @@ class SourceEntryViewController: UITableViewController {
                 sourceId: source.id,
                 entryId: sourceEntry.id
             ).get())?.first
-            self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: self.entry)
-            guard let entry else { return }
-            self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
-            self.entryHeaderView.canContinue = source is any VideoSource ? history?.episode != nil : history?.chapter != nil
-            self.tableView.reloadData()
+            if let entry {
+                self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
+                self.entryHeaderView.canContinue = source is any VideoSource ? history?.episode != nil : history?.chapter != nil
+                self.tableView.reloadData()
+            }
+            self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: self.entry, history: self.history)
         }
     }
 
