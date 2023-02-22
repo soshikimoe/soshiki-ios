@@ -17,6 +17,8 @@ class LibraryViewController: UICollectionViewController {
         }
     }
 
+    var notificationBadges: [String: Int] = [:]
+
     let refreshControl = UIRefreshControl()
 
     var dataSource: UICollectionViewDiffableDataSource<Int, Entry>!
@@ -54,6 +56,11 @@ class LibraryViewController: UICollectionViewController {
 
         let cellRegistration: UICollectionView.CellRegistration<LibraryCollectionViewCell, Entry> = .init(handler: { cell, _, entry in
             cell.setEntry(entry: entry)
+            if let notificationBadge = self.notificationBadges[entry._id] {
+                cell.setNotificationBadge(to: notificationBadge)
+            } else {
+                cell.setNotificationBadge(to: 0)
+            }
         })
         dataSource = UICollectionViewDiffableDataSource(
             collectionView: self.collectionView,
@@ -65,6 +72,9 @@ class LibraryViewController: UICollectionViewController {
 
         categoryLabel.text = "All - \(LibraryManager.shared.mediaType.rawValue.capitalized)"
         self.navigationItem.rightBarButtonItems = [ categoryButton, UIBarButtonItem(customView: categoryLabel) ]
+        Task {
+            await reloadNotificationBadges()
+        }
 
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(LibraryManager.Keys.libraries), object: nil, queue: nil) { [weak self] _ in
@@ -121,6 +131,7 @@ class LibraryViewController: UICollectionViewController {
     @objc func refresh() {
         Task {
             await LibraryManager.shared.refresh()
+            await reloadNotificationBadges()
             refreshControl.endRefreshing()
         }
     }
@@ -179,6 +190,16 @@ class LibraryViewController: UICollectionViewController {
         } else {
             categoryButton.menu = nil
         }
+    }
+
+    func reloadNotificationBadges() async {
+        notificationBadges = [:]
+        for notification in await UNUserNotificationCenter.current().deliveredNotifications() {
+            if let id = notification.request.content.userInfo["id"] as? String {
+                notificationBadges[id] = notification.request.content.badge?.intValue ?? 0
+            }
+        }
+        collectionView.reloadData()
     }
 }
 

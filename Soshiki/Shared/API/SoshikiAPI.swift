@@ -19,6 +19,8 @@ class SoshikiAPI {
 
     lazy var loginViewController = SFSafariViewController(url: self.loginUrl)
 
+    var isRefreshing = false
+
     init() {
         token = KeychainManager.shared.get("soshiki.api.access")
     }
@@ -42,7 +44,9 @@ class SoshikiAPI {
 //                }
                 return .success(entry)
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -89,7 +93,9 @@ class SoshikiAPI {
 //                DataManager.shared.save()
                 return .success(entries)
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -153,7 +159,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -181,7 +189,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([Entry].self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -219,7 +229,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(User.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -247,7 +259,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(History.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -273,7 +287,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode([History].self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -299,7 +315,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Histories.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -338,7 +356,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -377,7 +397,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -405,7 +427,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(LibraryCategory.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -431,7 +455,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Library.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -457,7 +483,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(FullLibrary.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -483,7 +511,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(try JSONDecoder().decode(Libraries.self, from: data))
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -511,7 +541,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -539,7 +571,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -567,7 +601,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -595,7 +631,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -623,7 +661,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -651,7 +691,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -695,6 +737,11 @@ class SoshikiAPI {
 
     @discardableResult
     func refreshToken() async -> Result<Void, Error> {
+        isRefreshing = true
+        defer {
+            isRefreshing = false
+        }
+
         do {
             guard let token = KeychainManager.shared.get("soshiki.api.refresh") else {
                 throw APIError("Could not get refresh token.")
@@ -710,6 +757,7 @@ class SoshikiAPI {
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
                 let refreshResponse = try JSONDecoder().decode(SoshikiAPI.RefreshResponse.self, from: data)
+                self.token = refreshResponse.access
                 KeychainManager.shared.set(refreshResponse.access, forKey: "soshiki.api.access")
                 KeychainManager.shared.set(refreshResponse.refresh, forKey: "soshiki.api.refresh")
                 UserDefaults.standard.set(refreshResponse.id, forKey: "user.id")
@@ -751,7 +799,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -778,7 +828,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -806,7 +858,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -834,7 +888,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -862,7 +918,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -891,7 +949,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)
@@ -918,7 +978,9 @@ class SoshikiAPI {
             if response.statusCode == 200 {
                 return .success(())
             } else if response.statusCode == 401 {
-                await refreshToken()
+                if !isRefreshing {
+                    await refreshToken()
+                }
                 throw UnauthorizedError()
             } else {
                 let error = String(data: data, encoding: .utf8)

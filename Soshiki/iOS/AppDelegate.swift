@@ -21,6 +21,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
 
+        Task {
+            let notifications = await UNUserNotificationCenter.current().deliveredNotifications()
+            application.applicationIconBadgeNumber = notifications.reduce(0, { accum, item in
+                accum + (item.request.content.badge?.intValue ?? 0)
+            })
+        }
+
         return true
     }
 

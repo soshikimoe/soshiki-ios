@@ -292,8 +292,9 @@ class ImageReaderViewController: UIPageViewController {
                 viewController.removeFromParent()
             }
             pageViewControllers.removeFirst(pageViewControllers.count - 3)
-            (pageViewControllers[safe: 2]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? pages.count - 1 : 0])
+
             if !pages.isEmpty {
+                (pageViewControllers[safe: 2]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? pages.count - 1 : 0])
                 for _ in 0..<(pages.count - 1) {
                     pageViewControllers.append(UIViewController(ImageReaderPageView(source: self.source)))
                 }
@@ -317,9 +318,9 @@ class ImageReaderViewController: UIPageViewController {
                 viewController.view.removeFromSuperview()
                 viewController.removeFromParent()
             }
-            pageViewControllers.removeLast(pageViewControllers.count - 3)
-            (pageViewControllers[safe: 0]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? 0 : pages.count - 1])
+
             if !pages.isEmpty {
+                (pageViewControllers[safe: 0]?.view as? ImageReaderPageView)?.setImage(pages[self.readingMode == .rtl ? 0 : pages.count - 1])
                 for _ in 0..<(pages.count - 1) {
                     pageViewControllers.insert(UIViewController(ImageReaderPageView(source: self.source)), at: 0)
                 }

@@ -172,6 +172,14 @@ class EntryViewController: UITableViewController {
             self.tableView.reloadData()
         }
 
+        Task {
+            for notification in await UNUserNotificationCenter.current().deliveredNotifications() {
+                if notification.request.content.userInfo["id"] as? String == entry._id {
+                    UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [ notification.request.identifier ])
+                }
+            }
+        }
+
         self.refresh()
     }
 
