@@ -82,8 +82,12 @@ class TrackerManager {
         NotificationCenter.default.post(name: .init(TrackerManager.Keys.update), object: nil)
     }
 
-    func installTrackers(_ url: URL) {
-
+    func installTrackers(_ url: URL) async {
+        guard let (trackerListData, _) = try? await URLSession.shared.data(from: url),
+              let trackerList = try? JSONDecoder().decode(TrackerListManifest.self, from: trackerListData) else { return }
+        for tracker in trackerList {
+            await installTracker(url.deletingLastPathComponent().appendingPathComponent(tracker.path))
+        }
     }
 
     func loginCallback(_ url: URL) {
@@ -111,4 +115,23 @@ extension TrackerManager {
     class Keys {
         static let update = "app.trackers.update"
     }
+}
+
+struct TrackerManifest: Codable {
+    let id: String
+    let name: String
+    let author: String
+    let icon: String
+    let version: String
+}
+
+typealias TrackerListManifest = [TrackerListTrackerManifest]
+
+struct TrackerListTrackerManifest: Codable {
+    let path: String
+    let id: String
+    let name: String
+    let author: String
+    let icon: String
+    let version: String
 }

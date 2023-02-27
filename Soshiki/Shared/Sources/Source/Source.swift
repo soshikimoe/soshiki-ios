@@ -25,12 +25,3 @@ protocol NetworkSource: Source {
     var version: String { get }
     var image: URL { get }
 }
-
-struct SourceManifest: Codable {
-    let id: String
-    let name: String
-    let author: String
-    let icon: String
-    let version: String
-    let type: String
-}

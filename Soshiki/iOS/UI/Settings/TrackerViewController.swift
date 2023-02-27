@@ -8,18 +8,61 @@
 import UIKit
 import SafariServices
 
-class TrackerViewController: UITableViewController {
+class TrackerViewController: SettingTableViewController {
     var observers: [NSObjectProtocol] = []
 
     let tracker: Tracker
     let authUrl: URL?
 
+    var loggedIn: Bool {
+        UserDefaults.standard.bool(forKey: "tracker.\(tracker.id).loggedIn")
+    }
+
+    var settingGroups: [SettingGroup] {
+        [
+            SettingGroup(id: "general", header: "General", items: [
+                ButtonSettingItem(id: "loginout", title: loggedIn ? "Logout" : "Login") { [weak self] _ in
+                    guard let self, let authUrl = self.authUrl else { return }
+                    if self.loggedIn {
+                        self.tracker.logout()
+                    } else {
+                        let safariViewController = SFSafariViewController(url: authUrl)
+                        TrackerManager.shared.currentLoginInformation = (
+                            tracker: self.tracker,
+                            viewController: safariViewController
+                        )
+                        self.present(safariViewController, animated: true)
+                    }
+                },
+                ToggleSettingItem(
+                    id: "automaticallyTrack",
+                    title: "Automatically Track",
+                    value: UserDefaults.standard.bool(forKey: "settings.tracker.\(self.tracker.id).automaticallyTrack")
+                ) { [weak self] newValue in
+                    guard let self else { return }
+                    UserDefaults.standard.set(newValue, forKey: "settings.tracker.\(self.tracker.id).automaticallyTrack")
+                    NotificationCenter.default.post(name: .init("settings.tracker.\(self.tracker.id).automaticallyTrack"), object: nil)
+                }
+            ])
+        ]
+    }
+
     init(tracker: Tracker) {
         self.tracker = tracker
         self.authUrl = tracker.getAuthUrl()
-        super.init(style: .insetGrouped)
-        self.title = tracker.name
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
+        super.init(title: tracker.name)
+
+        self.groups = self.settingGroups
+
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("tracker.\(tracker.id).loggedIn"), object: nil, queue: nil) { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    self.groups = self.settingGroups
+                    self.tableView.reloadData()
+                }
+            }
+        )
     }
 
     deinit {
@@ -30,51 +73,5 @@ class TrackerViewController: UITableViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-}
-
-extension TrackerViewController {
-    override func numberOfSections(in tableView: UITableView) -> Int { 1 }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 2 }
-
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "UITableViewCell", for: indexPath)
-        switch indexPath.row {
-        case 0:
-            var content = cell.defaultContentConfiguration()
-            content.text = "Login"
-            content.textProperties.color = .tintColor
-            cell.contentConfiguration = content
-            return cell
-        case 1:
-            let switchView = UISwitch()
-            switchView.isOn = UserDefaults.standard.bool(forKey: "settings.tracker.\(tracker.id).automaticallyTrack")
-            switchView.addTarget(self, action: #selector(updateAutoTrackStatus(_:)), for: .valueChanged)
-            cell.accessoryView = switchView
-            var content = cell.defaultContentConfiguration()
-            content.text = "Automatically Track"
-            cell.contentConfiguration = content
-            return cell
-        default: break
-        }
-        return cell
-    }
-
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if indexPath.row == 0, let authUrl {
-            let safariViewController = SFSafariViewController(url: authUrl)
-            TrackerManager.shared.currentLoginInformation = (
-                tracker: tracker,
-                viewController: safariViewController
-            )
-            self.present(safariViewController, animated: true)
-        }
-        tableView.deselectRow(at: indexPath, animated: true)
-    }
-
-    @objc func updateAutoTrackStatus(_ sender: UISwitch) {
-        UserDefaults.standard.set(sender.isOn, forKey: "settings.tracker.\(tracker.id).automaticallyTrack")
-        NotificationCenter.default.post(name: .init("settings.tracker.\(tracker.id).automaticallyTrack"), object: nil)
     }
 }

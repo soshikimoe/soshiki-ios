@@ -17,6 +17,8 @@ class LibraryViewController: UICollectionViewController {
         }
     }
 
+    var notificationBadges: [String: Int] = [:]
+
     let refreshControl = UIRefreshControl()
 
     var dataSource: UICollectionViewDiffableDataSource<Int, Entry>!
@@ -28,10 +30,11 @@ class LibraryViewController: UICollectionViewController {
 
     init() {
         let layout = UICollectionViewCompositionalLayout(sectionProvider: { _, environment in
+            let itemsPerRow = UserDefaults.standard.object(forKey: "app.settings.itemsPerRow") as? Int ?? 3
             let item = NSCollectionLayoutItem(
                 layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(3)),
-                    heightDimension: .fractionalWidth(CGFloat(1) / CGFloat(2))
+                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
+                    heightDimension: .fractionalWidth(CGFloat(1.5) / CGFloat(itemsPerRow))
                 )
             )
             item.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -41,7 +44,7 @@ class LibraryViewController: UICollectionViewController {
                     heightDimension: .estimated(environment.container.contentSize.width * 3 / 2)
                 ),
                 subitem: item,
-                count: 3
+                count: itemsPerRow
             )
             let section = NSCollectionLayoutSection(group: group)
             section.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
@@ -53,6 +56,11 @@ class LibraryViewController: UICollectionViewController {
 
         let cellRegistration: UICollectionView.CellRegistration<LibraryCollectionViewCell, Entry> = .init(handler: { cell, _, entry in
             cell.setEntry(entry: entry)
+            if let notificationBadge = self.notificationBadges[entry._id] {
+                cell.setNotificationBadge(to: notificationBadge)
+            } else {
+                cell.setNotificationBadge(to: 0)
+            }
         })
         dataSource = UICollectionViewDiffableDataSource(
             collectionView: self.collectionView,
@@ -64,6 +72,9 @@ class LibraryViewController: UICollectionViewController {
 
         categoryLabel.text = "All - \(LibraryManager.shared.mediaType.rawValue.capitalized)"
         self.navigationItem.rightBarButtonItems = [ categoryButton, UIBarButtonItem(customView: categoryLabel) ]
+        Task {
+            await reloadNotificationBadges()
+        }
 
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(LibraryManager.Keys.libraries), object: nil, queue: nil) { [weak self] _ in
@@ -92,6 +103,13 @@ class LibraryViewController: UICollectionViewController {
                 }
             }
         )
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("app.settings.itemsPerRow"), object: nil, queue: nil) { [weak self] _ in
+                Task { @MainActor in
+                    self?.collectionViewLayout.invalidateLayout()
+                }
+            }
+        )
     }
 
     required init?(coder: NSCoder) {
@@ -113,6 +131,7 @@ class LibraryViewController: UICollectionViewController {
     @objc func refresh() {
         Task {
             await LibraryManager.shared.refresh()
+            await reloadNotificationBadges()
             refreshControl.endRefreshing()
         }
     }
@@ -171,6 +190,16 @@ class LibraryViewController: UICollectionViewController {
         } else {
             categoryButton.menu = nil
         }
+    }
+
+    func reloadNotificationBadges() async {
+        notificationBadges = [:]
+        for notification in await UNUserNotificationCenter.current().deliveredNotifications() {
+            if let id = notification.request.content.userInfo["id"] as? String {
+                notificationBadges[id] = notification.request.content.badge?.intValue ?? 0
+            }
+        }
+        collectionView.reloadData()
     }
 }
 

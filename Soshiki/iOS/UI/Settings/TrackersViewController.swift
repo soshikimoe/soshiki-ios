@@ -49,9 +49,15 @@ class TrackersViewController: UITableViewController {
             textField.delegate = self
         })
         let doneAction = UIAlertAction(title: "Install", style: .default, handler: { [weak self] _ in
-            if let self, let url = URL(string: self.addTrackerText), url.pathExtension == "soshikitracker" {
-                Task {
-                    await TrackerManager.shared.installTracker(url)
+            if let self, let url = URL(string: self.addTrackerText) {
+                if url.pathExtension == "soshikitracker" {
+                    Task {
+                        await TrackerManager.shared.installTracker(url)
+                    }
+                } else if url.pathExtension == "soshikitrackers" {
+                    Task {
+                        await TrackerManager.shared.installTrackers(url)
+                    }
                 }
             }
             self?.addTrackerText = ""

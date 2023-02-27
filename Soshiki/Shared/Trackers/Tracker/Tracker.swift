@@ -58,6 +58,11 @@ class Tracker {
             KeychainManager.shared.set(value, forKey: "keychain.tracker.\(manifest.id).\(key)")
         } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setKeychainValue")
 
+        context.objectForKeyedSubscript("globalThis").setObject({ status in
+            UserDefaults.standard.set(status.toBool(), forKey: "tracker.\(manifest.id).loggedIn")
+            NotificationCenter.default.post(name: .init("tracker.\(manifest.id).loggedIn"), object: nil)
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "setLoginStatus")
+
         context.evaluateScript(script)
         context.objectForKeyedSubscript("globalThis").setObject(
             context.objectForKeyedSubscript("globalThis")
@@ -98,6 +103,10 @@ class Tracker {
 
     func getAuthUrl() -> URL? {
         self.context.objectForKeyedSubscript(self.id)?.invokeMethod("_getAuthUrl", withArguments: []).toString().flatMap({ URL(string: $0) })
+    }
+
+    func logout() {
+        self.context.objectForKeyedSubscript(self.id)?.invokeMethod("_logout", withArguments: [])
     }
 
     func handleResponse(url: URL) async {
@@ -281,12 +290,4 @@ class Tracker {
             object.invokeMethod("_deleteHistory", withArguments: [callbackValue, errorValue, mediaType.rawValue, id])
         }
     }
-}
-
-struct TrackerManifest: Codable {
-    let id: String
-    let name: String
-    let author: String
-    let icon: String
-    let version: String
 }

@@ -182,7 +182,7 @@ class JSDom {
         context.globalObject.setObject({ ref in
             guard let element = dom.elementReferences[ref] else { return "" }
             return (try? element.element.outerHtml()) ?? ""
-        } as @convention(block) (String) -> String, forKeyedSubscript: "__element_className")
+        } as @convention(block) (String) -> String, forKeyedSubscript: "__element_outerHTML")
         context.globalObject.setObject({ ref in
             guard let element = dom.elementReferences[ref],
                   let child = try? element.element.previousElementSibling() else { return nil }

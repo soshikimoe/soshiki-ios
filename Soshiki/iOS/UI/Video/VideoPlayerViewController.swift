@@ -51,7 +51,8 @@ class VideoPlayerViewController: AVPlayerViewController {
         self.entry = entry
         self.history = history
         super.init(nibName: nil, bundle: nil)
-        try? AVAudioSession.sharedInstance().setCategory(.playback)
+
+        self.allowsPictureInPicturePlayback = true
 
         self.view.backgroundColor = .systemBackground
         self.hidesBottomBarWhenPushed = true
@@ -122,6 +123,17 @@ class VideoPlayerViewController: AVPlayerViewController {
         }
         for observer in observers {
             NotificationCenter.default.removeObserver(observer)
+        }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playback, mode: .moviePlayback)
+            try audioSession.setActive(true)
+        } catch {
+            print(error)
         }
     }
 

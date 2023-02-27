@@ -90,8 +90,18 @@ class SourceManager {
         NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
     }
 
-    func installSources(_ url: URL) {
-
+    func installSources(_ url: URL) async {
+        guard let (sourceListData, _) = try? await URLSession.shared.data(from: url),
+              let sourceList = try? JSONDecoder().decode(SourceListManifest.self, from: sourceListData) else { return }
+        for source in sourceList.text {
+            await installSource(url.deletingLastPathComponent().appendingPathComponent(source.path))
+        }
+        for source in sourceList.image {
+            await installSource(url.deletingLastPathComponent().appendingPathComponent(source.path))
+        }
+        for source in sourceList.video {
+            await installSource(url.deletingLastPathComponent().appendingPathComponent(source.path))
+        }
     }
 }
 
@@ -99,4 +109,29 @@ extension SourceManager {
     class Keys {
         static let update = "app.sources.update"
     }
+}
+
+struct SourceManifest: Codable {
+    let id: String
+    let name: String
+    let author: String
+    let icon: String
+    let version: String
+    let type: String
+}
+
+struct SourceListManifest: Codable {
+    let text: [SourceListSourceManifest]
+    let image: [SourceListSourceManifest]
+    let video: [SourceListSourceManifest]
+}
+
+struct SourceListSourceManifest: Codable {
+    let path: String
+    let id: String
+    let name: String
+    let author: String
+    let icon: String
+    let version: String
+    let type: String
 }

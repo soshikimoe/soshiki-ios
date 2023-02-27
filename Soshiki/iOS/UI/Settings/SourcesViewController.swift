@@ -53,9 +53,15 @@ class SourcesViewController: UITableViewController {
             textField.delegate = self
         })
         let doneAction = UIAlertAction(title: "Install", style: .default, handler: { [weak self] _ in
-            if let self, let url = URL(string: self.addSourceText), url.pathExtension == "soshikisource" {
-                Task {
-                    await SourceManager.shared.installSource(url)
+            if let self, let url = URL(string: self.addSourceText) {
+                if url.pathExtension == "soshikisource" {
+                    Task {
+                        await SourceManager.shared.installSource(url)
+                    }
+                } else if url.pathExtension == "soshikisources" {
+                    Task {
+                        await SourceManager.shared.installSources(url)
+                    }
                 }
             }
             self?.addSourceText = ""
