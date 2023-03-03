@@ -33,6 +33,17 @@ class SettingsViewController: SettingTableViewController {
                 ) { newValue in
                     UserDefaults.standard.set(Int(newValue), forKey: "app.settings.itemsPerRow")
                     NotificationCenter.default.post(name: .init("app.settings.itemsPerRow"), object: nil)
+                },
+                ColorSettingItem(
+                    id: "accentColor",
+                    title: "Accent Color",
+                    supportsAlpha: false,
+                    canReset: true,
+                    value: UserDefaults.standard.string(forKey: "app.settings.accentColor").flatMap({ UIColor.from(rawValue: $0) })
+                ) { [weak self] newValue in
+                    UserDefaults.standard.set(newValue?.rawValue, forKey: "app.settings.accentColor")
+                    NotificationCenter.default.post(name: .init("app.settings.accentColor"), object: nil)
+                    self?.tableView.window?.tintColor = newValue ?? UIColor.tintColor
                 }
             ]),
             SettingGroup(id: "sources", header: "Sources", items: [
@@ -43,6 +54,14 @@ class SettingsViewController: SettingTableViewController {
             SettingGroup(id: "trackers", header: "Trackers", items: [
                 ButtonSettingItem(id: "trackers", title: "Trackers", presentsView: true) { [weak self] _ in
                     self?.navigationController?.pushViewController(TrackersViewController(), animated: true)
+                }
+            ]),
+            SettingGroup(id: "notifications", header: "Notifications", items: [
+                ButtonSettingItem(id: "forceResetBadge", title: "Force Reset Badge") { _ in
+                    UIApplication.shared.applicationIconBadgeNumber = 0
+                    Task {
+                        await SoshikiAPI.shared.setNotificationBadge(count: 0)
+                    }
                 }
             ])
         ]

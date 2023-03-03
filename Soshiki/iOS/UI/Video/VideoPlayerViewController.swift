@@ -27,9 +27,11 @@ class VideoPlayerViewController: AVPlayerViewController {
     var autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? false
+    var hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
 
     var endObserver: NSObjectProtocol?
     var timeObserver: Any?
+    var rateObserver: NSKeyValueObservation?
 
     var lastRegisteredTimestamp: Double = 0
 
@@ -77,6 +79,11 @@ class VideoPlayerViewController: AVPlayerViewController {
         self.navigationItem.leftBarButtonItems = [ closeViewerButton, previousEpisodeButton ]
         self.navigationItem.rightBarButtonItems = [ openSettingsButton, nextEpisodeButton ]
 
+        self.entersFullScreenWhenPlaybackBegins = true
+        self.exitsFullScreenWhenPlaybackEnds = true
+
+        self.delegate = self
+
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.autoPlay"), object: nil, queue: nil) { [weak self] _ in
                 self?.autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
@@ -90,6 +97,15 @@ class VideoPlayerViewController: AVPlayerViewController {
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.persistTimestamp"), object: nil, queue: nil) { [weak self] _ in
                 self?.persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .init("settings.video.hideToolbarWhenPlaying"),
+                object: nil,
+                queue: nil
+            ) { [weak self] _ in
+                self?.hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
             }
         )
         observers.append(
@@ -149,7 +165,6 @@ class VideoPlayerViewController: AVPlayerViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.player?.pause()
         let transparentAppearance = UINavigationBarAppearance()
         transparentAppearance.configureWithTransparentBackground()
         let defaultAppearance = UINavigationBarAppearance()
@@ -177,6 +192,9 @@ class VideoPlayerViewController: AVPlayerViewController {
         if let timeObserver {
             self.player?.removeTimeObserver(timeObserver)
         }
+        rateObserver?.invalidate()
+        self.player?.pause()
+
         self.timeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 15, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
             queue: .global(qos: .utility)
@@ -198,8 +216,25 @@ class VideoPlayerViewController: AVPlayerViewController {
                 }
             }
         }
-        self.player?.pause()
+        self.rateObserver = player.observe(\.rate) { [weak self] player, _ in
+            guard let self else { return }
+            Task { @MainActor in
+                if player.rate == 0, self.navigationController?.navigationBar.isHidden == true {
+                    self.navigationController?.navigationBar.isHidden = false
+                    UIView.animate(withDuration: CATransaction.animationDuration()) {
+                        self.navigationController?.navigationBar.alpha = 1
+                    }
+                } else if self.hideToolbarWhenPlaying, player.rate > 0, self.navigationController?.navigationBar.isHidden == false {
+                    UIView.animate(withDuration: CATransaction.animationDuration()) {
+                        self.navigationController?.navigationBar.alpha = 0
+                    } completion: { _ in
+                        self.navigationController?.navigationBar.isHidden = true
+                    }
+                }
+            }
+        }
         self.player = player
+
         if self.autoPlay {
             self.player?.play()
         }
@@ -273,6 +308,7 @@ class VideoPlayerViewController: AVPlayerViewController {
 
 extension VideoPlayerViewController {
     @objc func closeViewer() {
+        self.player?.replaceCurrentItem(with: nil)
         self.navigationController?.popViewController(animated: true)
     }
 
@@ -289,7 +325,10 @@ extension VideoPlayerViewController {
     }
 
     @objc func openSettings() {
-        present(VideoPlayerSettingsViewController(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl), animated: true)
+        self.navigationController?.pushViewController(
+            VideoPlayerSettingsViewController(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl),
+            animated: true
+        )
     }
 }
 
@@ -316,5 +355,17 @@ extension VideoPlayerViewController: UIGestureRecognizerDelegate {
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
         true
+    }
+}
+
+extension VideoPlayerViewController: AVPlayerViewControllerDelegate {
+    func playerViewController(_ playerViewController: AVPlayerViewController,
+                              willBeginFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        self.navigationController?.navigationBar.isHidden = true
+    }
+
+    func playerViewController(_ playerViewController: AVPlayerViewController,
+                              willEndFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        self.navigationController?.navigationBar.isHidden = false
     }
 }

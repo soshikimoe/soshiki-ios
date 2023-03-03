@@ -152,6 +152,7 @@
 		3733CD22293D8ECB00901DA6 /* ImageReaderPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageReaderPageView.swift; sourceTree = "<group>"; };
 		373F6BFD296BC3A1009F268A /* TrackerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerManager.swift; sourceTree = "<group>"; };
 		3748E81F29908F8E00D37F2E /* EntrySettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntrySettingsViewController.swift; sourceTree = "<group>"; };
+		3748E82129ACF0ED00D37F2E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		37661CBE2922BD0D0052C629 /* Soshiki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Soshiki.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37661CC52922BD120052C629 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37A02EEA292410B90020B817 /* SoshikiAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoshikiAPI.swift; sourceTree = "<group>"; };
@@ -417,6 +418,7 @@
 		37661CB52922BD0D0052C629 = {
 			isa = PBXGroup;
 			children = (
+				3748E82129ACF0ED00D37F2E /* README.md */,
 				37E7BB2F2958D98100FBDAC3 /* .swiftlint.yml */,
 				37661CC02922BD0D0052C629 /* Soshiki */,
 				37661CBF2922BD0D0052C629 /* Products */,
@@ -964,7 +966,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -990,7 +992,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jimphieffer.Soshiki;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1008,7 +1010,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -1034,7 +1036,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jimphieffer.Soshiki;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

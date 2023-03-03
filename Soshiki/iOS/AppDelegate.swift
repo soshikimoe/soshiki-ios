@@ -7,6 +7,7 @@
 
 import UIKit
 import UserNotifications
+import Foundation
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -21,10 +22,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
 
+        URLSession.shared.configuration.httpShouldSetCookies = false
+        for cookie in URLSession.shared.configuration.httpCookieStorage?.cookies ?? [] {
+            URLSession.shared.configuration.httpCookieStorage?.deleteCookie(cookie)
+        }
+
         Task {
             let notifications = await UNUserNotificationCenter.current().deliveredNotifications()
             application.applicationIconBadgeNumber = notifications.reduce(0, { accum, item in
-                accum + (item.request.content.badge?.intValue ?? 0)
+                accum + (item.request.content.userInfo["count"] as? Int ?? 0)
             })
         }
 
@@ -54,17 +60,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-//        let info = response.notification.request.content.userInfo
-//        guard let platform = info["platform"] as? String,
-//              let source = info["source"] as? String,
-//              let sourceId = info["sourceId"] as? String,
-//              let id = info["id"] as? String,
-//              let mediaType = (info["mediaType"] as? String).flatMap({ MediaType(rawValue: $0) }),
-//              let sourceObject = SourceManager.shared.sources.first(where: { $0.id == source }) else { return }
-//        print(await center.deliveredNotifications().map({ $0.request.content.title }))
+        let info = response.notification.request.content.userInfo
+        guard let id = info["id"] as? String,
+              let mediaType = (info["mediaType"] as? String).flatMap({ MediaType(rawValue: $0) }) else { return }
+        print(id, mediaType)
         Task {
-            _ = await SoshikiAPI.shared.setNotificationBadge(count: 0)
-            UIApplication.shared.applicationIconBadgeNumber = 0
+            if let entry = try? await SoshikiAPI.shared.getEntry(mediaType: mediaType, id: id).get() {
+                NotificationCenter.default.post(name: .init("app.openToEntry"), object: entry)
+            }
         }
     }
 }

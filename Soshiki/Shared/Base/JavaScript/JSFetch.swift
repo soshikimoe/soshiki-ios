@@ -19,6 +19,7 @@ class JSFetch {
                 return
             }
             var request = URLRequest(url: url)
+            request.httpShouldHandleCookies = false
             if let method = options["method"] as? String {
                 request.httpMethod = method
             }
@@ -31,9 +32,9 @@ class JSFetch {
                 request.httpBody = body.data(using: .utf8)
             }
             URLSession.shared.dataTask(with: request) { data, response, error in
-                if let response = response as? HTTPURLResponse, let data, let dataString = String(data: data, encoding: .utf8) {
+                if let response = response as? HTTPURLResponse, let data {
                     resolve.call(withArguments: [[
-                        "data": dataString,
+                        "data": String(data: data, encoding: .utf8) ?? data.base64EncodedString(),
                         "status": response.statusCode,
                         "statusText": HTTPURLResponse.localizedString(forStatusCode: response.statusCode),
                         "headers": response.allHeaderFields as? [String: String] ?? [:]

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 protocol SettingItem {
     associatedtype ValueType
@@ -157,6 +158,31 @@ class ButtonSettingItem: SettingItem {
         self.id = id
         self.title = title
         self.presentsView = presentsView
+        self.valueDidChange = valueDidChange
+    }
+}
+
+class ColorSettingItem: SettingItem {
+    let id: String
+    let title: String
+    let supportsAlpha: Bool
+    let canReset: Bool
+    var value: UIColor?
+    let valueDidChange: (UIColor?) -> Void
+
+    init(
+        id: String,
+        title: String,
+        supportsAlpha: Bool = true,
+        canReset: Bool = false,
+        value: UIColor?,
+        valueDidChange: @escaping (UIColor?) -> Void
+    ) {
+        self.id = id
+        self.title = title
+        self.supportsAlpha = supportsAlpha
+        self.canReset = canReset
+        self.value = value
         self.valueDidChange = valueDidChange
     }
 }

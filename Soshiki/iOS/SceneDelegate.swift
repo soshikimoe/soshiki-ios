@@ -16,6 +16,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let window = UIWindow(windowScene: scene)
         window.rootViewController = MainViewController()
+        window.tintColor = UserDefaults.standard.string(forKey: "app.settings.accentColor").flatMap({
+            UIColor.from(rawValue: $0)
+        }) ?? UIColor.tintColor
         self.window = window
         window.makeKeyAndVisible()
     }

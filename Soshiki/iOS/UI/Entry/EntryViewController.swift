@@ -173,11 +173,15 @@ class EntryViewController: UITableViewController {
         }
 
         Task {
+            var badgesToRemove = 0
             for notification in await UNUserNotificationCenter.current().deliveredNotifications() {
                 if notification.request.content.userInfo["id"] as? String == entry._id {
+                    badgesToRemove += notification.request.content.userInfo["count"] as? Int ?? 0
                     UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [ notification.request.identifier ])
                 }
             }
+            UIApplication.shared.applicationIconBadgeNumber -= badgesToRemove
+            _ = await SoshikiAPI.shared.setNotificationBadge(count: UIApplication.shared.applicationIconBadgeNumber)
         }
 
         self.refresh()
@@ -412,21 +416,21 @@ extension EntryViewController: EntryHeaderViewDelegate {
                let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.textChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.textChapters.count - 1)
             }
         case is any ImageSource:
             if let history = self.history,
                let index = self.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.imageChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.imageChapters.count - 1)
             }
         case is any VideoSource:
             if let history = self.history,
                let index = self.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
                 self.openViewer(to: index)
             } else if !self.videoEpisodes.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.videoEpisodes.count - 1)
             }
         default:
             break

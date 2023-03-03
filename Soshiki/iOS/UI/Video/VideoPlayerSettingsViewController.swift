@@ -13,6 +13,7 @@ class VideoPlayerSettingsViewController: UITableViewController {
     var autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? false
+    var hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
 
     let urls: [(quality: Double?, urls: [(provider: String, url: String)])]
     var urlHeaderPoints: [Int] = []
@@ -44,6 +45,15 @@ class VideoPlayerSettingsViewController: UITableViewController {
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.persistTimestamp"), object: nil, queue: nil) { [weak self] _ in
                 self?.persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .init("settings.video.hideToolbarWhenPlaying"),
+                object: nil,
+                queue: nil
+            ) { [weak self] _ in
+                self?.hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
             }
         )
         observers.append(
@@ -95,6 +105,11 @@ class VideoPlayerSettingsViewController: UITableViewController {
         UserDefaults.standard.setValue(sender.isOn, forKey: "settings.video.persistTimestamp")
         NotificationCenter.default.post(name: .init("settings.video.persistTimestamp"), object: nil)
     }
+
+    @objc func toggleHideToolbarWhenPlaying(_ sender: UISwitch) {
+        UserDefaults.standard.setValue(sender.isOn, forKey: "settings.video.hideToolbarWhenPlaying")
+        NotificationCenter.default.post(name: .init("settings.video.hideToolbarWhenPlaying"), object: nil)
+    }
 }
 
 extension VideoPlayerSettingsViewController {
@@ -125,6 +140,11 @@ extension VideoPlayerSettingsViewController {
                 content.text = "Persist Time on Server Change"
                 toggle.isOn = persistTimestamp
                 toggle.addTarget(self, action: #selector(togglePersistTimestamp(_:)), for: .valueChanged)
+                cell.accessoryView = toggle
+            case 3:
+                content.text = "Hide Toolbar When Playing"
+                toggle.isOn = hideToolbarWhenPlaying
+                toggle.addTarget(self, action: #selector(toggleHideToolbarWhenPlaying(_:)), for: .valueChanged)
                 cell.accessoryView = toggle
             default: break
             }

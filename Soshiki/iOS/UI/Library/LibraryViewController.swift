@@ -110,6 +110,13 @@ class LibraryViewController: UICollectionViewController {
                 }
             }
         )
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("app.openToEntry"), object: nil, queue: nil) { [weak self] notification in
+                if let entry = notification.object as? Entry {
+                    self?.navigationController?.pushViewController(EntryViewController(entry: entry), animated: true)
+                }
+            }
+        )
     }
 
     required init?(coder: NSCoder) {
@@ -196,7 +203,7 @@ class LibraryViewController: UICollectionViewController {
         notificationBadges = [:]
         for notification in await UNUserNotificationCenter.current().deliveredNotifications() {
             if let id = notification.request.content.userInfo["id"] as? String {
-                notificationBadges[id] = notification.request.content.badge?.intValue ?? 0
+                notificationBadges[id] = notification.request.content.userInfo["count"] as? Int ?? 0
             }
         }
         collectionView.reloadData()

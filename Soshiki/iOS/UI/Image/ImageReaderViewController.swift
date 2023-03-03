@@ -491,7 +491,7 @@ extension ImageReaderViewController {
     }
 
     @objc func openSettings() {
-        present(ImageReaderSettingsViewController(), animated: true)
+        self.navigationController?.pushViewController(ImageReaderSettingsViewController(), animated: true)
     }
 
     @objc func closeReader() {

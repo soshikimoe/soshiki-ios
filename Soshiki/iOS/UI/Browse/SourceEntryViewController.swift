@@ -287,21 +287,21 @@ extension SourceEntryViewController: EntryHeaderViewDelegate {
                let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.textChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.textChapters.count - 1)
             }
         case is any ImageSource:
             if let history = self.history,
                let index = self.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.imageChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.imageChapters.count - 1)
             }
         case is any VideoSource:
             if let history = self.history,
                let index = self.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
                 self.openViewer(to: index)
             } else if !self.videoEpisodes.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.videoEpisodes.count - 1)
             }
         default:
             break
