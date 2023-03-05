@@ -34,6 +34,7 @@
 		373F6BFA2968F452009F268A /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 373F6BF92968F452009F268A /* KeychainSwift */; };
 		373F6BFE296BC3A1009F268A /* TrackerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 373F6BFD296BC3A1009F268A /* TrackerManager.swift */; };
 		3748E82029908F8E00D37F2E /* EntrySettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3748E81F29908F8E00D37F2E /* EntrySettingsViewController.swift */; };
+		3748E82429B2E80E00D37F2E /* AniSkipAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3748E82329B2E80E00D37F2E /* AniSkipAPI.swift */; };
 		37661CC62922BD120052C629 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 37661CC52922BD120052C629 /* Assets.xcassets */; };
 		37A02EEB292410B90020B817 /* SoshikiAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A02EEA292410B90020B817 /* SoshikiAPI.swift */; };
 		37A02EEE29241EEA0020B817 /* JSONAny.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A02EED29241EEA0020B817 /* JSONAny.swift */; };
@@ -153,6 +154,7 @@
 		373F6BFD296BC3A1009F268A /* TrackerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerManager.swift; sourceTree = "<group>"; };
 		3748E81F29908F8E00D37F2E /* EntrySettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntrySettingsViewController.swift; sourceTree = "<group>"; };
 		3748E82129ACF0ED00D37F2E /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		3748E82329B2E80E00D37F2E /* AniSkipAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AniSkipAPI.swift; sourceTree = "<group>"; };
 		37661CBE2922BD0D0052C629 /* Soshiki.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Soshiki.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37661CC52922BD120052C629 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37A02EEA292410B90020B817 /* SoshikiAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoshikiAPI.swift; sourceTree = "<group>"; };
@@ -387,6 +389,14 @@
 			path = Components;
 			sourceTree = "<group>";
 		};
+		3748E82229B2E7F900D37F2E /* AniSkip */ = {
+			isa = PBXGroup;
+			children = (
+				3748E82329B2E80E00D37F2E /* AniSkipAPI.swift */,
+			);
+			path = AniSkip;
+			sourceTree = "<group>";
+		};
 		37612AA6292323D400E55BFF /* Library */ = {
 			isa = PBXGroup;
 			children = (
@@ -458,6 +468,7 @@
 		37661CD52922D37F0052C629 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				3748E82229B2E7F900D37F2E /* AniSkip */,
 				37AACA3529905D1800EF9A57 /* Settings */,
 				37AAC9F9298EBD4800EF9A57 /* Data */,
 				37AAC9B829818FF100EF9A57 /* Library */,
@@ -787,6 +798,7 @@
 				3733CCFB292BFEE600901DA6 /* JSXMLHttpRequest.swift in Sources */,
 				37A02EEB292410B90020B817 /* SoshikiAPI.swift in Sources */,
 				37AACA00298EC21000EF9A57 /* DataManager.swift in Sources */,
+				3748E82429B2E80E00D37F2E /* AniSkipAPI.swift in Sources */,
 				370CB2B52968E72D00435F17 /* KeychainManager.swift in Sources */,
 				373F6BFE296BC3A1009F268A /* TrackerManager.swift in Sources */,
 				37AAC9D429858A1800EF9A57 /* BrowseViewController.swift in Sources */,
@@ -966,7 +978,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -1010,7 +1022,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;

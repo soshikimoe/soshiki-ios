@@ -77,7 +77,11 @@ class SourceEntryViewController: UITableViewController {
             ).get())?.first
             if let entry {
                 self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
-                self.entryHeaderView.canContinue = source is any VideoSource ? history?.episode != nil : history?.chapter != nil
+                if let currentItem = source is any VideoSource ? history?.episode : history?.chapter {
+                    self.entryHeaderView.setContinueButtonText(
+                        to: "Continue \(source is any VideoSource ? "Episode" : "Chapter") \(currentItem.toTruncatedString())"
+                    )
+                }
                 self.tableView.reloadData()
             }
             self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: self.entry, history: self.history)

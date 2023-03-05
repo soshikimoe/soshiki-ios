@@ -168,7 +168,11 @@ class EntryViewController: UITableViewController {
         Task {
             self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
             self.entryHeaderView.setEntry(to: entry.toLocalEntry(), with: entry, history: history)
-            self.entryHeaderView.canContinue = entry.mediaType == .video ? history?.episode != nil : history?.chapter != nil
+            if let currentItem = entry.mediaType == .video ? history?.episode : history?.chapter {
+                self.entryHeaderView.setContinueButtonText(
+                    to: "Continue \(entry.mediaType == .video ? "Episode" : "Chapter") \(currentItem.toTruncatedString())"
+                )
+            }
             self.tableView.reloadData()
         }
 
@@ -208,7 +212,11 @@ class EntryViewController: UITableViewController {
             if let history {
                 self.entryHeaderView.setEntry(to: entry.toLocalEntry(), with: entry, history: history)
             }
-            self.entryHeaderView.canContinue = entry.mediaType == .video ? history?.episode != nil : history?.chapter != nil
+            if let currentItem = entry.mediaType == .video ? history?.episode : history?.chapter {
+                self.entryHeaderView.setContinueButtonText(
+                    to: "Continue \(entry.mediaType == .video ? "Episode" : "Chapter") \(currentItem.toTruncatedString())"
+                )
+            }
             self.tableView.reloadData()
             sender?.endRefreshing()
         }

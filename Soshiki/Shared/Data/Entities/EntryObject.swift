@@ -192,7 +192,8 @@ class EntryObject: NSManagedObject {
             tags: tags.compactMap({ ($0 as? EntryTagObject)?.get() }),
             links: links.compactMap({ ($0 as? EntryLinkObject)?.get() }),
             platforms: platforms.compactMap({ ($0 as? EntryPlatformObject)?.get() }),
-            trackers: trackers.compactMap({ ($0 as? EntryTrackerObject)?.get() })
+            trackers: trackers.compactMap({ ($0 as? EntryTrackerObject)?.get() }),
+            skipTimes: nil
         )
     }
 }
