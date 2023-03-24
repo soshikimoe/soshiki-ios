@@ -265,7 +265,7 @@ extension TextReaderViewController {
     }
 
     @objc func openSettings() {
-        present(TextReaderSettingsViewController(), animated: true)
+        self.navigationController?.pushViewController(TextReaderSettingsViewController(), animated: true)
     }
 
     @objc func closeReader() {

@@ -134,4 +134,5 @@ struct TrackerListTrackerManifest: Codable {
     let author: String
     let icon: String
     let version: String
+    let schema: Int
 }

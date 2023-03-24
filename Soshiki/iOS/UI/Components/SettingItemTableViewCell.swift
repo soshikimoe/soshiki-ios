@@ -12,6 +12,8 @@ class SettingItemTableViewCell: UITableViewCell {
 
     var item: any SettingItem
 
+    weak var colorWell: UIColorWell?
+
     init(item: any SettingItem) {
         self.item = item
         switch item {
@@ -155,6 +157,31 @@ class SettingItemTableViewCell: UITableViewCell {
                 content.textProperties.color = .tintColor
             }
             self.contentConfiguration = content
+        case let item as ColorSettingItem:
+            super.init(style: .default, reuseIdentifier: "ColorSettingItemTableViewCell")
+            var content = self.defaultContentConfiguration()
+            content.text = item.title
+            self.contentConfiguration = content
+            let colorWell = UIColorWell()
+            colorWell.selectedColor = item.value
+            colorWell.supportsAlpha = item.supportsAlpha
+            colorWell.addTarget(self, action: #selector(updateColorFilter(_:)), for: .valueChanged)
+            colorWell.translatesAutoresizingMaskIntoConstraints = false
+            self.contentView.addSubview(colorWell)
+            colorWell.topAnchor.constraint(equalTo: self.contentView.layoutMarginsGuide.topAnchor).isActive = true
+            colorWell.bottomAnchor.constraint(equalTo: self.contentView.layoutMarginsGuide.bottomAnchor).isActive = true
+            colorWell.trailingAnchor.constraint(equalTo: self.contentView.layoutMarginsGuide.trailingAnchor).isActive = true
+            if item.canReset {
+                let resetButton = UIButton(type: .roundedRect)
+                resetButton.setTitle("Reset", for: .normal)
+                resetButton.addTarget(self, action: #selector(resetColorFilter), for: .touchUpInside)
+                resetButton.translatesAutoresizingMaskIntoConstraints = false
+                self.contentView.addSubview(resetButton)
+                resetButton.trailingAnchor.constraint(equalTo: colorWell.leadingAnchor, constant: -8).isActive = true
+                resetButton.topAnchor.constraint(equalTo: self.contentView.layoutMarginsGuide.topAnchor).isActive = true
+                resetButton.bottomAnchor.constraint(equalTo: self.contentView.layoutMarginsGuide.bottomAnchor).isActive = true
+            }
+            self.colorWell = colorWell
         default:
             super.init(style: .default, reuseIdentifier: "SettingItemTableViewCell")
         }
@@ -191,6 +218,19 @@ class SettingItemTableViewCell: UITableViewCell {
         var content = self.contentConfiguration as? UIListContentConfiguration ?? self.defaultContentConfiguration()
         content.secondaryText = item.value.toTruncatedString()
         self.contentConfiguration = content
+    }
+
+    @objc func updateColorFilter(_ sender: UIColorWell) {
+        guard let item = item as? ColorSettingItem else { return }
+        item.value = sender.selectedColor
+        item.valueDidChange(sender.selectedColor)
+    }
+
+    @objc func resetColorFilter() {
+        guard let item = item as? ColorSettingItem else { return }
+        item.value = nil
+        item.valueDidChange(nil)
+        colorWell?.selectedColor = nil
     }
 }
 

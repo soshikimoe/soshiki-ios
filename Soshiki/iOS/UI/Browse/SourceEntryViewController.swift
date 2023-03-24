@@ -77,7 +77,11 @@ class SourceEntryViewController: UITableViewController {
             ).get())?.first
             if let entry {
                 self.history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get()
-                self.entryHeaderView.canContinue = source is any VideoSource ? history?.episode != nil : history?.chapter != nil
+                if let currentItem = source is any VideoSource ? history?.episode : history?.chapter {
+                    self.entryHeaderView.setContinueButtonText(
+                        to: "Continue \(source is any VideoSource ? "Episode" : "Chapter") \(currentItem.toTruncatedString())"
+                    )
+                }
                 self.tableView.reloadData()
             }
             self.entryHeaderView.setEntry(to: sourceEntry.toLocalEntry(), with: self.entry, history: self.history)
@@ -287,21 +291,21 @@ extension SourceEntryViewController: EntryHeaderViewDelegate {
                let index = self.textChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.textChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.textChapters.count - 1)
             }
         case is any ImageSource:
             if let history = self.history,
                let index = self.imageChapters.firstIndex(where: { $0.chapter == history.chapter && $0.volume == history.volume }) {
                 self.openViewer(to: index)
             } else if !self.imageChapters.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.imageChapters.count - 1)
             }
         case is any VideoSource:
             if let history = self.history,
                let index = self.videoEpisodes.firstIndex(where: { $0.episode == history.episode }) {
                 self.openViewer(to: index)
             } else if !self.videoEpisodes.isEmpty {
-                self.openViewer(to: 0)
+                self.openViewer(to: self.videoEpisodes.count - 1)
             }
         default:
             break

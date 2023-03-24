@@ -13,6 +13,8 @@ class VideoPlayerSettingsViewController: UITableViewController {
     var autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? false
+    var hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
+    var showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
 
     let urls: [(quality: Double?, urls: [(provider: String, url: String)])]
     var urlHeaderPoints: [Int] = []
@@ -44,6 +46,20 @@ class VideoPlayerSettingsViewController: UITableViewController {
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.persistTimestamp"), object: nil, queue: nil) { [weak self] _ in
                 self?.persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .init("settings.video.hideToolbarWhenPlaying"),
+                object: nil,
+                queue: nil
+            ) { [weak self] _ in
+                self?.hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("settings.video.showSkipButton"), object: nil, queue: nil) { [weak self] _ in
+                self?.showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
             }
         )
         observers.append(
@@ -95,13 +111,23 @@ class VideoPlayerSettingsViewController: UITableViewController {
         UserDefaults.standard.setValue(sender.isOn, forKey: "settings.video.persistTimestamp")
         NotificationCenter.default.post(name: .init("settings.video.persistTimestamp"), object: nil)
     }
+
+    @objc func toggleHideToolbarWhenPlaying(_ sender: UISwitch) {
+        UserDefaults.standard.setValue(sender.isOn, forKey: "settings.video.hideToolbarWhenPlaying")
+        NotificationCenter.default.post(name: .init("settings.video.hideToolbarWhenPlaying"), object: nil)
+    }
+
+    @objc func toggleShowSkipButton(_ sender: UISwitch) {
+        UserDefaults.standard.setValue(sender.isOn, forKey: "settings.video.showSkipButton")
+        NotificationCenter.default.post(name: .init("settings.video.showSkipButton"), object: nil)
+    }
 }
 
 extension VideoPlayerSettingsViewController {
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        section == 0 ? 3 : urls.count + urls.reduce(0, { accum, item in accum + item.urls.count })
+        section == 0 ? 5 : urls.count + urls.reduce(0, { accum, item in accum + item.urls.count })
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -125,6 +151,16 @@ extension VideoPlayerSettingsViewController {
                 content.text = "Persist Time on Server Change"
                 toggle.isOn = persistTimestamp
                 toggle.addTarget(self, action: #selector(togglePersistTimestamp(_:)), for: .valueChanged)
+                cell.accessoryView = toggle
+            case 3:
+                content.text = "Hide Toolbar When Playing"
+                toggle.isOn = hideToolbarWhenPlaying
+                toggle.addTarget(self, action: #selector(toggleHideToolbarWhenPlaying(_:)), for: .valueChanged)
+                cell.accessoryView = toggle
+            case 4:
+                content.text = "Show Skip Button"
+                toggle.isOn = showSkipButton
+                toggle.addTarget(self, action: #selector(toggleShowSkipButton(_:)), for: .valueChanged)
                 cell.accessoryView = toggle
             default: break
             }

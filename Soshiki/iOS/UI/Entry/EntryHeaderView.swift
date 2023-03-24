@@ -43,22 +43,6 @@ class EntryHeaderView: UIView {
     let webViewButton = UIButton(type: .roundedRect)
     let buttonStackView = UIStackView()
 
-    var canContinue = false {
-        didSet {
-            if canContinue {
-                self.continueButton.setAttributedTitle(NSAttributedString(
-                    string: self.mediaType == .video ? "Continue Watching" : "Continue Reading",
-                    attributes: [.font: UIFont.systemFont(ofSize: 17, weight: .bold)]
-                ), for: .normal)
-            } else {
-                self.continueButton.setAttributedTitle(NSAttributedString(
-                    string: self.mediaType == .video ? "Begin Watching" : "Begin Reading",
-                    attributes: [.font: UIFont.systemFont(ofSize: 17, weight: .bold)]
-                ), for: .normal)
-            }
-        }
-    }
-
     var descriptionExpanded = false
 
     init(mediaType: MediaType) {
@@ -371,6 +355,20 @@ class EntryHeaderView: UIView {
         self.heightAnchor.constraint(equalTo: self.headerStackView.heightAnchor).isActive = true
         self.invalidateIntrinsicContentSize()
         delegate?.sizeDidChange?()
+    }
+
+    func setContinueButtonText(to text: String?) {
+        if let text {
+            self.continueButton.setAttributedTitle(NSAttributedString(
+                string: text,
+                attributes: [.font: UIFont.systemFont(ofSize: 17, weight: .bold)]
+            ), for: .normal)
+        } else {
+            self.continueButton.setAttributedTitle(NSAttributedString(
+                string: self.mediaType == .video ? "Begin Watching" : "Begin Reading",
+                attributes: [.font: UIFont.systemFont(ofSize: 17, weight: .bold)]
+            ), for: .normal)
+        }
     }
 
     @objc func toggleDescription() {

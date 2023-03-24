@@ -27,15 +27,31 @@ class VideoPlayerViewController: AVPlayerViewController {
     var autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? false
+    var hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
+    var showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
 
-    var endObserver: NSObjectProtocol?
     var timeObserver: Any?
+    var rateObserver: NSKeyValueObservation?
+    var skipTimeObserver: Any?
 
     var lastRegisteredTimestamp: Double = 0
 
     var details: VideoSourceEpisodeDetails?
     var previousDetails: VideoSourceEpisodeDetails?
     var nextDetails: VideoSourceEpisodeDetails?
+
+    var skipTimes: [Entry.SkipTimeItem]? {
+        entry?.skipTimes?.filter({
+            $0.episode == self.episodes[self.episode].episode
+        }).min(by: {
+            $0.times.count > $1.times.count
+        })?.times.filter({
+            $0.type.shouldSkip()
+        })
+    }
+    let skipButton = UIButton(type: .roundedRect)
+    var skipButtonWidthConstraint: NSLayoutConstraint?
+    var currentSkipItem: Entry.SkipTimeItem?
 
     lazy var singleTapGestureRecognizer: UITapGestureRecognizer = {
         let single = UITapGestureRecognizer(target: self, action: #selector(singleTap))
@@ -77,6 +93,32 @@ class VideoPlayerViewController: AVPlayerViewController {
         self.navigationItem.leftBarButtonItems = [ closeViewerButton, previousEpisodeButton ]
         self.navigationItem.rightBarButtonItems = [ openSettingsButton, nextEpisodeButton ]
 
+        self.entersFullScreenWhenPlaybackBegins = true
+        self.exitsFullScreenWhenPlaybackEnds = true
+
+        self.delegate = self
+
+        if showSkipButton, let contentOverlayView {
+            skipButton.addTarget(self, action: #selector(skipButtonPressed), for: .touchUpInside)
+            skipButton.setImage(UIImage(systemName: "forward.fill"), for: .normal)
+            var configuration = UIButton.Configuration.plain()
+            configuration.imagePadding = 8
+            skipButton.configuration = configuration
+            skipButton.tintColor = .black
+            skipButton.backgroundColor = UIColor(white: 0.6, alpha: 0.8)
+            skipButton.layer.cornerRadius = 5
+            skipButton.clipsToBounds = true
+            skipButton.alpha = 0
+            skipButton.isHidden = true
+            skipButton.translatesAutoresizingMaskIntoConstraints = false
+            contentOverlayView.addSubview(skipButton)
+            skipButton.bottomAnchor.constraint(equalTo: contentOverlayView.layoutMarginsGuide.bottomAnchor).isActive = true
+            skipButton.trailingAnchor.constraint(equalTo: contentOverlayView.layoutMarginsGuide.trailingAnchor).isActive = true
+            skipButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+            skipButtonWidthConstraint = skipButton.widthAnchor.constraint(equalToConstant: skipButton.intrinsicContentSize.width + 15 * 2)
+            skipButtonWidthConstraint?.isActive = true
+        }
+
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.autoPlay"), object: nil, queue: nil) { [weak self] _ in
                 self?.autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
@@ -90,6 +132,20 @@ class VideoPlayerViewController: AVPlayerViewController {
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.video.persistTimestamp"), object: nil, queue: nil) { [weak self] _ in
                 self?.persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: .init("settings.video.hideToolbarWhenPlaying"),
+                object: nil,
+                queue: nil
+            ) { [weak self] _ in
+                self?.hideToolbarWhenPlaying = UserDefaults.standard.object(forKey: "settings.video.hideToolbarWhenPlaying") as? Bool ?? true
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("settings.video.showSkipButton"), object: nil, queue: nil) { [weak self] _ in
+                self?.showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
             }
         )
         observers.append(
@@ -115,9 +171,6 @@ class VideoPlayerViewController: AVPlayerViewController {
     }
 
     deinit {
-        if let endObserver {
-            NotificationCenter.default.removeObserver(endObserver)
-        }
         if let timeObserver {
             self.player?.removeTimeObserver(timeObserver)
         }
@@ -149,7 +202,6 @@ class VideoPlayerViewController: AVPlayerViewController {
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        self.player?.pause()
         let transparentAppearance = UINavigationBarAppearance()
         transparentAppearance.configureWithTransparentBackground()
         let defaultAppearance = UINavigationBarAppearance()
@@ -161,22 +213,39 @@ class VideoPlayerViewController: AVPlayerViewController {
     }
 
     func setUrl(_ url: URL) async {
-        if let endObserver {
-            NotificationCenter.default.removeObserver(endObserver)
-        }
-
         let currentTimestamp = self.player?.currentTime()
         let currentUrl = self.currentlyPlayingUrl
         self.currentlyPlayingUrl = url
         let request = await self.source.modifyVideoRequest(request: URLRequest(url: url))
-        let player = AVPlayer(playerItem: AVPlayerItem(asset: AVURLAsset(
+        let playerItem = AVPlayerItem(asset: AVURLAsset(
             url: request?.url ?? url,
             options: ["AVURLAssetHTTPHeaderFieldsKey": request?.allHTTPHeaderFields ?? [:]]
-        )))
+        ))
+        var metadata: [AVMetadataItem] = []
+        let titleMetadata = AVMutableMetadataItem()
+        titleMetadata.identifier = .commonIdentifierTitle
+        titleMetadata.value = self.episodes[self.episode].toListString() as any NSCopying & NSObjectProtocol
+        if let copy = titleMetadata.copy() as? AVMetadataItem {
+            metadata.append(copy)
+        }
+        if let entry {
+            let subtitleMetadata = AVMutableMetadataItem()
+            subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
+            subtitleMetadata.value = entry.title as any NSCopying & NSObjectProtocol
+            if let copy = subtitleMetadata.copy() as? AVMetadataItem {
+                metadata.append(copy)
+            }
+        }
+        playerItem.externalMetadata = metadata
+        let player = AVPlayer(playerItem: playerItem)
 
         if let timeObserver {
             self.player?.removeTimeObserver(timeObserver)
         }
+        rateObserver?.invalidate()
+        self.player?.pause()
+        self.player?.currentItem?.asset.cancelLoading()
+
         self.timeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 15, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
             queue: .global(qos: .utility)
@@ -198,8 +267,52 @@ class VideoPlayerViewController: AVPlayerViewController {
                 }
             }
         }
-        self.player?.pause()
+        self.rateObserver = player.observe(\.rate) { [weak self] player, _ in
+            guard let self else { return }
+            Task { @MainActor in
+                if player.rate == 0, self.navigationController?.navigationBar.isHidden == true {
+                    self.navigationController?.navigationBar.isHidden = false
+                    UIView.animate(withDuration: CATransaction.animationDuration()) {
+                        self.navigationController?.navigationBar.alpha = 1
+                    }
+                } else if self.hideToolbarWhenPlaying,
+                          self.navigationController?.topViewController == self,
+                          player.rate > 0,
+                          self.navigationController?.navigationBar.isHidden == false {
+                    UIView.animate(withDuration: CATransaction.animationDuration()) {
+                        self.navigationController?.navigationBar.alpha = 0
+                    } completion: { _ in
+                        self.navigationController?.navigationBar.isHidden = true
+                    }
+                }
+            }
+        }
+        if let skipTimeObserver {
+            self.player?.removeTimeObserver(skipTimeObserver)
+        }
+        if showSkipButton, let skipTimes, !skipTimes.isEmpty {
+            self.skipTimeObserver = player.addBoundaryTimeObserver(forTimes: skipTimes.flatMap({ time in
+                [NSValue(time: CMTime(seconds: time.start, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))]
+                + (time.end.flatMap({ [NSValue(time: CMTime(seconds: $0 - 5, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))] }) ?? [])
+            }), queue: .global(qos: .utility)) { [weak self] in
+                guard let self, let time = self.player?.currentTime().seconds else { return }
+                if let assumedTime = skipTimes.first(where: { $0.start.equals(time, withTolerance: 1) }) {
+                    self.currentSkipItem = assumedTime
+                    Task { @MainActor in
+                        self.setButtonTitle(to: "Skip \(assumedTime.type.rawValue)")
+                        self.setButtonVisibility(true)
+                    }
+                } else if let assumedTime = skipTimes.first(where: { $0.end?.equals(time + 5, withTolerance: 1) == true }),
+                          self.currentSkipItem?.type == assumedTime.type {
+                    self.currentSkipItem = nil
+                    Task { @MainActor in
+                        self.setButtonVisibility(false)
+                    }
+                }
+            }
+        }
         self.player = player
+
         if self.autoPlay {
             self.player?.play()
         }
@@ -224,6 +337,42 @@ class VideoPlayerViewController: AVPlayerViewController {
         if self.autoNextEpisode, self.episode > 0 {
             Task {
                 await setEpisode(to: self.episode - 1)
+            }
+        }
+    }
+
+    @objc func skipButtonPressed() {
+        if let endTime = currentSkipItem?.end ?? player?.currentItem?.duration.seconds {
+            Task {
+                await self.player?.seek(to: CMTime(seconds: endTime - 2, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
+                Task { @MainActor in
+                    self.setButtonVisibility(false)
+                }
+            }
+        }
+    }
+
+    func setButtonTitle(to title: String) {
+        skipButton.setAttributedTitle(NSAttributedString(
+            string: title,
+            attributes: [.font: UIFont.systemFont(ofSize: 17, weight: .bold)]
+        ), for: .normal)
+        skipButtonWidthConstraint?.isActive = false
+        skipButtonWidthConstraint = skipButton.widthAnchor.constraint(equalToConstant: skipButton.intrinsicContentSize.width + 25)
+    }
+
+    func setButtonVisibility(_ visible: Bool) {
+        guard self.skipButton.isHidden == visible else { return }
+        if visible {
+            self.skipButton.isHidden = false
+            UIView.animate(withDuration: CATransaction.animationDuration()) {
+                self.skipButton.alpha = 1
+            }
+        } else {
+            UIView.animate(withDuration: CATransaction.animationDuration()) {
+                self.skipButton.alpha = 0
+            } completion: { _ in
+                self.skipButton.isHidden = true
             }
         }
     }
@@ -273,6 +422,9 @@ class VideoPlayerViewController: AVPlayerViewController {
 
 extension VideoPlayerViewController {
     @objc func closeViewer() {
+        self.player?.pause()
+        self.player?.currentItem?.asset.cancelLoading()
+        self.player?.replaceCurrentItem(with: nil)
         self.navigationController?.popViewController(animated: true)
     }
 
@@ -289,7 +441,10 @@ extension VideoPlayerViewController {
     }
 
     @objc func openSettings() {
-        present(VideoPlayerSettingsViewController(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl), animated: true)
+        self.navigationController?.pushViewController(
+            VideoPlayerSettingsViewController(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl),
+            animated: true
+        )
     }
 }
 
@@ -316,5 +471,17 @@ extension VideoPlayerViewController: UIGestureRecognizerDelegate {
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
     ) -> Bool {
         true
+    }
+}
+
+extension VideoPlayerViewController: AVPlayerViewControllerDelegate {
+    func playerViewController(_ playerViewController: AVPlayerViewController,
+                              willBeginFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        self.navigationController?.navigationBar.isHidden = true
+    }
+
+    func playerViewController(_ playerViewController: AVPlayerViewController,
+                              willEndFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        self.navigationController?.navigationBar.isHidden = false
     }
 }

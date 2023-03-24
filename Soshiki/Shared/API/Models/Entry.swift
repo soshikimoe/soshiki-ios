@@ -30,6 +30,7 @@ struct Entry: Codable, Hashable {
     let links: [Entry.Link]
     let platforms: [Entry.Platform]
     let trackers: [Entry.Tracker]
+    let skipTimes: [Entry.SkipTime]?
 
     struct AlternativeTitle: Codable {
         let title: String
@@ -109,6 +110,39 @@ struct Entry: Codable, Hashable {
         let id: String
         let name: String
         let entryId: String
+    }
+
+    struct SkipTime: Codable {
+        let episode: Double
+        let times: [SkipTimeItem]
+    }
+
+    struct SkipTimeItem: Codable {
+        let type: SkipTimeItemType
+        let start: Double
+        let end: Double?
+    }
+
+    enum SkipTimeItemType: String, Codable {
+        case intro = "Intro"
+        case mixedIntro = "Mixed Intro"
+        case newIntro = "New Intro"
+        case canon = "Canon"
+        case mustWatch = "Must Watch"
+        case branding = "Branding"
+        case recap = "Recap"
+        case filler = "Filler"
+        case transition = "Transition"
+        case credits = "Credits"
+        case mixedCredits = "Mixed Credits"
+        case newCredits = "New Credits"
+        case preview = "Preview"
+        case titleCard = "Title Card"
+        case unknown = "Unknown"
+
+        func shouldSkip() -> Bool {
+            [.intro, .mixedIntro, .newIntro, .recap, .filler, .credits, .mixedCredits, .newCredits, .preview].contains(self)
+        }
     }
 
     func toLocalEntry() -> LocalEntry {

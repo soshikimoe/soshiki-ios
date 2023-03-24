@@ -134,4 +134,5 @@ struct SourceListSourceManifest: Codable {
     let icon: String
     let version: String
     let type: String
+    let schema: Int
 }

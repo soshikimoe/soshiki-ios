@@ -133,7 +133,7 @@ class JSImageSource: JSSource, ImageSource {
                 print(error.toString() ?? "JSContext Error")
                 return callback.resume(returning: nil)
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let url = request.urlRequest.url,
+            guard let url = request.urlRequest.url?.absoluteString,
                   let object = self.context.objectForKeyedSubscript(self.id),
                   let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
                   let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {

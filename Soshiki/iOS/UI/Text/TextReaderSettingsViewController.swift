@@ -133,13 +133,13 @@ extension TextReaderSettingsViewController {
                 colorWell.selectedColor = fontColor
                 colorWell.tag = 0
                 colorWell.addTarget(self, action: #selector(colorWellDidChangeValue(_:)), for: .valueChanged)
-                cell =  ColorPickerTableViewCell(title: "Font Color", colorWell: colorWell, reuseIdentifier: "ColorPickerTableViewCell")
+                cell = ColorPickerTableViewCell(title: "Font Color", colorWell: colorWell, reuseIdentifier: "ColorPickerTableViewCell")
             case 3:
                 let colorWell = UIColorWell()
                 colorWell.selectedColor = backgroundColor
                 colorWell.tag = 1
                 colorWell.addTarget(self, action: #selector(colorWellDidChangeValue(_:)), for: .valueChanged)
-                cell =  ColorPickerTableViewCell(title: "Background Color", colorWell: colorWell, reuseIdentifier: "ColorPickerTableViewCell")
+                cell = ColorPickerTableViewCell(title: "Background Color", colorWell: colorWell, reuseIdentifier: "ColorPickerTableViewCell")
             default:
                 cell = tableView.dequeueReusableCell(withIdentifier: "UITableViewCell", for: indexPath)
             }
