@@ -8,22 +8,27 @@
 import Foundation
 import ZIPFoundation
 import SafariServices
+import JavaScriptCore
 
 class TrackerManager {
     static let shared = TrackerManager()
+
+    let context = JSContext()!
 
     var trackers: [Tracker] = []
 
     var currentLoginInformation: (tracker: Tracker, viewController: SFSafariViewController)?
 
     func startup() {
+        injectDependencies()
+
         let trackersDirectory = FileManager.default.documentDirectory.appendingPathComponent("Trackers")
         if !FileManager.default.fileExists(atPath: trackersDirectory.path) {
             guard (try? FileManager.default.createDirectory(at: trackersDirectory, withIntermediateDirectories: true)) != nil else { return }
         }
         guard let trackers = try? FileManager.default.contentsOfDirectory(at: trackersDirectory, includingPropertiesForKeys: nil) else { return }
         for tracker in trackers {
-            if let tracker = Tracker.load(directory: tracker) {
+            if let tracker = Tracker.load(directory: tracker, context: context) {
                 self.trackers.append(tracker)
             }
         }
@@ -66,7 +71,7 @@ class TrackerManager {
             for item in items {
                 _ = try? FileManager.default.moveItem(at: item, to: trackerDirectory.appendingPathComponent(item.lastPathComponent))
             }
-            if let tracker = Tracker.load(directory: trackerDirectory) {
+            if let tracker = Tracker.load(directory: trackerDirectory, context: context) {
                 self.trackers.append(tracker)
                 NotificationCenter.default.post(name: .init(TrackerManager.Keys.update), object: nil)
             }
@@ -109,6 +114,47 @@ class TrackerManager {
             }
         }
     }
+
+    func injectDependencies() {
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext LOG: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "log")
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext WARN: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "warn")
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext ERROR: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "error")
+        JSFetch.inject(into: context)
+        JSDom.inject(into: context)
+
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return UserDefaults.standard.value(forKey: "settings.tracker.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> Any?, forKeyedSubscript: "getSettingsValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return UserDefaults.standard.value(forKey: "storage.tracker.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> Any?, forKeyedSubscript: "getStorageValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, value, id in
+            guard let key = key.toString(), let id = id.toString() else { return }
+            UserDefaults.standard.set(value.toObject(), forKey: "storage.tracker.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue, JSValue) -> Void, forKeyedSubscript: "setStorageValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return KeychainManager.shared.get("keychain.tracker.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> String?, forKeyedSubscript: "getKeychainValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, value, id in
+            guard let key = key.toString(), let value = value.toString(), let id = id.toString() else { return }
+            KeychainManager.shared.set(value, forKey: "keychain.tracker.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue, JSValue) -> Void, forKeyedSubscript: "setKeychainValue")
+
+        context.objectForKeyedSubscript("globalThis").setObject({ status, id in
+            guard let id = id.toString() else { return }
+            UserDefaults.standard.set(status.toBool(), forKey: "tracker.\(id).loggedIn")
+            NotificationCenter.default.post(name: .init("tracker.\(id).loggedIn"), object: nil)
+        } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setLoginStatus")
+    }
 }
 
 extension TrackerManager {
@@ -123,6 +169,7 @@ struct TrackerManifest: Codable {
     let author: String
     let icon: String
     let version: String
+    let schema: Int?
 }
 
 typealias TrackerListManifest = [TrackerListTrackerManifest]
@@ -134,5 +181,5 @@ struct TrackerListTrackerManifest: Codable {
     let author: String
     let icon: String
     let version: String
-    let schema: Int
+    let schema: Int?
 }

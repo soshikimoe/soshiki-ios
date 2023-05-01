@@ -8,11 +8,11 @@
 import UIKit
 import Nuke
 
-class ImageReaderViewController: UIPageViewController {
+class ImageReaderViewController_Old: UIPageViewController {
     var observers: [NSObjectProtocol] = []
 
     var pagesToPreload = UserDefaults.standard.object(forKey: "settings.image.pagesToPreload") as? Int ?? 3
-    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode(rawValue: $0) }) ?? .rtl {
+    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode_Old(rawValue: $0) }) ?? .rtl {
         didSet {
             Task {
                 await self.setChapter(to: chapter, direction: .none)
@@ -135,7 +135,7 @@ class ImageReaderViewController: UIPageViewController {
         )
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.image.readingMode"), object: nil, queue: nil) { [weak self] _ in
-                self?.readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode(rawValue: $0) }) ?? .rtl
+                self?.readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode_Old(rawValue: $0) }) ?? .rtl
             }
         )
     }
@@ -369,7 +369,7 @@ class ImageReaderViewController: UIPageViewController {
     }
 }
 
-extension ImageReaderViewController: UIPageViewControllerDataSource {
+extension ImageReaderViewController_Old: UIPageViewControllerDataSource {
     func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
         if let index = pageViewControllers.firstIndex(of: viewController), index > 0 {
 //            loadPages((index - pagesToPreload - 1)..<(index))
@@ -389,7 +389,7 @@ extension ImageReaderViewController: UIPageViewControllerDataSource {
     }
 }
 
-extension ImageReaderViewController: UIPageViewControllerDelegate {
+extension ImageReaderViewController_Old: UIPageViewControllerDelegate {
     func pageViewController(
         _ pageViewController: UIPageViewController,
         didFinishAnimating finished: Bool,
@@ -427,7 +427,7 @@ extension ImageReaderViewController: UIPageViewControllerDelegate {
     }
 }
 
-extension ImageReaderViewController {
+extension ImageReaderViewController_Old {
     @objc func leftPage() {
         guard page >= (hasPreviousChapter ? -1 : 0), page < (details?.pages.count ?? 0) + (hasNextChapter ? 1 : 0) else { return }
         if readingMode == .ltr {
@@ -491,7 +491,7 @@ extension ImageReaderViewController {
     }
 
     @objc func openSettings() {
-        self.navigationController?.pushViewController(ImageReaderSettingsViewController(), animated: true)
+        self.navigationController?.pushViewController(ImageReaderSettingsViewController_Old(), animated: true)
     }
 
     @objc func closeReader() {
@@ -513,7 +513,7 @@ extension ImageReaderViewController {
     }
 }
 
-extension ImageReaderViewController {
+extension ImageReaderViewController_Old {
     @objc func singleTap(_ gestureRecognizer: UITapGestureRecognizer? = nil) {
         if let gestureRecognizer {
             if CGRect(x: 0, y: 0, width: self.view.bounds.width / 4, height: self.view.bounds.height).contains(
@@ -547,7 +547,7 @@ extension ImageReaderViewController {
     }
 }
 
-enum ReadingMode: String, CaseIterable {
+enum ReadingMode_Old: String, CaseIterable {
     case ltr = "Left to Right"
     case rtl = "Right to Left"
 }

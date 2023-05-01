@@ -8,6 +8,7 @@
 import UIKit
 import UserNotifications
 import Foundation
+import AsyncDisplayKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -63,7 +64,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         let info = response.notification.request.content.userInfo
         guard let id = info["id"] as? String,
               let mediaType = (info["mediaType"] as? String).flatMap({ MediaType(rawValue: $0) }) else { return }
-        print(id, mediaType)
         Task {
             if let entry = try? await SoshikiAPI.shared.getEntry(mediaType: mediaType, id: id).get() {
                 NotificationCenter.default.post(name: .init("app.openToEntry"), object: entry)

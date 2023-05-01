@@ -7,7 +7,7 @@
 
 import UIKit
 
-class VideoPlayerSettingsViewController: UITableViewController {
+class VideoPlayerSettingsViewController_Old: UITableViewController {
     var observers: [NSObjectProtocol] = []
 
     var autoPlay = UserDefaults.standard.object(forKey: "settings.video.autoPlay") as? Bool ?? true
@@ -21,7 +21,7 @@ class VideoPlayerSettingsViewController: UITableViewController {
     var currentlyPlayingUrl: URL?
 
     init(providers: [VideoSourceEpisodeProvider], currentlyPlayingUrl: URL?) {
-        self.urls = VideoPlayerSettingsViewController.providerUrlsByQuality(providers)
+        self.urls = VideoPlayerSettingsViewController_Old.providerUrlsByQuality(providers)
         self.currentlyPlayingUrl = currentlyPlayingUrl
         super.init(style: .insetGrouped)
         self.title = "Settings"
@@ -123,7 +123,7 @@ class VideoPlayerSettingsViewController: UITableViewController {
     }
 }
 
-extension VideoPlayerSettingsViewController {
+extension VideoPlayerSettingsViewController_Old {
     override func numberOfSections(in tableView: UITableView) -> Int { 2 }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

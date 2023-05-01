@@ -9,13 +9,13 @@ import UIKit
 import Nuke
 import SafariServices
 
-class EntryViewController: UITableViewController {
+class EntryViewController_Old: UITableViewController {
     let entry: Entry
     let entrySources: [Entry.Source]
     var source: Entry.Source?
     var history: History?
 
-    let entryHeaderView: EntryHeaderView
+    let entryHeaderView: EntryHeaderView_Old
 
     var textChapters: [TextSourceChapter] = []
     var imageChapters: [ImageSourceChapter] = []
@@ -121,7 +121,7 @@ class EntryViewController: UITableViewController {
 
     init(entry: Entry) {
         self.entry = entry
-        self.entryHeaderView = EntryHeaderView(mediaType: entry.mediaType)
+        self.entryHeaderView = EntryHeaderView_Old(mediaType: entry.mediaType)
         self.entryHeaderView.setEntry(to: entry.toLocalEntry(), with: entry)
 
         switch entry.mediaType {
@@ -240,9 +240,9 @@ class EntryViewController: UITableViewController {
             if imageChapters.indices.contains(index) {
                 navigationController?.pushViewController(
                     ImageReaderViewController(
-                        chapters: imageChapters,
-                        chapter: index,
                         source: source,
+                        chapters: imageChapters,
+                        chapterIndex: index,
                         entry: entry,
                         history: history
                     ),
@@ -253,9 +253,9 @@ class EntryViewController: UITableViewController {
             if videoEpisodes.indices.contains(index) {
                 navigationController?.pushViewController(
                     VideoPlayerViewController(
-                        episodes: videoEpisodes,
-                        episode: index,
                         source: source,
+                        episodes: videoEpisodes,
+                        episodeIndex: index,
                         entry: entry,
                         history: history
                     ),
@@ -268,7 +268,7 @@ class EntryViewController: UITableViewController {
     }
 }
 
-extension EntryViewController {
+extension EntryViewController_Old {
     override func numberOfSections(in tableView: UITableView) -> Int { 1 }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -398,7 +398,7 @@ extension EntryViewController {
     }
 }
 
-extension EntryViewController: EntryHeaderViewDelegate {
+extension EntryViewController_Old: EntryHeaderViewDelegate_Old {
     func bookmarkButtonPressed() {
         if LibraryManager.shared.library(forMediaType: entry.mediaType)?.all.ids.contains(entry._id) == true {
             Task {
@@ -446,7 +446,7 @@ extension EntryViewController: EntryHeaderViewDelegate {
     }
 
     func sizeDidChange() {
-        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView {
+        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView_Old {
             self.tableView.tableHeaderView?.layoutIfNeeded()
             self.tableView.tableHeaderView = self.tableView.tableHeaderView
         }

@@ -8,8 +8,6 @@
 import UIKit
 
 class SettingsViewController: SettingTableViewController {
-    var observers: [NSObjectProtocol] = []
-
     var settingGroups: [SettingGroup] {
         [
             SettingGroup(id: "account", header: "Account", items: [
@@ -44,6 +42,17 @@ class SettingsViewController: SettingTableViewController {
                     UserDefaults.standard.set(newValue?.rawValue, forKey: "app.settings.accentColor")
                     NotificationCenter.default.post(name: .init("app.settings.accentColor"), object: nil)
                     self?.tableView.window?.tintColor = newValue ?? UIColor.tintColor
+                },
+                SelectSettingItem(
+                    id: "discoverSource",
+                    title: "Discover Source",
+                    value: UserDefaults.standard.string(forKey: "app.settings.discoverSource").flatMap({ name in
+                        TrackerManager.shared.trackers.first(where: { $0.name == name && $0.schema >= 2 })?.name
+                    }) ?? TrackerManager.shared.trackers.filter({ $0.schema >= 2 }).first?.name,
+                    options: TrackerManager.shared.trackers.filter({ $0.schema >= 2 }).map({ $0.name })
+                ) { newValue in
+                    UserDefaults.standard.set(newValue, forKey: "app.settings.discoverSource")
+                    NotificationCenter.default.post(name: .init("app.settings.discoverSource"), object: nil)
                 }
             ]),
             SettingGroup(id: "sources", header: "Sources", items: [
@@ -90,12 +99,6 @@ class SettingsViewController: SettingTableViewController {
                 }
             }
         )
-    }
-
-    deinit {
-        for observer in observers {
-            NotificationCenter.default.removeObserver(observer)
-        }
     }
 
     required init?(coder: NSCoder) {

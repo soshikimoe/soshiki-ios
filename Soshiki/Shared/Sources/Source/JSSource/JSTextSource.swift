@@ -28,7 +28,9 @@ class JSTextSource: JSSource, TextSource {
                                 name: chapter["name"] as? String,
                                 chapter: chapterNumber,
                                 volume: chapter["volume"] as? Double,
-                                translator: chapter["translator"] as? String
+                                translator: chapter["translator"] as? String,
+                                thumbnail: chapter["thumbnail"] as? String,
+                                timestamp: chapter["timestamp"] as? Double
                             )
                         } else {
                             return nil

@@ -17,7 +17,7 @@ class SourceEntryViewController: UITableViewController {
     var entry: Entry?
     var history: History?
 
-    let entryHeaderView: EntryHeaderView
+    let entryHeaderView: EntryHeaderView_Old
 
     var textChapters: [TextSourceChapter] = []
     var imageChapters: [ImageSourceChapter] = []
@@ -26,7 +26,7 @@ class SourceEntryViewController: UITableViewController {
     init(sourceShortEntry: SourceShortEntry, source: any Source) {
         self.sourceShortEntry = sourceShortEntry
         self.source = source
-        self.entryHeaderView = EntryHeaderView(mediaType: source is any TextSource ? .text : source is any ImageSource ? .image : .video)
+        self.entryHeaderView = EntryHeaderView_Old(mediaType: source is any TextSource ? .text : source is any ImageSource ? .image : .video)
         self.entryHeaderView.setEntry(to: sourceShortEntry.toLocalEntry())
         super.init(style: .plain)
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UITableViewCell")
@@ -129,7 +129,7 @@ class SourceEntryViewController: UITableViewController {
         case let source as any ImageSource:
             if imageChapters.indices.contains(index) {
                 navigationController?.pushViewController(
-                    ImageReaderViewController(
+                    ImageReaderViewController_Old(
                         chapters: imageChapters,
                         chapter: index,
                         source: source,
@@ -142,7 +142,7 @@ class SourceEntryViewController: UITableViewController {
         case let source as any VideoSource:
             if videoEpisodes.indices.contains(index) {
                 navigationController?.pushViewController(
-                    VideoPlayerViewController(
+                    VideoPlayerViewController_Old(
                         episodes: videoEpisodes,
                         episode: index,
                         source: source,
@@ -258,7 +258,7 @@ extension SourceEntryViewController {
     }
 }
 
-extension SourceEntryViewController: EntryHeaderViewDelegate {
+extension SourceEntryViewController: EntryHeaderViewDelegate_Old {
     func bookmarkButtonPressed() {
         guard let entry else { return }
         if LibraryManager.shared.library(forMediaType: entry.mediaType)?.all.ids.contains(entry._id) == true {
@@ -313,7 +313,7 @@ extension SourceEntryViewController: EntryHeaderViewDelegate {
     }
 
     func sizeDidChange() {
-        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView {
+        if self.tableView.tableHeaderView?.subviews.first is EntryHeaderView_Old {
             self.tableView.tableHeaderView?.layoutIfNeeded()
             self.tableView.tableHeaderView = self.tableView.tableHeaderView
         }

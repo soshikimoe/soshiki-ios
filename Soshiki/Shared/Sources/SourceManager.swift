@@ -12,6 +12,8 @@ import JavaScriptCore
 class SourceManager {
     static let shared = SourceManager()
 
+    let context = JSContext()!
+
     var sources: [any Source] = []
 
     var textSources: [any TextSource] {
@@ -25,13 +27,15 @@ class SourceManager {
     }
 
     func startup() {
+        injectDependencies()
+
         let sourcesDirectory = FileManager.default.documentDirectory.appendingPathComponent("Sources")
         if !FileManager.default.fileExists(atPath: sourcesDirectory.path) {
             guard (try? FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)) != nil else { return }
         }
         guard let sources = try? FileManager.default.contentsOfDirectory(at: sourcesDirectory, includingPropertiesForKeys: nil) else { return }
         for source in sources {
-            if let source = JSSource.load(directory: source) {
+            if let source = JSSource.load(directory: source, context: context) {
                 self.sources.append(source)
             }
         }
@@ -74,7 +78,7 @@ class SourceManager {
             for item in items {
                 _ = try? FileManager.default.moveItem(at: item, to: sourceDirectory.appendingPathComponent(item.lastPathComponent))
             }
-            if let source = JSSource.load(directory: sourceDirectory) {
+            if let source = JSSource.load(directory: sourceDirectory, context: context) {
                 self.sources.append(source)
                 NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
             }
@@ -102,6 +106,41 @@ class SourceManager {
         for source in sourceList.video {
             await installSource(url.deletingLastPathComponent().appendingPathComponent(source.path))
         }
+    }
+
+    func injectDependencies() {
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext LOG: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "log")
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext WARN: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "warn")
+        context.objectForKeyedSubscript("console").setObject({ value in
+            print("JSContext ERROR: \(value.toString() ?? "")")
+        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "error")
+        JSFetch.inject(into: context)
+        JSDom.inject(into: context)
+
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return UserDefaults.standard.value(forKey: "settings.source.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> Any?, forKeyedSubscript: "getSettingsValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return UserDefaults.standard.value(forKey: "storage.source.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> Any?, forKeyedSubscript: "getStorageValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, value, id in
+            guard let key = key.toString(), let id = id.toString() else { return }
+            UserDefaults.standard.set(value.toObject(), forKey: "storage.source.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue, JSValue) -> Void, forKeyedSubscript: "setStorageValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, id in
+            guard let key = key.toString(), let id = id.toString() else { return nil }
+            return KeychainManager.shared.get("keychain.source.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue) -> String?, forKeyedSubscript: "getKeychainValue")
+        context.objectForKeyedSubscript("globalThis").setObject({ key, value, id in
+            guard let key = key.toString(), let value = value.toString(), let id = id.toString() else { return }
+            KeychainManager.shared.set(value, forKey: "keychain.source.\(id).\(key)")
+        } as @convention(block) (JSValue, JSValue, JSValue) -> Void, forKeyedSubscript: "setKeychainValue")
     }
 }
 
@@ -134,5 +173,5 @@ struct SourceListSourceManifest: Codable {
     let icon: String
     let version: String
     let type: String
-    let schema: Int
+    let schema: Int?
 }

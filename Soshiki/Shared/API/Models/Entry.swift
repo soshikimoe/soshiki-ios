@@ -48,12 +48,22 @@ struct Entry: Codable, Hashable {
         let quality: Entry.ImageQuality
     }
 
-    enum ImageQuality: String, Codable {
+    enum ImageQuality: String, Codable, Comparable {
         case low = "LOW"
         case medium = "MEDIUM"
         case high = "HIGH"
         case full = "FULL"
         case unknown = "UNKNOWN"
+
+        static func < (lhs: Entry.ImageQuality, rhs: Entry.ImageQuality) -> Bool {
+            switch lhs {
+            case .unknown: return rhs == .low || rhs == .medium || rhs == .high || rhs == .full
+            case .low: return rhs == .medium || rhs == .high || rhs == .full
+            case .medium: return rhs == .high || rhs == .full
+            case .high: return rhs == .full
+            case .full: return false
+            }
+        }
     }
 
     enum ContentRating: String, Codable {
@@ -61,6 +71,15 @@ struct Entry: Codable, Hashable {
         case suggestive = "SUGGESTIVE"
         case nsfw = "NSFW"
         case unknown = "UNKNOWN"
+
+        func toSourceContentRating() -> SourceEntryContentRating {
+            switch self {
+            case .safe: return .safe
+            case .suggestive: return .suggestive
+            case .nsfw: return .nsfw
+            case .unknown: return .safe
+            }
+        }
     }
 
     enum Status: String, Codable {
@@ -70,6 +89,17 @@ struct Entry: Codable, Hashable {
         case hiatus = "HIATUS"
         case cancelled = "CANCELLED"
         case unknown = "UNKNOWN"
+
+        func toSourceStatus() -> SourceEntryStatus {
+            switch self {
+            case .completed: return .completed
+            case .releasing: return .ongoing
+            case .unreleased: return .unknown
+            case .hiatus: return .hiatus
+            case .cancelled: return .dropped
+            case .unknown: return .unknown
+            }
+        }
     }
 
     struct Tag: Codable, Hashable {
@@ -170,5 +200,24 @@ struct Entry: Codable, Hashable {
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(self._id)
+    }
+
+    func toSourceEntry() -> SourceEntry {
+        SourceEntry(
+            id: self._id,
+            title: self.title,
+            staff: self.staff.map({ $0.name }),
+            tags: self.tags.map({ $0.name }),
+            cover: self.covers.max(by: { $0.quality < $1.quality })?.image ?? "",
+            banner: self.banners.max(by: { $0.quality < $1.quality })?.image,
+            nsfw: self.contentRating.toSourceContentRating(),
+            status: self.status.toSourceStatus(),
+            score: self.score,
+            items: nil,
+            season: nil,
+            year: nil,
+            url: self.links.first?.url ?? "",
+            description: self.description ?? ""
+        )
     }
 }

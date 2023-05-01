@@ -31,36 +31,36 @@ class LibraryViewController: UICollectionViewController {
     init() {
         let layout = UICollectionViewCompositionalLayout(sectionProvider: { _, environment in
             let itemsPerRow = UserDefaults.standard.object(forKey: "app.settings.itemsPerRow") as? Int ?? 3
-            let item = NSCollectionLayoutItem(
-                layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
-                    heightDimension: .fractionalWidth(CGFloat(1.5) / CGFloat(itemsPerRow))
-                )
-            )
-            item.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1),
-                    heightDimension: .estimated(environment.container.contentSize.width * 3 / 2)
+                    heightDimension: .estimated(environment.container.contentSize.width / CGFloat(itemsPerRow) * 1.5 + 40)
                 ),
-                subitem: item,
+                subitem: NSCollectionLayoutItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
+                        heightDimension: .estimated(environment.container.contentSize.width / CGFloat(itemsPerRow) * 1.5 + 40)
+                    )
+                ),
                 count: itemsPerRow
             )
+            group.interItemSpacing = .fixed(16)
             let section = NSCollectionLayoutSection(group: group)
-            section.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
+            section.interGroupSpacing = 16
+            section.contentInsets = NSDirectionalEdgeInsets(all: 8)
             return section
         })
         super.init(collectionViewLayout: layout)
 
         self.title = "Library"
 
-        let cellRegistration: UICollectionView.CellRegistration<LibraryCollectionViewCell, Entry> = .init(handler: { cell, _, entry in
-            cell.setEntry(entry: entry)
-            if let notificationBadge = self.notificationBadges[entry._id] {
-                cell.setNotificationBadge(to: notificationBadge)
-            } else {
-                cell.setNotificationBadge(to: 0)
-            }
+        let cellRegistration: UICollectionView.CellRegistration<SourceEntryCollectionViewCell, Entry> = .init(handler: { cell, _, entry in
+            cell.setEntry(to: entry.toSourceEntry())
+//            if let notificationBadge = self.notificationBadges[entry._id] {
+//                cell.setNotificationBadge(to: notificationBadge)
+//            } else {
+//                cell.setNotificationBadge(to: 0)
+//            }
         })
         dataSource = UICollectionViewDiffableDataSource(
             collectionView: self.collectionView,
@@ -113,7 +113,7 @@ class LibraryViewController: UICollectionViewController {
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("app.openToEntry"), object: nil, queue: nil) { [weak self] notification in
                 if let entry = notification.object as? Entry {
-                    self?.navigationController?.pushViewController(EntryViewController(entry: entry), animated: true)
+                    self?.navigationController?.pushViewController(EntryViewController_Old(entry: entry), animated: true)
                 }
             }
         )

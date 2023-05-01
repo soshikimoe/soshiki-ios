@@ -8,7 +8,7 @@
 import UIKit
 import AVKit
 
-class VideoPlayerViewController: AVPlayerViewController {
+class VideoPlayerViewController_Old: AVPlayerViewController {
     var observers: [NSObjectProtocol] = []
 
     var episodes: [VideoSourceEpisode]
@@ -270,19 +270,19 @@ class VideoPlayerViewController: AVPlayerViewController {
         self.rateObserver = player.observe(\.rate) { [weak self] player, _ in
             guard let self else { return }
             Task { @MainActor in
-                if player.rate == 0, self.navigationController?.navigationBar.isHidden == true {
-                    self.navigationController?.navigationBar.isHidden = false
+                if player.rate == 0, self.navigationController?.isNavigationBarHidden == true {
+                    self.navigationController?.setNavigationBarHidden(false, animated: false)
                     UIView.animate(withDuration: CATransaction.animationDuration()) {
                         self.navigationController?.navigationBar.alpha = 1
                     }
                 } else if self.hideToolbarWhenPlaying,
                           self.navigationController?.topViewController == self,
                           player.rate > 0,
-                          self.navigationController?.navigationBar.isHidden == false {
+                          self.navigationController?.isNavigationBarHidden == false {
                     UIView.animate(withDuration: CATransaction.animationDuration()) {
                         self.navigationController?.navigationBar.alpha = 0
                     } completion: { _ in
-                        self.navigationController?.navigationBar.isHidden = true
+                        self.navigationController?.setNavigationBarHidden(true, animated: false)
                     }
                 }
             }
@@ -420,7 +420,7 @@ class VideoPlayerViewController: AVPlayerViewController {
     }
 }
 
-extension VideoPlayerViewController {
+extension VideoPlayerViewController_Old {
     @objc func closeViewer() {
         self.player?.pause()
         self.player?.currentItem?.asset.cancelLoading()
@@ -442,13 +442,13 @@ extension VideoPlayerViewController {
 
     @objc func openSettings() {
         self.navigationController?.pushViewController(
-            VideoPlayerSettingsViewController(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl),
+            VideoPlayerSettingsViewController_Old(providers: details?.providers ?? [], currentlyPlayingUrl: currentlyPlayingUrl),
             animated: true
         )
     }
 }
 
-extension VideoPlayerViewController {
+extension VideoPlayerViewController_Old {
     @objc func singleTap() {
         if self.navigationController?.navigationBar.isHidden == true {
             self.navigationController?.navigationBar.isHidden = false
@@ -465,7 +465,7 @@ extension VideoPlayerViewController {
     }
 }
 
-extension VideoPlayerViewController: UIGestureRecognizerDelegate {
+extension VideoPlayerViewController_Old: UIGestureRecognizerDelegate {
     func gestureRecognizer(
         _ gestureRecognizer: UIGestureRecognizer,
         shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
@@ -474,7 +474,7 @@ extension VideoPlayerViewController: UIGestureRecognizerDelegate {
     }
 }
 
-extension VideoPlayerViewController: AVPlayerViewControllerDelegate {
+extension VideoPlayerViewController_Old: AVPlayerViewControllerDelegate {
     func playerViewController(_ playerViewController: AVPlayerViewController,
                               willBeginFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator) {
         self.navigationController?.navigationBar.isHidden = true

@@ -19,14 +19,26 @@ enum SourceEntryContentRating: String {
     case nsfw = "NSFW"
 }
 
+enum SourceEntrySeason: String {
+    case winter = "WINTER"
+    case spring = "SPRING"
+    case summer = "SUMMER"
+    case fall = "FALL"
+}
+
 struct SourceEntry: Hashable {
     let id: String
     let title: String
     let staff: [String]
     let tags: [String]
     let cover: String
+    let banner: String?
     let nsfw: SourceEntryContentRating
     let status: SourceEntryStatus
+    let score: Double?
+    let items: Int?
+    let season: SourceEntrySeason?
+    let year: Int?
     let url: String
     let description: String
 

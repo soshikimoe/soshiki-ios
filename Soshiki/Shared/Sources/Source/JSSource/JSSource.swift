@@ -16,7 +16,7 @@ class JSSource: NetworkSource {
     let image: URL
     let context: JSContext
 
-    static func load(directory: URL) -> JSSource? {
+    static func load(directory: URL, context: JSContext? = nil) -> JSSource? {
         let manifestFile = directory.appendingPathComponent("manifest.json", conformingTo: .json)
         guard let manifestData = try? Data(contentsOf: manifestFile),
               let manifest = try? JSONDecoder().decode(SourceManifest.self, from: manifestData) else { return nil }
@@ -25,39 +25,7 @@ class JSSource: NetworkSource {
         guard let sourceData = try? Data(contentsOf: sourceFile),
               let script = String(data: sourceData, encoding: .utf8) else { return nil }
 
-        guard let context = JSContext() else { return nil }
-        context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext LOG - \(manifest.name) - \(value.toString() ?? "")")
-        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "log")
-        context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext WARN - \(manifest.name) - \(value.toString() ?? "")")
-        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "warn")
-        context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext ERROR - \(manifest.name) - \(value.toString() ?? "")")
-        } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "error")
-        JSFetch.inject(into: context)
-        JSDom.inject(into: context)
-
-        context.objectForKeyedSubscript("globalThis").setObject({ key in
-            guard let key = key.toString() else { return nil }
-            return UserDefaults.standard.value(forKey: "settings.source.\(manifest.id).\(key)")
-        } as @convention(block) (JSValue) -> Any?, forKeyedSubscript: "getSettingsValue")
-        context.objectForKeyedSubscript("globalThis").setObject({ key in
-            guard let key = key.toString() else { return nil }
-            return UserDefaults.standard.value(forKey: "storage.source.\(manifest.id).\(key)")
-        } as @convention(block) (JSValue) -> Any?, forKeyedSubscript: "getStorageValue")
-        context.objectForKeyedSubscript("globalThis").setObject({ key, value in
-            guard let key = key.toString() else { return }
-            UserDefaults.standard.set(value.toObject(), forKey: "storage.source.\(manifest.id).\(key)")
-        } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setStorageValue")
-        context.objectForKeyedSubscript("globalThis").setObject({ key in
-            guard let key = key.toString() else { return nil }
-            return KeychainManager.shared.get("keychain.source.\(manifest.id).\(key)")
-        } as @convention(block) (JSValue) -> String?, forKeyedSubscript: "getKeychainValue")
-        context.objectForKeyedSubscript("globalThis").setObject({ key, value in
-            guard let key = key.toString(), let value = value.toString() else { return }
-            KeychainManager.shared.set(value, forKey: "keychain.source.\(manifest.id).\(key)")
-        } as @convention(block) (JSValue, JSValue) -> Void, forKeyedSubscript: "setKeychainValue")
+        guard let context = context ?? JSContext() else { return nil }
 
         context.evaluateScript(script)
         context.objectForKeyedSubscript("globalThis").setObject(
@@ -249,8 +217,13 @@ class JSSource: NetworkSource {
                         staff: staff,
                         tags: tags,
                         cover: cover,
+                        banner: dict["banner"] as? String,
                         nsfw: nsfw,
                         status: status,
+                        score: dict["score"] as? Double,
+                        items: dict["items"] as? Int,
+                        season: (dict["season"] as? String).flatMap({ SourceEntrySeason(rawValue: $0) }),
+                        year: dict["year"] as? Int,
                         url: url,
                         description: description
                     ))

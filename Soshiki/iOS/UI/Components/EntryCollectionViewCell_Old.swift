@@ -8,7 +8,7 @@
 import UIKit
 import Nuke
 
-class EntryCollectionViewCell: UICollectionViewCell {
+class EntryCollectionViewCell_Old: UICollectionViewCell {
     let imageView = UIImageView()
     let titleView = UILabel()
     let gradientLayer = CAGradientLayer()

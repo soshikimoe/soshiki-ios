@@ -72,17 +72,18 @@ class LocalTextSource: TextSource, LocalSource {
         guard let manifestData = try? Data(contentsOf: manifestUrl),
               let manifest = try? JSONDecoder().decode(Manifest.self, from: manifestData),
               let entry = manifest.first(where: { $0.id == id })?.entry else { return nil }
-        return SourceEntry(
-            id: id,
-            title: entry.title,
-            staff: entry.staff,
-            tags: [],
-            cover: entry.cover,
-            nsfw: .safe,
-            status: .unknown,
-            url: "",
-            description: ""
-        )
+        return nil
+//        return SourceEntry(
+//            id: id,
+//            title: entry.title,
+//            staff: entry.staff,
+//            tags: [],
+//            cover: entry.cover,
+//            nsfw: .safe,
+//            status: .unknown,
+//            url: "",
+//            description: ""
+//        )
     }
 
     func getFilters() async -> [any SourceFilter] {
@@ -140,19 +141,20 @@ class LocalTextSource: TextSource, LocalSource {
         let rootPathUrl = rootFileUrl.deletingLastPathComponent()
         let authors = (try? rootFile.select("package > metadata > dc|creator").first()?.text()).flatMap({ [$0] }) ?? []
         let contributors = (try? rootFile.select("package > metadata > dc|contributor").compactMap({ try? $0.text() })) ?? []
-        return SourceEntry(
-            id: fileUrl.lastPathComponent,
-            title: (try? rootFile.select("package > metadata > dc|title").first()?.text()) ?? "",
-            staff: authors + contributors,
-            tags: [],
-            cover: (try? rootFile.select("package > metadata > meta[name=cover]").first()?.attr("content")).flatMap({ id in
-                        try? rootFile.select("package > manifest > item#\(id)").first()?.attr("href")
-                     }).flatMap({ rootPathUrl.appendingPathComponent($0).absoluteString }) ?? "",
-            nsfw: .safe,
-            status: .unknown,
-            url: "",
-            description: ""
-        )
+        return nil
+//        return SourceEntry(
+//            id: fileUrl.lastPathComponent,
+//            title: (try? rootFile.select("package > metadata > dc|title").first()?.text()) ?? "",
+//            staff: authors + contributors,
+//            tags: [],
+//            cover: (try? rootFile.select("package > metadata > meta[name=cover]").first()?.attr("content")).flatMap({ id in
+//                        try? rootFile.select("package > manifest > item#\(id)").first()?.attr("href")
+//                     }).flatMap({ rootPathUrl.appendingPathComponent($0).absoluteString }) ?? "",
+//            nsfw: .safe,
+//            status: .unknown,
+//            url: "",
+//            description: ""
+//        )
     }
 
     func getEpubChapters(_ fileUrl: URL, id: String, volume: Double? = nil) -> [TextSourceChapter] {
@@ -182,7 +184,9 @@ class LocalTextSource: TextSource, LocalSource {
                     name: try? element.text(),
                     chapter: Double(offset + 1),
                     volume: volume,
-                    translator: nil
+                    translator: nil,
+                    thumbnail: nil,
+                    timestamp: nil
                 )
             }).reversed() ?? []
         }

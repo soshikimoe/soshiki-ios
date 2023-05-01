@@ -29,16 +29,16 @@ class ImageSourceChapterObject: NSManagedObject {
         self.translator = imageSourceChapter.translator
     }
 
-    func get() -> ImageSourceChapter {
-        ImageSourceChapter(
-            id: id,
-            entryId: entryId,
-            name: name,
-            chapter: chapter,
-            volume: volume == -1 ? nil : volume,
-            translator: translator
-        )
-    }
+//    func get() -> ImageSourceChapter {
+//        ImageSourceChapter(
+//            id: id,
+//            entryId: entryId,
+//            name: name,
+//            chapter: chapter,
+//            volume: volume == -1 ? nil : volume,
+//            translator: translator
+//        )
+//    }
 }
 
 @objc(ImageSourceChapterDetailsObject)

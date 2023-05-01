@@ -8,7 +8,7 @@
 import UIKit
 import Nuke
 
-class LibraryCollectionViewCell: EntryCollectionViewCell {
+class LibraryCollectionViewCell: EntryCollectionViewCell_Old {
     var history: History?
 
     var entry: Entry!

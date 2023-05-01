@@ -69,23 +69,23 @@ class SourceViewController: UICollectionViewController {
 
         let layout = UICollectionViewCompositionalLayout(sectionProvider: { _, environment in
             let itemsPerRow = UserDefaults.standard.object(forKey: "app.settings.itemsPerRow") as? Int ?? 3
-            let item = NSCollectionLayoutItem(
-                layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
-                    heightDimension: .fractionalWidth(CGFloat(1.5) / CGFloat(itemsPerRow))
-                )
-            )
-            item.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
                     widthDimension: .fractionalWidth(1),
-                    heightDimension: .estimated(environment.container.contentSize.width * 3 / 2)
+                    heightDimension: .estimated(environment.container.contentSize.width / CGFloat(itemsPerRow) * 1.5 + 40)
                 ),
-                subitem: item,
+                subitem: NSCollectionLayoutItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(CGFloat(1) / CGFloat(itemsPerRow)),
+                        heightDimension: .estimated(environment.container.contentSize.width / CGFloat(itemsPerRow) * 1.5 + 40)
+                    )
+                ),
                 count: itemsPerRow
             )
+            group.interItemSpacing = .fixed(16)
             let section = NSCollectionLayoutSection(group: group)
-            section.contentInsets = .init(top: 5, leading: 5, bottom: 5, trailing: 5)
+            section.interGroupSpacing = 16
+            section.contentInsets = NSDirectionalEdgeInsets(all: 8)
             return section
         })
         let config = UICollectionViewCompositionalLayoutConfiguration()
@@ -103,8 +103,8 @@ class SourceViewController: UICollectionViewController {
 
         self.title = source.name
 
-        let cellRegistration: UICollectionView.CellRegistration<EntryCollectionViewCell, SourceShortEntry> = .init(handler: { cell, _, entry in
-            cell.setEntry(entry: entry.toLocalEntry())
+        let cellRegistration: UICollectionView.CellRegistration<SourceEntryCollectionViewCell, SourceShortEntry> = .init(handler: { cell, _, entry in
+            cell.setEntry(to: entry)
         })
         self.dataSource = UICollectionViewDiffableDataSource(
             collectionView: self.collectionView,
@@ -263,7 +263,7 @@ class SourceViewController: UICollectionViewController {
 extension SourceViewController {
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         self.navigationController?.pushViewController(
-            SourceEntryViewController(sourceShortEntry: entries[indexPath.item], source: source),
+            EntryViewController(sourceShortEntry: self.entries[indexPath.item], source: self.source),
             animated: true
         )
         collectionView.deselectItem(at: indexPath, animated: true)

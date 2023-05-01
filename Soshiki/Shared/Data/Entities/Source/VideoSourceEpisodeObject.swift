@@ -27,15 +27,15 @@ class VideoSourceEpisodeObject: NSManagedObject {
         self.type = videoSourceEpisode.type.rawValue
     }
 
-    func get() -> VideoSourceEpisode {
-        VideoSourceEpisode(
-            id: id,
-            entryId: entryId,
-            name: name,
-            episode: episode,
-            type: VideoSourceEpisodeType(rawValue: type) ?? .unknown
-        )
-    }
+//    func get() -> VideoSourceEpisode {
+//        VideoSourceEpisode(
+//            id: id,
+//            entryId: entryId,
+//            name: name,
+//            episode: episode,
+//            type: VideoSourceEpisodeType(rawValue: type) ?? .unknown
+//        )
+//    }
 }
 
 @objc(VideoSourceEpisodeDetailsObject)

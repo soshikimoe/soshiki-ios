@@ -7,11 +7,11 @@
 
 import UIKit
 
-class ImageReaderSettingsViewController: UITableViewController {
+class ImageReaderSettingsViewController_Old: UITableViewController {
     var observers: [NSObjectProtocol] = []
 
     var pagesToPreload = UserDefaults.standard.object(forKey: "settings.image.pagesToPreload") as? Int ?? 3
-    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode(rawValue: $0) }) ?? .rtl
+    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode_Old(rawValue: $0) }) ?? .rtl
 
     init() {
         super.init(style: .insetGrouped)
@@ -26,7 +26,7 @@ class ImageReaderSettingsViewController: UITableViewController {
         )
         observers.append(
             NotificationCenter.default.addObserver(forName: .init("settings.image.readingMode"), object: nil, queue: nil) { [weak self] _ in
-                self?.readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode(rawValue: $0) }) ?? .rtl
+                self?.readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode_Old(rawValue: $0) }) ?? .rtl
                 self?.tableView.reloadRows(at: [ IndexPath(item: 0, section: 0) ], with: .none)
             }
         )
@@ -43,7 +43,7 @@ class ImageReaderSettingsViewController: UITableViewController {
     }
 }
 
-extension ImageReaderSettingsViewController {
+extension ImageReaderSettingsViewController_Old {
     override func numberOfSections(in tableView: UITableView) -> Int { 1 }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 2 }
@@ -92,7 +92,7 @@ extension ImageReaderSettingsViewController {
 }
 
 class ImageReaderReadingModeViewController: UITableViewController {
-    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode(rawValue: $0) }) ?? .rtl {
+    var readingMode = UserDefaults.standard.string(forKey: "settings.image.readingMode").flatMap({ ReadingMode_Old(rawValue: $0) }) ?? .rtl {
         didSet {
             UserDefaults.standard.set(readingMode.rawValue, forKey: "settings.image.readingMode")
             NotificationCenter.default.post(name: .init("settings.image.readingMode"), object: nil)
@@ -112,13 +112,13 @@ extension ImageReaderReadingModeViewController {
     override func numberOfSections(in tableView: UITableView) -> Int { 1 }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        ReadingMode.allCases.count
+        ReadingMode_Old.allCases.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "UITableViewCell", for: indexPath)
         var content = cell.defaultContentConfiguration()
-        let mode = ReadingMode.allCases[indexPath.item]
+        let mode = ReadingMode_Old.allCases[indexPath.item]
         content.text = mode.rawValue
         if mode == readingMode {
             cell.accessoryView = UIImageView(image: UIImage(systemName: "checkmark"))
@@ -130,7 +130,7 @@ extension ImageReaderReadingModeViewController {
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        readingMode = ReadingMode.allCases[indexPath.item]
+        readingMode = ReadingMode_Old.allCases[indexPath.item]
         tableView.deselectRow(at: indexPath, animated: true)
         tableView.reloadData()
     }

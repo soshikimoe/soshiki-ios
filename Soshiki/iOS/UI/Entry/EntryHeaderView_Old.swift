@@ -8,10 +8,10 @@
 import UIKit
 import Nuke
 
-class EntryHeaderView: UIView {
+class EntryHeaderView_Old: UIView {
     var observers: [NSObjectProtocol] = []
 
-    weak var delegate: (any EntryHeaderViewDelegate)?
+    weak var delegate: (any EntryHeaderViewDelegate_Old)?
 
     let mediaType: MediaType
     var localEntry: LocalEntry?
@@ -125,7 +125,7 @@ class EntryHeaderView: UIView {
         continueButton.tintColor = .white
         continueButton.layer.cornerRadius = 10
         continueButton.clipsToBounds = true
-        continueButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.continueButtonPressed), for: .touchUpInside)
+        continueButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate_Old.continueButtonPressed), for: .touchUpInside)
 
         bookmarkButton.translatesAutoresizingMaskIntoConstraints = false
         bookmarkButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -138,7 +138,7 @@ class EntryHeaderView: UIView {
         bookmarkButton.tintColor = .white
         bookmarkButton.layer.cornerRadius = 10
         bookmarkButton.clipsToBounds = true
-        bookmarkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.bookmarkButtonPressed), for: .touchUpInside)
+        bookmarkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate_Old.bookmarkButtonPressed), for: .touchUpInside)
 
         linkButton.translatesAutoresizingMaskIntoConstraints = false
         linkButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -151,7 +151,7 @@ class EntryHeaderView: UIView {
         linkButton.tintColor = .white
         linkButton.layer.cornerRadius = 10
         linkButton.clipsToBounds = true
-        linkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.linkButtonPressed), for: .touchUpInside)
+        linkButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate_Old.linkButtonPressed), for: .touchUpInside)
 
         webViewButton.translatesAutoresizingMaskIntoConstraints = false
         webViewButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
@@ -164,7 +164,7 @@ class EntryHeaderView: UIView {
         webViewButton.tintColor = .white
         webViewButton.layer.cornerRadius = 10
         webViewButton.clipsToBounds = true
-        webViewButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate.webViewButtonPressed), for: .touchUpInside)
+        webViewButton.addTarget(delegate, action: #selector(EntryHeaderViewDelegate_Old.webViewButtonPressed), for: .touchUpInside)
 
         observers.append(
             NotificationCenter.default.addObserver(forName: .init(LibraryManager.Keys.libraries), object: nil, queue: nil) { [weak self] _ in
@@ -184,6 +184,16 @@ class EntryHeaderView: UIView {
                         ), for: .normal)
                     }
                 }
+            }
+        )
+        observers.append(
+            NotificationCenter.default.addObserver(forName: .init("app.settings.accentColor"), object: nil, queue: nil) { [weak self] _ in
+                let color = UserDefaults.standard.string(forKey: "app.settings.accentColor").flatMap({ UIColor.from(rawValue: $0) })
+                    ?? UIColor(red: 0.84375, green: 0.265625, blue: 0.59375, alpha: 1)
+                self?.continueButton.backgroundColor = color
+                self?.bookmarkButton.backgroundColor = color
+                self?.linkButton.backgroundColor = color
+                self?.webViewButton.backgroundColor = color
             }
         )
     }
@@ -391,7 +401,7 @@ class EntryHeaderView: UIView {
     }
 }
 
-@objc protocol EntryHeaderViewDelegate {
+@objc protocol EntryHeaderViewDelegate_Old {
     @objc optional func webViewButtonPressed()
     @objc optional func linkButtonPressed()
     @objc optional func bookmarkButtonPressed()

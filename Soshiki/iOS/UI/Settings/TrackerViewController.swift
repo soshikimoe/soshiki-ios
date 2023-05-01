@@ -9,8 +9,6 @@ import UIKit
 import SafariServices
 
 class TrackerViewController: SettingTableViewController {
-    var observers: [NSObjectProtocol] = []
-
     let tracker: Tracker
     let authUrl: URL?
 
@@ -63,12 +61,6 @@ class TrackerViewController: SettingTableViewController {
                 }
             }
         )
-    }
-
-    deinit {
-        for observer in observers {
-            NotificationCenter.default.removeObserver(observer)
-        }
     }
 
     required init?(coder: NSCoder) {

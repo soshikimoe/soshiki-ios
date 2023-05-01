@@ -1,6 +1,9 @@
 disabled_rules:
   - todo
   - identifier_name
+  - type_name
+  - type_body_length
+  - large_tuple
 opt_in_rules:
   - closure_end_indentation
   - closure_spacing
@@ -46,7 +49,6 @@ custom_rules:
       - number
       - attribute.builtin
     message: "Don't add a .0 to the end of floating point literals"
-type_body_length: 500
 function_body_length: 200
 function_parameter_count: 10
 line_length:
@@ -54,5 +56,5 @@ line_length:
     error: 200
     ignores_comments: true
     ignores_urls: true
-file_length: 1200
+file_length: 2000
 cyclomatic_complexity: 25

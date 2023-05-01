@@ -271,7 +271,6 @@ extension TextReaderViewController {
     @objc func closeReader() {
         Task {
             if let entry = entry {
-                print(percent)
                 await SoshikiAPI.shared.setHistory(
                     mediaType: entry.mediaType,
                     id: entry._id,
@@ -294,7 +293,7 @@ extension TextReaderViewController {
 extension TextReaderViewController {
     @objc func singleTap() {
         if self.navigationController?.navigationBar.isHidden == true {
-            self.navigationController?.navigationBar.isHidden = false
+            self.navigationController?.setNavigationBarHidden(false, animated: false)
             UIView.animate(withDuration: CATransaction.animationDuration()) {
                 self.navigationController?.navigationBar.alpha = 1
             }
@@ -302,7 +301,7 @@ extension TextReaderViewController {
             UIView.animate(withDuration: CATransaction.animationDuration()) {
                 self.navigationController?.navigationBar.alpha = 0
             } completion: { _ in
-                self.navigationController?.navigationBar.isHidden = true
+                self.navigationController?.setNavigationBarHidden(true, animated: false)
             }
         }
     }

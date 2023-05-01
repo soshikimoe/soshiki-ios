@@ -73,8 +73,13 @@ class SourceEntryObject: NSManagedObject {
             staff: staff.compactMap({ ($0 as? SourceEntryStaffObject)?.value }),
             tags: tags.compactMap({ ($0 as? SourceEntryTagObject)?.value }),
             cover: cover,
+            banner: nil,
             nsfw: SourceEntryContentRating(rawValue: nsfw) ?? .safe,
             status: SourceEntryStatus(rawValue: status) ?? .unknown,
+            score: nil,
+            items: nil,
+            season: nil,
+            year: nil,
             url: url,
             description: desc
         )

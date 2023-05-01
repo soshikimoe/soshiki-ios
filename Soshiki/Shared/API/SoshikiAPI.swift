@@ -9,7 +9,6 @@ import Foundation
 import SafariServices
 import Network
 
-// swiftlint:disable:next type_body_length
 class SoshikiAPI {
     static let shared = SoshikiAPI()
 
@@ -172,12 +171,41 @@ class SoshikiAPI {
         }
     }
 
+    func getLink(mediaType: MediaType, trackerId: String, entryId: String) async -> Result<[Entry], Error> {
+        do {
+            let query = [
+                "trackerId=" + trackerId,
+                "entryId=" + entryId
+            ].joined(separator: "&")
+            guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/link?\(query)") else {
+                throw APIError(
+                    "Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/link?\(query)'."
+                )
+            }
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
+            if response.statusCode == 200 {
+                return .success(try JSONDecoder().decode([Entry].self, from: data))
+            } else if response.statusCode == 401 {
+                if !isRefreshing {
+                    await refreshToken()
+                }
+                throw UnauthorizedError()
+            } else {
+                let error = String(data: data, encoding: .utf8)
+                throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
+            }
+        } catch {
+            return .failure(error)
+        }
+    }
+
     func getLink(mediaType: MediaType, platformId: String, sourceId: String, entryId: String) async -> Result<[Entry], Error> {
         do {
             let query = [
                 "platformId=" + platformId,
                 "sourceId=" + sourceId,
-                "entryId=" + entryId
+                "entryId=" + (entryId.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "")
             ].joined(separator: "&")
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/link?\(query)") else {
                 throw APIError(
@@ -747,9 +775,7 @@ class SoshikiAPI {
                 throw APIError("Could not get refresh token.")
             }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/oauth2/refresh") else {
-                throw APIError(
-                    "Could not create URL from '\(SoshikiAPI.baseUrl)/oauth2/refresh'."
-                )
+                throw APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/oauth2/refresh'.")
             }
             var request = URLRequest(url: url)
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

@@ -29,16 +29,16 @@ class TextSourceChapterObject: NSManagedObject {
         self.volume = textSourceChapter.volume ?? -1
     }
 
-    func get() -> TextSourceChapter {
-        TextSourceChapter(
-            id: id,
-            entryId: entryId,
-            name: name,
-            chapter: chapter,
-            volume: volume == -1 ? nil : volume,
-            translator: translator
-        )
-    }
+//    func get() -> TextSourceChapter {
+//        TextSourceChapter(
+//            id: id,
+//            entryId: entryId,
+//            name: name,
+//            chapter: chapter,
+//            volume: volume == -1 ? nil : volume,
+//            translator: translator
+//        )
+//    }
 }
 
 @objc(TextSourceChapterDetailsObject)

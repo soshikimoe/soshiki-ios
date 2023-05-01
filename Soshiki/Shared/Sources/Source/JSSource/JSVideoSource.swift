@@ -18,17 +18,19 @@ class JSVideoSource: JSSource, VideoSource {
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
                 if let dict = entry.toArray() as? [[String: Any]] {
-                    return callback.resume(returning: dict.compactMap({ chapter in
-                        if let id = chapter["id"] as? String,
-                           let entryId = chapter["entryId"] as? String,
-                           let episodeNumber = chapter["episode"] as? Double,
-                           let type = (chapter["type"] as? String).flatMap({ VideoSourceEpisodeType(rawValue: $0) }) {
+                    return callback.resume(returning: dict.compactMap({ episode in
+                        if let id = episode["id"] as? String,
+                           let entryId = episode["entryId"] as? String,
+                           let episodeNumber = episode["episode"] as? Double,
+                           let type = (episode["type"] as? String).flatMap({ VideoSourceEpisodeType(rawValue: $0) }) {
                             return VideoSourceEpisode(
                                 id: id,
                                 entryId: entryId,
-                                name: chapter["name"] as? String,
+                                name: episode["name"] as? String,
                                 episode: episodeNumber,
-                                type: type
+                                type: type,
+                                thumbnail: episode["thumbnail"] as? String,
+                                timestamp: episode["timestamp"] as? Double
                             )
                         } else {
                             return nil
