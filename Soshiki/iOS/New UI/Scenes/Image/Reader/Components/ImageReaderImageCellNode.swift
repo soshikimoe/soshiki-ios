@@ -14,6 +14,7 @@ class ImageReaderImageCellNode: ASCellNode {
     let reloadButton: UIButton
 
     let pageIndex: Int
+    let source: any ImageSource
 
     var image: URL?
 
@@ -24,12 +25,13 @@ class ImageReaderImageCellNode: ASCellNode {
     weak var delegate: (any ImageReaderCellNodeDelegate)?
     weak var resizeDelegate: (any ImageCellNodeResizeDelegate)?
 
-    init(pageIndex: Int, readingMode: ImageReaderViewController.ReadingMode) {
+    init(source: any ImageSource, pageIndex: Int, readingMode: ImageReaderViewController.ReadingMode) {
         self.imageNode = ASImageNode()
         self.progressView = CircularProgressView()
         self.reloadButton = UIButton(type: .roundedRect)
 
         self.pageIndex = pageIndex
+        self.source = source
         self.readingMode = readingMode
 
         super.init()
@@ -92,51 +94,56 @@ class ImageReaderImageCellNode: ASCellNode {
             self.progressView.isHidden = false
             self.reloadButton.isHidden = true
             self.imageNode.isHidden = true
-            self.imageTask = ImagePipeline.shared.loadImage(
-                with: image,
-                progress: { [weak self] _, progress, total in
-                    self?.progressView.setProgress(value: Float(progress) / Float(total), withAnimation: false)
-                },
-                completion: { [weak self] result in
-                    if case .success(let response) = result {
-                        self?.progressView.isHidden = true
-                        self?.reloadButton.isHidden = true
-                        self?.imageNode.isHidden = false
-                        self?.imageNode.image = response.image
-
-                        let newSize: CGSize
-                        if self?.readingMode.isPaged == true, UIScreen.main.bounds.size.aspectRatio > response.image.size.aspectRatio {
-                            newSize = CGSize(
-                                width: UIScreen.main.bounds.height * response.image.size.aspectRatio,
-                                height: UIScreen.main.bounds.height
-                            )
-                        } else {
-                            newSize = CGSize(
-                                width: UIScreen.main.bounds.width,
-                                height: UIScreen.main.bounds.width / response.image.size.aspectRatio
-                            )
+            Task {
+                let request = await self.source.modifyImageRequest(request: image.asImageRequest()) ?? image.asImageRequest()
+                Task { @MainActor in
+                    self.imageTask = ImagePipeline.shared.loadImage(
+                        with: request,
+                        progress: { [weak self] _, progress, total in
+                            self?.progressView.setProgress(value: Float(progress) / Float(total), withAnimation: false)
+                        },
+                        completion: { [weak self] result in
+                            if case .success(let response) = result {
+                                self?.progressView.isHidden = true
+                                self?.reloadButton.isHidden = true
+                                self?.imageNode.isHidden = false
+                                self?.imageNode.image = response.image
+                                
+                                let newSize: CGSize
+                                if self?.readingMode.isPaged == true, UIScreen.main.bounds.size.aspectRatio > response.image.size.aspectRatio {
+                                    newSize = CGSize(
+                                        width: UIScreen.main.bounds.height * response.image.size.aspectRatio,
+                                        height: UIScreen.main.bounds.height
+                                    )
+                                } else {
+                                    newSize = CGSize(
+                                        width: UIScreen.main.bounds.width,
+                                        height: UIScreen.main.bounds.width / response.image.size.aspectRatio
+                                    )
+                                }
+                                
+                                self?.imageNode.style.width = ASDimensionMake(newSize.width)
+                                self?.imageNode.style.height = ASDimensionMake(newSize.height)
+                                
+                                if let currentSize = self?.frame.size, let indexPath = self?.indexPath {
+                                    self?.resizeDelegate?.willResize(
+                                        from: currentSize,
+                                        to: newSize,
+                                        at: indexPath
+                                    )
+                                }
+                                
+                                self?.imageNode.setNeedsLayout()
+                                self?.imageNode.setNeedsDisplay()
+                            } else {
+                                self?.progressView.isHidden = true
+                                self?.imageNode.isHidden = true
+                                self?.reloadButton.isHidden = false
+                            }
                         }
-
-                        self?.imageNode.style.width = ASDimensionMake(newSize.width)
-                        self?.imageNode.style.height = ASDimensionMake(newSize.height)
-
-                        if let currentSize = self?.frame.size, let indexPath = self?.indexPath {
-                            self?.resizeDelegate?.willResize(
-                                from: currentSize,
-                                to: newSize,
-                                at: indexPath
-                            )
-                        }
-
-                        self?.imageNode.setNeedsLayout()
-                        self?.imageNode.setNeedsDisplay()
-                    } else {
-                        self?.progressView.isHidden = true
-                        self?.imageNode.isHidden = true
-                        self?.reloadButton.isHidden = false
-                    }
+                    )
                 }
-            )
+            }
         }
     }
 

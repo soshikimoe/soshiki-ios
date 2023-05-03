@@ -62,7 +62,7 @@ class ImageReaderViewController: BaseViewController {
                         ),
                         animated: false
                     )
-                    
+
                     self.seekSliderForegroundViewEdgeConstraint.isActive = false
                     if self.readingMode.isReversed {
                         self.seekSliderForegroundViewEdgeConstraint = self.seekSliderForegroundView.trailingAnchor.constraint(
@@ -178,7 +178,7 @@ class ImageReaderViewController: BaseViewController {
                 leadingBufferScreenfuls: 3,
                 trailingBufferScreenfuls: 3
             ),
-            for: .preload
+            for: .display
         )
 
         super.addObserver("settings.image.readingMode") { [weak self] _ in
@@ -591,7 +591,7 @@ extension ImageReaderViewController: ASCollectionDataSource {
             }
         } else { // This is an image page
             let index = self.readingMode.isReversed ? details.pages.count - indexPath.item - 1 : indexPath.item
-            let imageCellNode = ImageReaderImageCellNode(pageIndex: index, readingMode: self.readingMode)
+            let imageCellNode = ImageReaderImageCellNode(source: self.source, pageIndex: index, readingMode: self.readingMode)
             imageCellNode.delegate = self
             imageCellNode.resizeDelegate = self
             if let imageUrl = details.pages[safe: index]?.url.flatMap({ URL(string: $0) }) {

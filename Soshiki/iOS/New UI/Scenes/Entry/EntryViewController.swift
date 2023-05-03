@@ -123,6 +123,8 @@ class EntryViewController: BaseViewController {
         self.view.frame.width > self.view.frame.height
     }
 
+    override var prefersStatusBarHidden: Bool { true }
+
     convenience init(sourceEntry: SourceEntry, source: any Source) {
         self.init(sourceEntry: sourceEntry, source: source, tracker: nil, entry: nil)
 
@@ -145,6 +147,8 @@ class EntryViewController: BaseViewController {
             } else {
                 self.source = (source: source, id: sourceEntry.id)
                 self.sources = [(source: source, id: sourceEntry.id)]
+
+                reloadItems()
             }
         }
     }
@@ -217,6 +221,8 @@ class EntryViewController: BaseViewController {
                 } else {
                     self.source = (source: source, id: sourceEntry.id)
                     self.sources = [(source: source, id: sourceEntry.id)]
+
+                    reloadItems()
                 }
             }
         }

@@ -108,6 +108,8 @@ class VideoPlayerViewController: BaseViewController {
 
     override var prefersHomeIndicatorAutoHidden: Bool { true }
 
+    override var prefersStatusBarHidden: Bool { true }
+
     // MARK: Entry
     var source: any VideoSource
     var episodes: [VideoSourceEpisode]
@@ -798,7 +800,7 @@ extension VideoPlayerViewController {
                 queue: .global(qos: .utility)
             ) { [weak self] time in
                 guard let self else { return }
-                
+
                 if let duration = self.playerLayer.player?.currentItem?.duration.seconds,
                    time.seconds < duration - Double(self.endThreshold),
                    let currentEpisode = self.currentEpisode {
