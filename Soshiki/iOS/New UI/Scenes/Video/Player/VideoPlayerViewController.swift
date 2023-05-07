@@ -1216,9 +1216,9 @@ extension VideoPlayerViewController {
             }
             return
         }
-        let initialLocation = sender.location(ofTouch: 0, in: self.view)
-        let offset = sender.translation(in: self.view)
-        let velocity = sender.velocity(in: self.view)
+        let initialLocation = sender.location(ofTouch: 0, in: nil)
+        let offset = sender.translation(in: nil)
+        let velocity = sender.velocity(in: nil)
         if sender.state == .began {
             if abs(velocity.x) > abs(velocity.y) { // Horizontal movement
                 self.panType = .seek

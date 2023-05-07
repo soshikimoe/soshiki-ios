@@ -51,6 +51,7 @@ class HistoryObject: NSManagedObject {
 
     @NSManaged var chapter: Double
     @NSManaged var episode: Double
+    @NSManaged var season: Double
     @NSManaged var id: String
     @NSManaged var page: Int32
     @NSManaged var percent: Double
@@ -63,6 +64,7 @@ class HistoryObject: NSManagedObject {
     func set(_ history: History, mediaType: MediaType, context: NSManagedObjectContext) {
         self.chapter = history.chapter ?? -1
         self.episode = history.episode ?? -1
+        self.season = history.season ?? -1
         self.id = history.id
         self.page = Int32(history.page ?? -1)
         self.percent = history.percent ?? -1
@@ -80,6 +82,7 @@ class HistoryObject: NSManagedObject {
             volume: volume == -1 ? nil : volume,
             timestamp: timestamp == -1 ? nil : Int(timestamp),
             episode: episode == -1 ? nil : episode,
+            season: season == -1 ? nil : season,
             percent: percent == -1 ? nil : percent,
             score: score == -1 ? nil : score,
             status: History.Status(rawValue: status) ?? .unknown

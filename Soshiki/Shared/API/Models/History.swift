@@ -14,6 +14,7 @@ struct History: Codable {
     let volume: Double?
     let timestamp: Int?
     let episode: Double?
+    let season: Double?
     let percent: Double?
     let score: Double?
     let status: History.Status
@@ -39,6 +40,7 @@ struct History: Codable {
             volume: self.volume,
             timestamp: self.timestamp,
             episode: self.episode,
+            season: self.season,
             percent: self.percent,
             score: self.score,
             status: self.status

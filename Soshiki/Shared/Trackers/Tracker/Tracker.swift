@@ -176,6 +176,7 @@ class Tracker {
                         volume: dict["volume"] as? Double,
                         timestamp: dict["timestamp"] as? Int,
                         episode: dict["episode"] as? Double,
+                        season: dict["season"] as? Double,
                         percent: dict["percent"] as? Double,
                         score: dict["score"] as? Double,
                         status: status

@@ -28,6 +28,7 @@ class JSVideoSource: JSSource, VideoSource {
                                 entryId: entryId,
                                 name: episode["name"] as? String,
                                 episode: episodeNumber,
+                                season: episode["season"] as? Double,
                                 type: type,
                                 thumbnail: episode["thumbnail"] as? String,
                                 timestamp: episode["timestamp"] as? Double

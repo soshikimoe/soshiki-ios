@@ -18,11 +18,13 @@ struct VideoSourceEpisode: Sendable {
     let entryId: String
     let name: String?
     let episode: Double
+    let season: Double?
     let type: VideoSourceEpisodeType
     let thumbnail: String?
     let timestamp: Double?
 
     func toListString() -> String {
+        let seasonString = season.flatMap({ !$0.isNaN ? "Season \($0.toTruncatedString()) " : nil }) ?? ""
         let episodeString = "Episode \(episode.toTruncatedString())"
         let nameString: String = name.flatMap({ $0.isEmpty ? "" : ": \($0)" }) ?? ""
         return episodeString + nameString
@@ -31,6 +33,7 @@ struct VideoSourceEpisode: Sendable {
     func toSourceItem() -> SourceItem {
         SourceItem(
             id: self.id,
+            group: self.season,
             number: self.episode,
             name: self.name,
             info: self.type.rawValue.capitalized,

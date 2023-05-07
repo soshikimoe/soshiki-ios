@@ -70,7 +70,7 @@ class EntryItemTableViewCell: UITableViewCell {
     }
 
     func applyConstraints() {
-        self.coverImageViewHeightConstraint = self.coverImageView.heightAnchor.constraint(lessThanOrEqualToConstant: 90)
+        self.coverImageViewHeightConstraint = self.coverImageView.heightAnchor.constraint(equalToConstant: 90)
         NSLayoutConstraint.activate([
             self.coverImageViewHeightConstraint,
             self.coverImageView.widthAnchor.constraint(equalTo: self.coverImageView.heightAnchor, multiplier: CGFloat(16)/CGFloat(9)),
@@ -108,7 +108,7 @@ class EntryItemTableViewCell: UITableViewCell {
             groupString = item.group.flatMap({ "Volume \($0.toTruncatedString())" })
         case .video:
             numberString = "Episode \(item.number.toTruncatedString())"
-            groupString = nil
+            groupString = item.group.flatMap({ "Season \($0.toTruncatedString())" })
         }
         if let title = item.name, !title.isEmpty {
             setItem(
