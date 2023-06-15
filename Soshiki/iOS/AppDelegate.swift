@@ -63,7 +63,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print(error)
+        LogManager.shared.log("Error registering for notifications: \(error)", at: .error)
     }
 }
 
@@ -82,6 +82,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
 extension AppDelegate: GCKLoggerDelegate {
     func logMessage(_ message: String, at level: GCKLoggerLevel, fromFunction function: String, location: String) {
-        print(function + " - " + message)
+        LogManager.shared.log(function + " - " + message, at: level == .error ? .error : level == .warning ? .warn : .info)
     }
 }

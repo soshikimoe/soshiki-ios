@@ -89,7 +89,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: ())
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard let object = self.context.objectForKeyedSubscript(self.id),
@@ -143,7 +143,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: nil)
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard let object = self.context.objectForKeyedSubscript(self.id),
@@ -187,7 +187,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: nil)
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard let object = self.context.objectForKeyedSubscript(self.id),
@@ -213,7 +213,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: ())
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard let object = self.context.objectForKeyedSubscript(self.id),
@@ -246,7 +246,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: ())
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard let object = self.context.objectForKeyedSubscript(self.id),
@@ -309,7 +309,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: [])
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard self.schema >= 2,
@@ -364,7 +364,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: nil)
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard self.schema >= 2,
@@ -439,7 +439,7 @@ class Tracker {
             self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                print(error.toString() ?? "JSContext Error")
+                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
                 return callback.resume(returning: [])
             } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
             guard self.schema >= 2,

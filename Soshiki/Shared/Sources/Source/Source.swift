@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import JavaScriptCore
 
 protocol Source: Equatable, Identifiable {
     var id: String { get }

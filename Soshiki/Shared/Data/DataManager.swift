@@ -16,7 +16,7 @@ class DataManager {
         container = NSPersistentContainer(name: "Soshiki")
         container.loadPersistentStores { _, error in
             if let error {
-                print("CoreData: Loading persistent stores failed with error \(error)")
+                LogManager.shared.log("CoreData: Loading persistent stores failed with error \(error)", at: .error)
             }
         }
     }

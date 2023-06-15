@@ -110,6 +110,17 @@
         <attribute name="url" optional="YES" attributeType="String"/>
         <relationship name="details" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="ImageSourceChapterDetails" inverseName="pages" inverseEntity="ImageSourceChapterDetails"/>
     </entity>
+    <entity name="ImageSourceManifest" representedClassName="ImageSourceManifestObject" syncable="YES">
+        <attribute name="author" attributeType="String"/>
+        <attribute name="icon" attributeType="String"/>
+        <attribute name="id" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="path" attributeType="String"/>
+        <attribute name="schema" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" attributeType="String"/>
+        <attribute name="version" attributeType="String"/>
+        <relationship name="list" optional="YES" maxCount="1" deletionRule="No Action" destinationEntity="SourceList" inverseName="image" inverseEntity="SourceList"/>
+    </entity>
     <entity name="Libraries" representedClassName="LibrariesObject" syncable="YES">
         <relationship name="libraries" toMany="YES" minCount="3" maxCount="3" deletionRule="Nullify" destinationEntity="FullLibrary" inverseName="libraries" inverseEntity="FullLibrary"/>
     </entity>
@@ -150,7 +161,13 @@
         <attribute name="value" attributeType="String"/>
         <relationship name="sourceEntry" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SourceEntry" inverseName="tags" inverseEntity="SourceEntry"/>
     </entity>
-    <entity name="TextSourceChapter" representedClassName="TextSourceChapterObject" syncable="YES">
+    <entity name="SourceList" representedClassName="SourceListObject" syncable="YES">
+        <attribute name="url" attributeType="String"/>
+        <relationship name="image" toMany="YES" deletionRule="Nullify" destinationEntity="ImageSourceManifest" inverseName="list" inverseEntity="ImageSourceManifest"/>
+        <relationship name="text" toMany="YES" deletionRule="Nullify" destinationEntity="TextSourceManifest" inverseName="list" inverseEntity="TextSourceManifest"/>
+        <relationship name="video" toMany="YES" deletionRule="Nullify" destinationEntity="VideoSourceManifest" inverseName="list" inverseEntity="VideoSourceManifest"/>
+    </entity>
+    <entity name="TextSourceChapter" representedClassName=".TextSourceChapterObject" syncable="YES">
         <attribute name="chapter" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="entryId" attributeType="String"/>
         <attribute name="id" attributeType="String"/>
@@ -158,34 +175,69 @@
         <attribute name="translator" optional="YES" attributeType="String"/>
         <attribute name="volume" optional="YES" attributeType="Double" defaultValueString="-1" usesScalarValueType="YES"/>
     </entity>
-    <entity name="TextSourceChapterDetails" representedClassName="TextSourceChapterDetailsObject" syncable="YES">
+    <entity name="TextSourceChapterDetails" representedClassName=".TextSourceChapterDetailsObject" syncable="YES">
         <attribute name="baseUrl" optional="YES" attributeType="String"/>
         <attribute name="entryId" attributeType="String"/>
         <attribute name="html" attributeType="String"/>
         <attribute name="id" attributeType="String"/>
     </entity>
-    <entity name="TextSourcesManifest" representedClassName="TextSourcesManifest" syncable="YES" codeGenerationType="class"/>
-    <entity name="VideoSourceEpisode" representedClassName="VideoSourceEpisodeObject" syncable="YES">
+    <entity name="TextSourceManifest" representedClassName=".TextSourceManifestObject" syncable="YES">
+        <attribute name="author" attributeType="String"/>
+        <attribute name="icon" attributeType="String"/>
+        <attribute name="id" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="path" attributeType="String"/>
+        <attribute name="schema" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" attributeType="String"/>
+        <attribute name="version" attributeType="String"/>
+        <relationship name="list" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="SourceList" inverseName="text" inverseEntity="SourceList"/>
+    </entity>
+    <entity name="TrackerList" representedClassName=".TrackerListObject" syncable="YES">
+        <attribute name="url" optional="YES" attributeType="String"/>
+        <relationship name="trackers" toMany="YES" deletionRule="Nullify" destinationEntity="TrackerManifest" inverseName="list" inverseEntity="TrackerManifest"/>
+    </entity>
+    <entity name="TrackerManifest" representedClassName=".TrackerManifestObject" syncable="YES">
+        <attribute name="author" attributeType="String"/>
+        <attribute name="icon" attributeType="String"/>
+        <attribute name="id" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="path" attributeType="String"/>
+        <attribute name="schema" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="version" attributeType="String"/>
+        <relationship name="list" maxCount="1" deletionRule="Nullify" destinationEntity="TrackerList" inverseName="trackers" inverseEntity="TrackerList"/>
+    </entity>
+    <entity name="VideoSourceEpisode" representedClassName=".VideoSourceEpisodeObject" syncable="YES">
         <attribute name="entryId" attributeType="String"/>
         <attribute name="episode" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="id" attributeType="String"/>
         <attribute name="name" optional="YES" attributeType="String"/>
         <attribute name="type" attributeType="String"/>
     </entity>
-    <entity name="VideoSourceEpisodeDetails" representedClassName="VideoSourceEpisodeDetailsObject" syncable="YES">
+    <entity name="VideoSourceEpisodeDetails" representedClassName=".VideoSourceEpisodeDetailsObject" syncable="YES">
         <attribute name="entryId" attributeType="String"/>
         <attribute name="id" attributeType="String"/>
         <relationship name="providers" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="VideoSourceEpisodeProvider" inverseName="details" inverseEntity="VideoSourceEpisodeProvider"/>
     </entity>
-    <entity name="VideoSourceEpisodeProvider" representedClassName="VideoSourceEpisodeProviderObject" syncable="YES">
+    <entity name="VideoSourceEpisodeProvider" representedClassName=".VideoSourceEpisodeProviderObject" syncable="YES">
         <attribute name="name" attributeType="String"/>
         <relationship name="details" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VideoSourceEpisodeDetails" inverseName="providers" inverseEntity="VideoSourceEpisodeDetails"/>
         <relationship name="urls" toMany="YES" deletionRule="Nullify" ordered="YES" destinationEntity="VideoSourceEpisodeUrl" inverseName="provider" inverseEntity="VideoSourceEpisodeUrl"/>
     </entity>
-    <entity name="VideoSourceEpisodeUrl" representedClassName="VideoSourceEpisodeUrlObject" syncable="YES">
+    <entity name="VideoSourceEpisodeUrl" representedClassName=".VideoSourceEpisodeUrlObject" syncable="YES">
         <attribute name="quality" optional="YES" attributeType="Double" defaultValueString="-1" usesScalarValueType="YES"/>
         <attribute name="type" attributeType="String"/>
         <attribute name="url" attributeType="String"/>
         <relationship name="provider" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="VideoSourceEpisodeProvider" inverseName="urls" inverseEntity="VideoSourceEpisodeProvider"/>
+    </entity>
+    <entity name="VideoSourceManifest" representedClassName=".VideoSourceManifestObject" syncable="YES">
+        <attribute name="author" attributeType="String"/>
+        <attribute name="icon" attributeType="String"/>
+        <attribute name="id" attributeType="String"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="path" attributeType="String"/>
+        <attribute name="schema" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" attributeType="String"/>
+        <attribute name="version" attributeType="String"/>
+        <relationship name="list" optional="YES" maxCount="1" deletionRule="No Action" destinationEntity="SourceList" inverseName="video" inverseEntity="SourceList"/>
     </entity>
 </model>

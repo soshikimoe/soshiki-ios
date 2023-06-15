@@ -10,6 +10,8 @@
 		370114DF2A0826170027CD37 /* GoogleCast.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 370114DD2A0825E90027CD37 /* GoogleCast.xcframework */; };
 		370114E02A0826170027CD37 /* GoogleCast.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 370114DD2A0825E90027CD37 /* GoogleCast.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		370114E32A0831CC0027CD37 /* URL.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370114E22A0831CC0027CD37 /* URL.swift */; };
+		370114E62A094E280027CD37 /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370114E52A094E280027CD37 /* LogManager.swift */; };
+		370114E82A0953E80027CD37 /* LogViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370114E72A0953E80027CD37 /* LogViewController.swift */; };
 		370CB2B52968E72D00435F17 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 370CB2B42968E72D00435F17 /* KeychainManager.swift */; };
 		3715DDEE297463F100F173EA /* TextReaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3715DDED297463F100F173EA /* TextReaderViewController.swift */; };
 		3715DDF02974738000F173EA /* TextSourceChapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3715DDEF2974738000F173EA /* TextSourceChapter.swift */; };
@@ -182,6 +184,8 @@
 /* Begin PBXFileReference section */
 		370114DD2A0825E90027CD37 /* GoogleCast.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = GoogleCast.xcframework; sourceTree = "<group>"; };
 		370114E22A0831CC0027CD37 /* URL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URL.swift; sourceTree = "<group>"; };
+		370114E52A094E280027CD37 /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
+		370114E72A0953E80027CD37 /* LogViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewController.swift; sourceTree = "<group>"; };
 		370CB2B42968E72D00435F17 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
 		3715DDED297463F100F173EA /* TextReaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextReaderViewController.swift; sourceTree = "<group>"; };
 		3715DDEF2974738000F173EA /* TextSourceChapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSourceChapter.swift; sourceTree = "<group>"; };
@@ -346,6 +350,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		370114E42A094E1A0027CD37 /* Logging */ = {
+			isa = PBXGroup;
+			children = (
+				370114E52A094E280027CD37 /* LogManager.swift */,
+			);
+			path = Logging;
+			sourceTree = "<group>";
+		};
 		3715DDE4296CA63200F173EA /* Trackers */ = {
 			isa = PBXGroup;
 			children = (
@@ -502,6 +514,7 @@
 				37AAC9AA297F75AB00EF9A57 /* SourcesViewController.swift */,
 				37AAC9AE2980B45F00EF9A57 /* TrackersViewController.swift */,
 				37AAC9B22980B5E300EF9A57 /* TrackerViewController.swift */,
+				370114E72A0953E80027CD37 /* LogViewController.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -655,6 +668,7 @@
 		37661CD52922D37F0052C629 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				370114E42A094E1A0027CD37 /* Logging */,
 				37AACA3529905D1800EF9A57 /* Settings */,
 				37AAC9F9298EBD4800EF9A57 /* Data */,
 				37AAC9B829818FF100EF9A57 /* Library */,
@@ -1087,6 +1101,7 @@
 				3727B62029D9F46F0004531A /* ResizeListeningImageView.swift in Sources */,
 				3727B5FF29C514B70004531A /* ImageReaderViewController.swift in Sources */,
 				37AACA1C298F2D9A00EF9A57 /* ImageSourceChapterObject.swift in Sources */,
+				370114E82A0953E80027CD37 /* LogViewController.swift in Sources */,
 				3733CCE42929B85300901DA6 /* Color.swift in Sources */,
 				37AAC9DF29861B1C00EF9A57 /* StringSelectViewController.swift in Sources */,
 				3715DE0629762D0B00F173EA /* LocalSource.swift in Sources */,
@@ -1204,6 +1219,7 @@
 				3733CCF2292AFEE900901DA6 /* JSFetch.swift in Sources */,
 				37E8D8282966690A00AC7D47 /* User.swift in Sources */,
 				37AAC9DB298601F600EF9A57 /* FilterTableViewCell.swift in Sources */,
+				370114E62A094E280027CD37 /* LogManager.swift in Sources */,
 				37AAC9F8298EBABF00EF9A57 /* Soshiki.xcdatamodeld in Sources */,
 				377B6F5629B7BA4200CAEC3C /* DiscoverCategoryView.swift in Sources */,
 				37AAC9D82985CEC900EF9A57 /* SourceEntryViewController.swift in Sources */,
@@ -1338,7 +1354,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -1383,7 +1399,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
