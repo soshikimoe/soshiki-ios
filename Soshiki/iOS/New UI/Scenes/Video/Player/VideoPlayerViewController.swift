@@ -162,6 +162,7 @@ class VideoPlayerViewController: BaseViewController {
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
     var showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
+    var simplePlayer = UserDefaults.standard.object(forKey: "settings.video.simplePlayer") as? Bool ?? false
     var endThreshold = UserDefaults.standard.object(forKey: "settings.video.endThreshold") as? Int ?? 30
 
     init(source: any VideoSource, episodes: [VideoSourceEpisode], episodeIndex: Int, entry: Entry? = nil, history: History? = nil) {
@@ -268,6 +269,18 @@ class VideoPlayerViewController: BaseViewController {
             self?.showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
         }
 
+        super.addObserver("settings.video.simplePlayer") { [weak self] _ in
+            guard let self else { return }
+            self.simplePlayer = UserDefaults.standard.object(forKey: "settings.video.simplePlayer") as? Bool ?? false
+            self.previousEpisodeButton.isHidden = self.simplePlayer
+            self.skipBackwardButton.isHidden = self.simplePlayer
+            self.skipForwardButton.isHidden = self.simplePlayer
+            self.nextEpisodeButton.isHidden = self.simplePlayer
+            self.subtitleLabel.isHidden = self.simplePlayer
+            self.brightnessStackView.isHidden = self.simplePlayer
+            self.volumeStackView.isHidden = self.simplePlayer
+        }
+
         super.addObserver("settings.video.endThreshold") { [weak self] _ in
             self?.endThreshold = UserDefaults.standard.object(forKey: "settings.video.endThreshold") as? Int ?? 30
         }
@@ -360,11 +373,13 @@ class VideoPlayerViewController: BaseViewController {
         self.previousEpisodeButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 25), forImageIn: .normal)
         self.previousEpisodeButton.tintColor = .white
         self.previousEpisodeButton.addTarget(self, action: #selector(previousEpisodeButtonPressed(_:)), for: .touchUpInside)
+        self.previousEpisodeButton.isHidden = self.simplePlayer
 
         self.skipBackwardButton.setImage(UIImage(systemName: "gobackward.10"), for: .normal)
         self.skipBackwardButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 25), forImageIn: .normal)
         self.skipBackwardButton.tintColor = .white
         self.skipBackwardButton.addTarget(self, action: #selector(skipBackwardButtonPressed(_:)), for: .touchUpInside)
+        self.skipBackwardButton.isHidden = self.simplePlayer
 
         self.playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
         self.playPauseButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 50, weight: .bold), forImageIn: .normal)
@@ -375,11 +390,13 @@ class VideoPlayerViewController: BaseViewController {
         self.skipForwardButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 25), forImageIn: .normal)
         self.skipForwardButton.tintColor = .white
         self.skipForwardButton.addTarget(self, action: #selector(skipForwardButtonPressed(_:)), for: .touchUpInside)
+        self.skipForwardButton.isHidden = self.simplePlayer
 
         self.nextEpisodeButton.setImage(UIImage(systemName: "forward.end.fill"), for: .normal)
         self.nextEpisodeButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 25), forImageIn: .normal)
         self.nextEpisodeButton.tintColor = .white
         self.nextEpisodeButton.addTarget(self, action: #selector(nextEpisodeButtonPressed(_:)), for: .touchUpInside)
+        self.nextEpisodeButton.isHidden = self.simplePlayer
 
         self.centerButtonStackView.spacing = 24
         self.centerButtonStackView.alignment = .center
@@ -397,6 +414,7 @@ class VideoPlayerViewController: BaseViewController {
 
         self.subtitleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
         self.subtitleLabel.textColor = .white
+        self.subtitleLabel.isHidden = self.simplePlayer
 
         self.titleStackView.axis = .vertical
         self.titleStackView.alignment = .leading
@@ -490,6 +508,7 @@ class VideoPlayerViewController: BaseViewController {
         self.brightnessStackView.alignment = .center
         self.brightnessStackView.addArrangedSubview(self.brightnessSliderBackgroundView)
         self.brightnessStackView.addArrangedSubview(self.brightnessImageView)
+        self.brightnessStackView.isHidden = self.simplePlayer
 
         self.volumeSliderBackgroundView.backgroundColor = UIColor(white: 0.75, alpha: 0.8)
         self.volumeSliderBackgroundView.layer.cornerRadius = 3
@@ -508,6 +527,7 @@ class VideoPlayerViewController: BaseViewController {
         self.volumeStackView.alignment = .center
         self.volumeStackView.addArrangedSubview(self.volumeSliderBackgroundView)
         self.volumeStackView.addArrangedSubview(self.volumeImageView)
+        self.volumeStackView.isHidden = self.simplePlayer
 
         // MARK: Miscellaneous
 
@@ -1362,10 +1382,12 @@ extension VideoPlayerViewController {
                 pause()
                 setChapterLabelVisibility(true)
             } else {
-                if self.view.frame.divided(atDistance: self.view.frame.width / 4, from: .minXEdge).slice.contains(initialLocation) {
+                if !self.simplePlayer,
+                   self.view.frame.divided(atDistance: self.view.frame.width / 4, from: .minXEdge).slice.contains(initialLocation) {
                     self.initialBarSize = self.brightnessSliderForegroundView.frame.height
                     self.panType = .brightness
-                } else if self.view.frame.divided(atDistance: self.view.frame.width / 4, from: .maxXEdge).slice.contains(initialLocation) {
+                } else if !self.simplePlayer,
+                          self.view.frame.divided(atDistance: self.view.frame.width / 4, from: .maxXEdge).slice.contains(initialLocation) {
                     self.initialBarSize = self.volumeSliderForegroundView.frame.height
                     self.panType = .volume
                 } else {

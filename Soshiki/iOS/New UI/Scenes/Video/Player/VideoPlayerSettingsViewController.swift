@@ -27,6 +27,10 @@ class VideoPlayerSettingsViewController: SettingTableViewController {
                     UserDefaults.standard.set(newValue, forKey: "settings.video.showSkipButton")
                     NotificationCenter.default.post(name: .init("settings.video.showSkipButton"), object: nil)
                 },
+                ToggleSettingItem(id: "simplePlayer", title: "Simple Player", value: self.simplePlayer) { newValue in
+                    UserDefaults.standard.set(newValue, forKey: "settings.video.simplePlayer")
+                    NotificationCenter.default.post(name: .init("settings.video.simplePlayer"), object: nil)
+                },
                 NumberSettingItem(
                     id: "endThreshold",
                     title: "Episode End Threshold",
@@ -46,6 +50,7 @@ class VideoPlayerSettingsViewController: SettingTableViewController {
     var autoNextEpisode = UserDefaults.standard.object(forKey: "settings.video.autoNextEpisode") as? Bool ?? true
     var persistTimestamp = UserDefaults.standard.object(forKey: "settings.video.persistTimestamp") as? Bool ?? true
     var showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
+    var simplePlayer = UserDefaults.standard.object(forKey: "settings.video.simplePlayer") as? Bool ?? false
     var endThreshold = UserDefaults.standard.object(forKey: "settings.video.endThreshold") as? Int ?? 30
 
     init() {
@@ -67,6 +72,10 @@ class VideoPlayerSettingsViewController: SettingTableViewController {
 
         super.addObserver("settings.video.showSkipButton") { [weak self] _ in
             self?.showSkipButton = UserDefaults.standard.object(forKey: "settings.video.showSkipButton") as? Bool ?? true
+        }
+
+        super.addObserver("settings.video.simplePlayer") { [weak self] _ in
+            self?.simplePlayer = UserDefaults.standard.object(forKey: "settings.video.simplePlayer") as? Bool ?? false
         }
 
         super.addObserver("settings.video.endThreshold") { [weak self] _ in
