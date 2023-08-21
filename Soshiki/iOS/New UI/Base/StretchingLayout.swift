@@ -1,5 +1,5 @@
 //
-//  StretchingwLayout.swift
+//  StretchingLayout.swift
 //  Soshiki
 //
 //  Created by Jim Phieffer on 3/8/23.

@@ -63,8 +63,8 @@ class SettingItemTableViewCell: UITableViewCell {
             contentView.addSubview(titleLabel)
             titleLabel.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor).isActive = true
             titleLabel.topAnchor.constraint(equalTo: contentView.layoutMarginsGuide.topAnchor).isActive = true
-            let segmentView = UISegmentedControl(items: item.options)
-            segmentView.selectedSegmentIndex = item.options.firstIndex(of: item.value) ?? 0
+            let segmentView = UISegmentedControl(items: item.value.map({ $0.name }))
+            segmentView.selectedSegmentIndex = item.value.firstIndex(where: { $0.selected }) ?? 0
             segmentView.isSpringLoaded = true
             segmentView.addTarget(self, action: #selector(updateSegmentFilter(_:)), for: .valueChanged)
             segmentView.translatesAutoresizingMaskIntoConstraints = false
@@ -81,12 +81,12 @@ class SettingItemTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: item.title,
-                options: item.options,
-                selected: item.value,
-                indicatorType: .includeExclude
-            ) { value in
-                item.value = value
-                item.valueDidChange(value)
+                options: item.value,
+                tristate: false,
+                multi: false,
+                type: .includeExclude
+            ) {
+                item.valueDidChange(item)
             }
         case let item as ExcludableSelectSettingItem:
             super.init(style: .default, reuseIdentifier: "ExcludableSelectSettingItemTableViewCell")
@@ -96,12 +96,12 @@ class SettingItemTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: item.title,
-                options: item.options,
-                selected: item.value,
-                indicatorType: .includeExclude
-            ) { value in
-                item.value = value
-                item.valueDidChange(value)
+                options: item.value,
+                tristate: true,
+                multi: false,
+                type: .includeExclude
+            ) {
+                item.valueDidChange(item)
             }
         case let item as MultiSelectSettingItem:
             super.init(style: .default, reuseIdentifier: "MultiSelectSettingItemTableViewCell")
@@ -111,11 +111,12 @@ class SettingItemTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: item.title,
-                options: item.options,
-                selected: item.value
-            ) { value in
-                item.value = value
-                item.valueDidChange(value)
+                options: item.value,
+                tristate: false,
+                multi: true,
+                type: .includeExclude
+            ) {
+                item.valueDidChange(item)
             }
         case let item as ExcludableMultiSelectSettingItem:
             super.init(style: .default, reuseIdentifier: "ExcludableMultiSelectSettingItemTableViewCell")
@@ -125,11 +126,12 @@ class SettingItemTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: item.title,
-                options: item.options,
-                selected: item.value
-            ) { value in
-                item.value = value
-                item.valueDidChange(value)
+                options: item.value,
+                tristate: true,
+                multi: true,
+                type: .includeExclude
+            ) {
+                item.valueDidChange(item)
             }
         case let item as NumberSettingItem:
             super.init(style: .value1, reuseIdentifier: "NumberSettingItemTableViewCell")
@@ -195,26 +197,27 @@ class SettingItemTableViewCell: UITableViewCell {
         if let viewControllerToPresent {
             self.nearestNavigationController?.pushViewController(viewControllerToPresent, animated: true)
         } else if let item = item as? ButtonSettingItem {
-            item.valueDidChange(())
+            item.valueDidChange(item)
         }
     }
 
     @objc func updateToggleFilter(_ sender: UISwitch) {
         guard let item = item as? ToggleSettingItem else { return }
         item.value = sender.isOn
-        item.valueDidChange(sender.isOn)
+        item.valueDidChange(item)
     }
 
     @objc func updateSegmentFilter(_ sender: UISegmentedControl) {
         guard let item = item as? SegmentSettingItem else { return }
-        item.value = item.options[sender.selectedSegmentIndex]
-        item.valueDidChange(item.options[sender.selectedSegmentIndex])
+        item.value.forEach({ $0.selected = false })
+        item.value[sender.selectedSegmentIndex].selected = true
+        item.valueDidChange(item)
     }
 
     @objc func updateNumberFilter(_ sender: UIStepper) {
         guard let item = item as? NumberSettingItem else { return }
         item.value = sender.value
-        item.valueDidChange(sender.value)
+        item.valueDidChange(item)
         var content = self.contentConfiguration as? UIListContentConfiguration ?? self.defaultContentConfiguration()
         content.secondaryText = item.value.toTruncatedString()
         self.contentConfiguration = content
@@ -223,13 +226,13 @@ class SettingItemTableViewCell: UITableViewCell {
     @objc func updateColorFilter(_ sender: UIColorWell) {
         guard let item = item as? ColorSettingItem else { return }
         item.value = sender.selectedColor
-        item.valueDidChange(sender.selectedColor)
+        item.valueDidChange(item)
     }
 
     @objc func resetColorFilter() {
         guard let item = item as? ColorSettingItem else { return }
         item.value = nil
-        item.valueDidChange(nil)
+        item.valueDidChange(item)
         colorWell?.selectedColor = nil
     }
 }
@@ -238,7 +241,7 @@ extension SettingItemTableViewCell: UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let item = item as? TextSettingItem else { return }
         item.value = textField.text ?? ""
-        item.valueDidChange(textField.text ?? "")
+        item.valueDidChange(item)
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

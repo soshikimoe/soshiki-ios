@@ -10,148 +10,99 @@ import JavaScriptCore
 import Nuke
 
 class JSImageSource: JSSource, ImageSource {
-    func getChapters(id: String) async -> [ImageSourceChapter] {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: []) }
-            let callbackId = "getChaptersCallback_\(String.random())"
-            let errorId = "getChaptersError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ entry in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entry.toArray() as? [[String: Any]] {
-                    return callback.resume(returning: dict.compactMap({ chapter in
-                        if let id = chapter["id"] as? String,
-                           let entryId = chapter["entryId"] as? String,
-                           let chapterNumber = chapter["chapter"] as? Double {
-                            return ImageSourceChapter(
-                                id: id,
-                                entryId: entryId,
-                                name: chapter["name"] as? String,
-                                chapter: chapterNumber,
-                                volume: chapter["volume"] as? Double,
-                                translator: chapter["translator"] as? String,
-                                thumbnail: chapter["thumbnail"] as? String,
-                                timestamp: chapter["timestamp"] as? Double
-                            )
-                        } else {
-                            return nil
-                        }
-                    }))
-                }
-                return callback.resume(returning: [])
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: [])
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
-                return callback.resume(returning: [])
-            }
-            object.invokeMethod("_getChapters", withArguments: [callbackValue, errorValue, id])
-        }
+    let id: String
+    let name: String
+    let author: String
+    let version: String
+    let image: URL
+    let context: JSContext
+
+    required init(id: String, name: String, author: String, version: String, image: URL, context: JSContext) {
+        self.id = id
+        self.name = name
+        self.author = author
+        self.version = version
+        self.image = image
+        self.context = context
+    }
+
+    func getListing(listing: SourceListing, page: Int) async -> SourceResults<ImageEntry>? {
+        await invokeAsyncMethod("_getListing", on: self.context.objectForKeyedSubscript(self.id), with: [ listing, page ])
+    }
+
+    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<ImageEntry>? {
+        await invokeAsyncMethod(
+            "_getSearchResults",
+            on: self.context.objectForKeyedSubscript(self.id),
+            with: [ query, page, filters.compactMap({ AnyEncodable(try? $0.toObject()) }) ]
+        )
+    }
+
+    func getEntry(id: String) async -> ImageEntry? {
+        await invokeAsyncMethod("_getEntry", on: self.context.objectForKeyedSubscript(self.id), with: [ id ])
+    }
+
+    func getChapters(id: String, page: Int) async -> SourceResults<ImageSourceChapter>? {
+        await invokeAsyncMethod("_getChapters", on: self.context.objectForKeyedSubscript(self.id), with: [ id, page ])
     }
 
     func getChapterDetails(id: String, entryId: String) async -> ImageSourceChapterDetails? {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: nil) }
-            let callbackId = "getChapterDetailsCallback_\(String.random())"
-            let errorId = "getChapterDetailsError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ entry in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entry.toObject() as? [String: Any],
-                   let id = dict["id"] as? String,
-                   let entryId = dict["entryId"] as? String,
-                   let pages = dict["pages"] as? [[String: Any]] {
-                    return callback.resume(returning: ImageSourceChapterDetails(
-                        id: id,
-                        entryId: entryId,
-                        pages: pages.compactMap({ page in
-                            if let index = page["index"] as? Int {
-                                return ImageSourceChapterPage(
-                                    index: index,
-                                    url: page["url"] as? String,
-                                    base64: page["base64"] as? String
-                                )
-                            } else {
-                                return nil
-                            }
-                        }).sorted(by: { page1, page2 in
-                            page1.index < page2.index
-                        })
-                    ))
-                }
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
-                return callback.resume(returning: nil)
-            }
-            object.invokeMethod("_getChapterDetails", withArguments: [callbackValue, errorValue, id, entryId])
-        }
+        await invokeAsyncMethod("_getChapterDetails", on: self.context.objectForKeyedSubscript(self.id), with: [ id, entryId ])
+    }
+
+    struct ModifiedRequest: Codable {
+        let url: String
+        let options: ModifiedRequestOptions?
+    }
+
+    struct ModifiedRequestOptions: Codable {
+        let method: String?
+        let headers: [String: String]?
+        let body: String?
     }
 
     func modifyImageRequest(request: ImageRequest) async -> ImageRequest? {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: nil) }
-            let callbackId = "modifyImageRequestCallback_\(String.random())"
-            let errorId = "modifyImageRequestError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ data in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = data.toObject() as? [String: Any],
-                   let url = (dict["url"] as? String).flatMap({ URL(string: $0) }),
-                   let options = dict["options"] as? [String: Any] {
-                    var request = URLRequest(url: url)
-                    if let method = options["method"] as? String {
+        guard let url = request.urlRequest?.url?.absoluteString else { return nil }
+
+        var options: [String: AnyEncodable] = [:]
+        if let method = request.urlRequest?.httpMethod {
+            options["method"] = AnyEncodable(method)
+        }
+        if let headers = request.urlRequest?.allHTTPHeaderFields {
+            options["headers"] = AnyEncodable(headers)
+        }
+        if let body = request.urlRequest?.httpBody.flatMap({ String(data: $0, encoding: .utf8) }) {
+            options["body"] = AnyEncodable(body)
+        }
+
+        if let object: ModifiedRequest = await invokeAsyncMethod(
+            "_modifyImageRequest",
+            on: self.context.objectForKeyedSubscript(self.id),
+            with: [ url, options ]
+        ) {
+            if let url = URL(string: object.url) {
+                var request = URLRequest(url: url)
+                if let options = object.options {
+                    if let method = options.method {
                         request.httpMethod = method
                     }
-                    if let headers = options["headers"] as? [String: String] {
+                    if let headers = options.headers {
                         for header in headers {
                             request.setValue(header.value, forHTTPHeaderField: header.key)
                         }
                     }
-                    if let body = options["body"] as? String {
+                    if let body = options.body {
                         request.httpBody = body.data(using: .utf8)
                     }
-                    return callback.resume(returning: request.asImageRequest())
                 }
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let url = request.urlRequest.url?.absoluteString,
-                  let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
-                return callback.resume(returning: nil)
+                return ImageRequest(urlRequest: request)
             }
-            var options: [String: Any] = [:]
-            if let method = request.urlRequest.httpMethod {
-                options["method"] = method
-            }
-            if let headers = request.urlRequest.allHTTPHeaderFields {
-                options["headers"] = headers
-            }
-            if let body = request.urlRequest.httpBody.flatMap({ String(data: $0, encoding: .utf8) }) {
-                options["body"] = body
-            }
-            object.invokeMethod("_modifyImageRequest", withArguments: [callbackValue, errorValue, url, options])
         }
+
+        return nil
+    }
+
+    static func == (lhs: JSImageSource, rhs: JSImageSource) -> Bool {
+        lhs.id == rhs.id
     }
 }

@@ -13,7 +13,7 @@ class EntryTableViewCell: UITableViewCell {
     let titleView = UILabel()
     let subtitleView = UILabel()
 
-    init(entry: Entry, reuseIdentifier: String?) {
+    init(entry: Entry_Old, reuseIdentifier: String?) {
         super.init(style: .default, reuseIdentifier: reuseIdentifier)
 
         var leadingAnchor = self.contentView.layoutMarginsGuide.leadingAnchor

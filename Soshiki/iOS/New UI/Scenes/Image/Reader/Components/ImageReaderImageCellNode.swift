@@ -95,7 +95,7 @@ class ImageReaderImageCellNode: ASCellNode {
             self.reloadButton.isHidden = true
             self.imageNode.isHidden = true
             Task {
-                let request = await self.source.modifyImageRequest(request: image.asImageRequest()) ?? image.asImageRequest()
+                let request = await self.source.modifyImageRequest(request: ImageRequest(url: image)) ?? ImageRequest(url: image)
                 Task { @MainActor in
                     self.imageTask = ImagePipeline.shared.loadImage(
                         with: request,
@@ -108,7 +108,7 @@ class ImageReaderImageCellNode: ASCellNode {
                                 self?.reloadButton.isHidden = true
                                 self?.imageNode.isHidden = false
                                 self?.imageNode.image = response.image
-                                
+
                                 let newSize: CGSize
                                 if self?.readingMode.isPaged == true, UIScreen.main.bounds.size.aspectRatio > response.image.size.aspectRatio {
                                     newSize = CGSize(
@@ -121,10 +121,10 @@ class ImageReaderImageCellNode: ASCellNode {
                                         height: UIScreen.main.bounds.width / response.image.size.aspectRatio
                                     )
                                 }
-                                
+
                                 self?.imageNode.style.width = ASDimensionMake(newSize.width)
                                 self?.imageNode.style.height = ASDimensionMake(newSize.height)
-                                
+
                                 if let currentSize = self?.frame.size, let indexPath = self?.indexPath {
                                     self?.resizeDelegate?.willResize(
                                         from: currentSize,
@@ -132,7 +132,7 @@ class ImageReaderImageCellNode: ASCellNode {
                                         at: indexPath
                                     )
                                 }
-                                
+
                                 self?.imageNode.setNeedsLayout()
                                 self?.imageNode.setNeedsDisplay()
                             } else {

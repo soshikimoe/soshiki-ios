@@ -84,7 +84,55 @@ class EntryItemTableViewCell: UITableViewCell {
         ])
     }
 
-    func setItem(to item: SourceItem, status: HistoryStatus = .unseen, mediaType: MediaType) {
+    func setItem(to chapter: TextSourceChapter, status: ItemStatus = .unseen) {
+        setItem(
+            number: chapter.chapter,
+            group: chapter.volume,
+            title: chapter.name,
+            thumbnail: chapter.thumbnail,
+            info: chapter.translator,
+            timestamp: chapter.timestamp,
+            status: status,
+            mediaType: .text
+        )
+    }
+
+    func setItem(to chapter: ImageSourceChapter, status: ItemStatus = .unseen) {
+        setItem(
+            number: chapter.chapter,
+            group: chapter.volume,
+            title: chapter.name,
+            thumbnail: chapter.thumbnail,
+            info: chapter.translator,
+            timestamp: chapter.timestamp,
+            status: status,
+            mediaType: .image
+        )
+    }
+
+    func setItem(to episode: VideoSourceEpisode, status: ItemStatus = .unseen) {
+        setItem(
+            number: episode.episode,
+            group: episode.season,
+            title: episode.name,
+            thumbnail: episode.thumbnail,
+            info: episode.type.rawValue.capitalized,
+            timestamp: episode.timestamp,
+            status: status,
+            mediaType: .video
+        )
+    }
+
+    private func setItem(
+        number: Double,
+        group: Double?,
+        title: String?,
+        thumbnail: String?,
+        info: String?,
+        timestamp: Double?,
+        status: ItemStatus,
+        mediaType: MediaType
+    ) {
         let numberString: String
         let groupString: String?
 
@@ -102,24 +150,24 @@ class EntryItemTableViewCell: UITableViewCell {
             self.titleLabel.textColor = .label
         }
 
-        switch item.mediaType {
+        switch mediaType {
         case .text, .image:
-            numberString = "Chapter \(item.number.toTruncatedString())"
-            groupString = item.group.flatMap({ "Volume \($0.toTruncatedString())" })
+            numberString = "Chapter \(number.toTruncatedString())"
+            groupString = group.flatMap({ "Volume \($0.toTruncatedString())" })
         case .video:
-            numberString = "Episode \(item.number.toTruncatedString())"
-            groupString = item.group.flatMap({ "Season \($0.toTruncatedString())" })
+            numberString = "Episode \(number.toTruncatedString())"
+            groupString = group.flatMap({ "Season \($0.toTruncatedString())" })
         }
-        if let title = item.name, !title.isEmpty {
+        if let title, !title.isEmpty {
             setItem(
-                image: item.thumbnail,
+                image: thumbnail,
                 title: title,
                 subtitle1: ([
                     [ groupString, numberString ].compactMap({ $0 }).joined(separator: " "),
-                    item.info
+                    info
                 ].compactMap({ $0 }) as [String]).joined(separator: " • "),
                 subtitle2: [
-                    item.timestamp.flatMap({
+                    timestamp.flatMap({
                         RelativeDateTimeFormatter().localizedString(for: Date(timeIntervalSince1970: $0), relativeTo: Date.now)
                     }),
                     statusString
@@ -127,11 +175,11 @@ class EntryItemTableViewCell: UITableViewCell {
             )
         } else {
             setItem(
-                image: item.thumbnail,
+                image: thumbnail,
                 title: [ groupString, numberString ].compactMap({ $0 }).joined(separator: " "),
-                subtitle1: item.info,
+                subtitle1: info,
                 subtitle2: [
-                    item.timestamp.flatMap({
+                    timestamp.flatMap({
                         RelativeDateTimeFormatter().localizedString(for: Date(timeIntervalSince1970: $0), relativeTo: Date.now)
                     }),
                     statusString
@@ -174,7 +222,7 @@ class EntryItemTableViewCell: UITableViewCell {
     }
 }
 
-enum HistoryStatus {
+enum ItemStatus {
     case seen
     case inProgress(Int)
     case unseen

@@ -77,20 +77,26 @@ extension BrowseViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch indexPath.section {
         case 0:
-            self.navigationController?.pushViewController(
-                SourceViewController(source: SourceManager.shared.textSources[indexPath.item]),
-                animated: true
-            )
+            if let source = SourceManager.shared.textSources[indexPath.item] as? JSTextSource {
+                self.navigationController?.pushViewController(
+                    DiscoverViewController(source: source),
+                    animated: true
+                )
+            }
         case 1:
-            self.navigationController?.pushViewController(
-                SourceViewController(source: SourceManager.shared.imageSources[indexPath.item]),
-                animated: true
-            )
+            if let source = SourceManager.shared.imageSources[indexPath.item] as? JSImageSource {
+                self.navigationController?.pushViewController(
+                    DiscoverViewController(source: source),
+                    animated: true
+                )
+            }
         case 2:
-            self.navigationController?.pushViewController(
-                SourceViewController(source: SourceManager.shared.videoSources[indexPath.item]),
-                animated: true
-            )
+            if let source = SourceManager.shared.videoSources[indexPath.item] as? JSVideoSource {
+                self.navigationController?.pushViewController(
+                    DiscoverViewController(source: source),
+                    animated: true
+                )
+            }
         default: break
         }
         tableView.deselectRow(at: indexPath, animated: true)

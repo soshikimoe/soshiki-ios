@@ -5,7 +5,7 @@
 //  Created by Jim Phieffer on 11/21/22.
 //
 
-enum SourceEntryStatus: String {
+enum SourceEntryStatus: String, Codable {
     case unknown = "UNKNOWN"
     case ongoing = "ONGOING"
     case completed = "COMPLETED"
@@ -13,20 +13,20 @@ enum SourceEntryStatus: String {
     case hiatus = "HIATUS"
 }
 
-enum SourceEntryContentRating: String {
+enum SourceEntryContentRating: String, Codable {
     case safe = "SAFE"
     case suggestive = "SUGGESTIVE"
     case nsfw = "NSFW"
 }
 
-enum SourceEntrySeason: String {
+enum SourceEntrySeason: String, Codable {
     case winter = "WINTER"
     case spring = "SPRING"
     case summer = "SUMMER"
     case fall = "FALL"
 }
 
-struct SourceEntry: Hashable {
+struct SourceEntry: Hashable, Codable {
     let id: String
     let title: String
     let staff: [String]

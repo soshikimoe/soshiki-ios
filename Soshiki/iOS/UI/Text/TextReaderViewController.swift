@@ -21,8 +21,8 @@ class TextReaderViewController: UIViewController {
 
     var chapters: [TextSourceChapter]
     var source: any TextSource
-    var entry: Entry?
-    var history: History?
+    var entry: TextEntry
+    var history: TextHistory
 
     var chapter: Int {
         didSet {
@@ -56,12 +56,20 @@ class TextReaderViewController: UIViewController {
         ).clamped(to: CGFloat(0)...CGFloat(100))
     }
 
-    init(chapters: [TextSourceChapter], chapter: Int, source: any TextSource, entry: Entry?, history: History?) {
+    init(source: any TextSource, entry: TextEntry, chapters: [TextSourceChapter], chapter: Int, history: TextHistory? = nil) {
         self.chapters = chapters
         self.chapter = chapter
         self.source = source
         self.entry = entry
-        self.history = history
+        if let history {
+            self.history = history
+        } else if let history = DataManager.shared.getHistory(entry) {
+            self.history = history
+        } else {
+            let history = TextHistory(id: entry.id, sourceId: entry.sourceId)
+            DataManager.shared.addHistory(history)
+            self.history = history
+        }
 
         let userScript = WKUserScript(
             source: """
@@ -248,6 +256,10 @@ class TextReaderViewController: UIViewController {
         if let details {
             self.webView.loadHTMLString(details.html, baseURL: details.baseUrl.flatMap({ URL(string: $0) }))
         }
+
+        self.history.chapter = self.chapters[self.chapter].chapter
+        self.history.volume = self.chapters[self.chapter].volume
+        DataManager.shared.setHistory(self.history)
     }
 }
 
@@ -269,23 +281,11 @@ extension TextReaderViewController {
     }
 
     @objc func closeReader() {
-        Task {
-            if let entry = entry {
-                await SoshikiAPI.shared.setHistory(
-                    mediaType: entry.mediaType,
-                    id: entry._id,
-                    query: [
-                        .percent(percent),
-                        .chapter(chapters[chapter].chapter)
-                    ] + (chapters[chapter].volume.flatMap({
-                        [ .volume($0) ] as [SoshikiAPI.HistoryQuery]
-                    }) ?? [])
-                )
-                if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
-                    await TrackerManager.shared.setHistory(entry: entry, history: history)
-                }
-            }
-        }
+        self.history.percent = self.percent
+        self.history.chapter = self.chapters[self.chapter].chapter
+        self.history.volume = self.chapters[self.chapter].volume
+        DataManager.shared.setHistory(self.history)
+
         self.navigationController?.popViewController(animated: true)
     }
 }

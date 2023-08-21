@@ -138,21 +138,22 @@ class VideoPlayerViewController: BaseViewController {
     var currentDetails: VideoSourceEpisodeDetails?
     var nextDetails: VideoSourceEpisodeDetails?
 
-    var entry: Entry?
-    var history: History?
+    let entry: VideoEntry
+    var history: VideoHistory
 
     var currentUrl: URL?
 
     let skipButton: UIButton
     let chapterLabel: UILabel
 
-    var currentSkipItem: Entry.SkipTimeItem?
-    var skipTimes: [Entry.SkipTimeItem] { // Get the skip times for the current episode
-        self.entry?.skipTimes?.filter({
-            $0.episode == self.currentEpisode?.episode // Find the ones that are for this episode
-        }).max(by: {
-            $0.times.count < $1.times.count // Find the one for this episode that has the most times
-        })?.times ?? []
+    var currentSkipItem: Entry_Old.SkipTimeItem?
+    var skipTimes: [Entry_Old.SkipTimeItem] { // Get the skip times for the current episode
+//        self.entry?.skipTimes?.filter({
+//            $0.episode == self.currentEpisode?.episode // Find the ones that are for this episode
+//        }).max(by: {
+//            $0.times.count < $1.times.count // Find the one for this episode that has the most times
+//        })?.times ?? []
+        []
     }
 
     var hasCrossedEndThreshold: Bool
@@ -165,7 +166,7 @@ class VideoPlayerViewController: BaseViewController {
     var simplePlayer = UserDefaults.standard.object(forKey: "settings.video.simplePlayer") as? Bool ?? false
     var endThreshold = UserDefaults.standard.object(forKey: "settings.video.endThreshold") as? Int ?? 30
 
-    init(source: any VideoSource, episodes: [VideoSourceEpisode], episodeIndex: Int, entry: Entry? = nil, history: History? = nil) {
+    init(source: any VideoSource, entry: VideoEntry, episodes: [VideoSourceEpisode], episodeIndex: Int, history: VideoHistory? = nil) {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
         try? AVAudioSession.sharedInstance().setActive(true)
 
@@ -238,7 +239,15 @@ class VideoPlayerViewController: BaseViewController {
         self.episodeIndex = episodeIndex
 
         self.entry = entry
-        self.history = history
+        if let history {
+            self.history = history
+        } else if let history = DataManager.shared.getHistory(entry) {
+            self.history = history
+        } else {
+            let history = VideoHistory(id: entry.id, sourceId: entry.sourceId)
+            DataManager.shared.addHistory(history)
+            self.history = history
+        }
 
         self.skipButton = UIButton(type: .roundedRect)
         self.chapterLabel = UILabel()
@@ -688,13 +697,6 @@ extension VideoPlayerViewController {
         guard self.episodes.indices.contains(index) else { return }
 
         if index == self.episodeIndex - 1 { // Move to next episode
-            // Update trackers to current episode
-            if let entry = self.entry, let history = self.history {
-                Task {
-                    await TrackerManager.shared.setHistory(entry: entry, history: history)
-                }
-            }
-
             self.previousDetails = self.currentDetails
             self.currentDetails = self.nextDetails
 
@@ -752,6 +754,10 @@ extension VideoPlayerViewController {
             self.hasCrossedEndThreshold = false
         }
 
+        self.history.episode = self.episodes[index].episode
+        self.history.season = self.episodes[index].season
+        DataManager.shared.setHistory(self.history)
+
         if let currentDetails = self.currentDetails, let url = currentDetails.providers.first?.urls.first.flatMap({ URL(string: $0.url) }) {
             await setUrl(to: url)
         }
@@ -788,9 +794,8 @@ extension VideoPlayerViewController {
             let metadata = GCKMediaMetadata()
             if let episode = self.currentEpisode {
                 metadata.setString(episode.toListString(), forKey: kGCKMetadataKeyTitle)
-                if let entry = self.entry {
-                    metadata.setString(entry.title, forKey: kGCKMetadataKeySubtitle)
-                }
+                metadata.setString(self.entry.title, forKey: kGCKMetadataKeySubtitle)
+
                 if let thumbnail = episode.thumbnail.flatMap({ URL(string: $0) }) {
                     metadata.addImage(GCKImage(url: thumbnail, width: 1280, height: 720))
                 }
@@ -828,13 +833,13 @@ extension VideoPlayerViewController {
             } else {
                 await player.seek(to: CMTime(seconds: Double(cachedTime), preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
             }
-        } else if history?.episode == self.currentEpisode?.episode, let timestamp = self.history?.timestamp {
+        } else if history.episode == self.currentEpisode?.episode {
             if let session = self.castSession {
                 let options = GCKMediaSeekOptions()
-                options.interval = TimeInterval(timestamp)
+                options.interval = TimeInterval(self.history.timestamp)
                 session.remoteMediaClient?.seek(with: options)
             } else {
-                await player.seek(to: CMTime(seconds: Double(timestamp), preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
+                await player.seek(to: CMTime(seconds: self.history.timestamp, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
             }
         }
 
@@ -906,27 +911,18 @@ extension VideoPlayerViewController {
             ) { [weak self] time in
                 guard let self else { return }
 
-                if let duration = self.playerLayer.player?.currentItem?.duration.seconds,
-                   time.seconds < duration - Double(self.endThreshold),
-                   let currentEpisode = self.currentEpisode {
-                    Task {
-                        await self.setHistory(to: currentEpisode, time: Int(time.seconds))
-                    }
-                } else if !self.hasCrossedEndThreshold {
-                    // Update trackers to current episode
-                    if let entry = self.entry, let history = self.history {
-                        Task {
-                            await TrackerManager.shared.setHistory(entry: entry, history: history)
-                        }
-                    }
-                    // Update API to the start of the next episode
-                    if let nextEpisode = self.nextEpisode {
-                        Task {
-                            await self.setHistory(to: nextEpisode)
-                        }
-                    }
+                if let duration = self.playerLayer.player?.currentItem?.duration.seconds {
+                    if time.seconds < duration - Double(self.endThreshold) {
+                        self.history.timestamp = duration
+                        DataManager.shared.setHistory(self.history)
+                    } else if !self.hasCrossedEndThreshold, let nextEpisode = self.nextEpisode {
+                        self.history.timestamp = 0
+                        self.history.episode = nextEpisode.episode
+                        self.history.season = nextEpisode.season
+                        DataManager.shared.setHistory(self.history)
 
-                    self.hasCrossedEndThreshold = true
+                        self.hasCrossedEndThreshold = true
+                    }
                 }
             }
         )
@@ -947,18 +943,6 @@ extension VideoPlayerViewController {
             Task {
                 await self.setEpisode(toIndex: self.episodeIndex - 1)
             }
-        }
-    }
-
-    func setHistory(to episode: VideoSourceEpisode, time: Int = 0) async {
-        guard let entry = self.entry else { return }
-
-        await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: [
-            .timestamp(time),
-            .episode(episode.episode)
-        ])
-        if let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
-            self.history = history
         }
     }
 }
@@ -1040,10 +1024,10 @@ extension VideoPlayerViewController {
             children: currentDetails.providers.reversed().map({ provider in // Menus are upside down for some reason so we must reverse
                 UIMenu(
                     title: provider.name,
-                    children: provider.urls.sorted(by: { $0.quality ?? -1 < $1.quality ?? -1 }).compactMap({ urlObject in
+                    children: provider.urls.sorted(by: { $0.quality < $1.quality }).compactMap({ urlObject in
                         guard let url = URL(string: urlObject.url) else { return nil }
                         return UIAction(
-                            title: urlObject.quality.flatMap({ $0.toTruncatedString() + "p" }) ?? "Unknown",
+                            title: urlObject.quality.qualityString,
                             image: self.currentUrl == url ? UIImage(systemName: "checkmark") : nil,
                             handler: { [weak self] _ in
                                 guard let self else { return }
@@ -1063,12 +1047,7 @@ extension VideoPlayerViewController {
         guard let currentEpisode = self.currentEpisode else { return }
 
         self.titleLabel.text = currentEpisode.toListString()
-
-        if let entry = self.entry {
-            self.subtitleLabel.text = entry.title
-        } else {
-            self.subtitleLabel.text = ""
-        }
+        self.subtitleLabel.text = entry.title
 
         if let item = self.playerLayer.player?.currentItem {
             item.externalMetadata = []
@@ -1080,13 +1059,11 @@ extension VideoPlayerViewController {
                 item.externalMetadata.append(copy)
             }
 
-            if let entry = self.entry {
-                let subtitleMetadata = AVMutableMetadataItem()
-                subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
-                subtitleMetadata.value = entry.title as any NSCopying & NSObjectProtocol
-                if let copy = subtitleMetadata.copy() as? AVMetadataItem {
-                    item.externalMetadata.append(copy)
-                }
+            let subtitleMetadata = AVMutableMetadataItem()
+            subtitleMetadata.identifier = .iTunesMetadataTrackSubTitle
+            subtitleMetadata.value = self.entry.title as any NSCopying & NSObjectProtocol
+            if let copy = subtitleMetadata.copy() as? AVMetadataItem {
+                item.externalMetadata.append(copy)
             }
         }
     }
@@ -1372,6 +1349,7 @@ extension VideoPlayerViewController {
             }
             return
         }
+        guard sender.numberOfTouches > 0 else { return }
         let initialLocation = sender.location(ofTouch: 0, in: nil)
         let offset = sender.translation(in: nil)
         let velocity = sender.velocity(in: nil)
@@ -1444,9 +1422,8 @@ extension VideoPlayerViewController: GCKSessionManagerListener {
         if let url = self.currentUrl, let episode = self.currentEpisode {
             let metadata = GCKMediaMetadata()
             metadata.setString(episode.toListString(), forKey: kGCKMetadataKeyTitle)
-            if let entry = self.entry {
-                metadata.setString(entry.title, forKey: kGCKMetadataKeySubtitle)
-            }
+            metadata.setString(self.entry.title, forKey: kGCKMetadataKeySubtitle)
+
             if let thumbnail = episode.thumbnail.flatMap({ URL(string: $0) }) {
                 metadata.addImage(GCKImage(url: thumbnail, width: 1280, height: 720))
             }

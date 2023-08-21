@@ -17,13 +17,13 @@ class LinkViewController: UITableViewController {
     var offset = 0
     var hasMore = true
 
-    var searchResults: [Entry] = []
+    var searchResults: [Entry_Old] = []
 
     var loadTask: Task<Void, Never>?
 
     let searchController = UISearchController(searchResultsController: nil)
 
-    var dataSource: UITableViewDiffableDataSource<Int, Entry>!
+    var dataSource: UITableViewDiffableDataSource<Int, Entry_Old>!
 
     init(source: any Source, entry: SourceEntry) {
         self.source = source
@@ -59,7 +59,7 @@ class LinkViewController: UITableViewController {
     }
 
     func reloadTableViewData() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, Entry>()
+        var snapshot = NSDiffableDataSourceSnapshot<Int, Entry_Old>()
         snapshot.appendSections([0])
         snapshot.appendItems(searchResults, toSection: 0)
         dataSource.apply(snapshot, animatingDifferences: false)
@@ -70,19 +70,19 @@ class LinkViewController: UITableViewController {
         loadTask = Task {
             self.offset = 0
             self.hasMore = true
-            if let results = try? await SoshikiAPI.shared.getEntries(
-                mediaType: mediaType,
-                query: [
-                    .title(currentSearch),
-                    .offset(offset),
-                    .limit(100)
-                ]
-            ).get() {
-                self.searchResults = results
-                self.offset = results.count
-                self.hasMore = !results.isEmpty
-                self.reloadTableViewData()
-            }
+//            if let results = try? await SoshikiAPI.shared.getEntries(
+//                mediaType: mediaType,
+//                query: [
+//                    .title(currentSearch),
+//                    .offset(offset),
+//                    .limit(100)
+//                ]
+//            ).get() {
+//                self.searchResults = results
+//                self.offset = results.count
+//                self.hasMore = !results.isEmpty
+//                self.reloadTableViewData()
+//            }
             self.loadTask = nil
         }
     }
@@ -94,21 +94,21 @@ extension LinkViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { searchResults.count }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let entry = searchResults[safe: indexPath.item] {
-            Task {
-                await SoshikiAPI.shared.setLink(
-                    mediaType: mediaType,
-                    id: entry._id,
-                    platformId: "soshiki",
-                    platformName: "Soshiki",
-                    sourceId: source.id,
-                    sourceName: source.name,
-                    entryId: sourceEntry.id
-                )
-                NotificationCenter.default.post(name: .init("app.link.update"), object: sourceEntry.id)
-            }
-            self.navigationController?.popViewController(animated: true)
-        }
+//        if let entry = searchResults[safe: indexPath.item] {
+//            Task {
+//                await SoshikiAPI.shared.setLink(
+//                    mediaType: mediaType,
+//                    id: entry._id,
+//                    platformId: "soshiki",
+//                    platformName: "Soshiki",
+//                    sourceId: source.id,
+//                    sourceName: source.name,
+//                    entryId: sourceEntry.id
+//                )
+//                NotificationCenter.default.post(name: .init("app.link.update"), object: sourceEntry.id)
+//            }
+//            self.navigationController?.popViewController(animated: true)
+//        }
         tableView.deselectRow(at: indexPath, animated: true)
     }
 }
@@ -117,20 +117,20 @@ extension LinkViewController {
     override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if hasMore, loadTask == nil, scrollView.contentSize.height - view.bounds.height - scrollView.contentOffset.y < 200 {
             loadTask = Task {
-                if let results = try? await SoshikiAPI.shared.getEntries(
-                    mediaType: mediaType,
-                    query: [
-                        .title(currentSearch),
-                        .offset(offset),
-                        .limit(100)
-                    ]
-                ).get() {
-                    self.searchResults.append(contentsOf: results)
-                    self.searchResults = self.searchResults.removingDuplicates()
-                    self.hasMore = !results.isEmpty
-                    self.offset = self.searchResults.count
-                    self.reloadTableViewData()
-                }
+//                if let results = try? await SoshikiAPI.shared.getEntries(
+//                    mediaType: mediaType,
+//                    query: [
+//                        .title(currentSearch),
+//                        .offset(offset),
+//                        .limit(100)
+//                    ]
+//                ).get() {
+//                    self.searchResults.append(contentsOf: results)
+//                    self.searchResults = self.searchResults.removingDuplicates()
+//                    self.hasMore = !results.isEmpty
+//                    self.offset = self.searchResults.count
+//                    self.reloadTableViewData()
+//                }
                 self.loadTask = nil
             }
         }

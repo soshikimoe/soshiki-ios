@@ -7,28 +7,17 @@
 
 import Foundation
 
-struct SourceListing: JSObjectCodable, Hashable {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let name = object["name"] as? String else { return nil }
-        self.id = id
-        self.name = name
-    }
+enum SourceListingType: String, Codable {
+    case featured = "FEATURED"
+    case trending = "TRENDING"
+    case topRated = "TOP_RATED"
+    case basic = "BASIC"
+}
 
-    init(id: String, name: String) {
-        self.id = id
-        self.name = name
-    }
-
+struct SourceListing: Codable, Hashable {
     let id: String
     let name: String
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "name": name
-        ]
-    }
+    let type: SourceListingType
 
     static func == (lhs: SourceListing, rhs: SourceListing) -> Bool {
         lhs.id == rhs.id && lhs.name == rhs.name

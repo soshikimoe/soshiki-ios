@@ -8,7 +8,7 @@
 import Foundation
 
 protocol VideoSource: Source {
-    func getEpisodes(id: String) async -> [VideoSourceEpisode]
+    func getEpisodes(id: String, page: Int) async -> SourceResults<VideoSourceEpisode>?
     func getEpisodeDetails(id: String, entryId: String) async -> VideoSourceEpisodeDetails?
     func modifyVideoRequest(request: URLRequest) async -> URLRequest?
 }

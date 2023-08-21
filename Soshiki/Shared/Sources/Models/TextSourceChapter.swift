@@ -7,9 +7,10 @@
 
 import Foundation
 
-struct TextSourceChapter: Sendable {
+struct TextSourceChapter: Codable {
     let id: String
     let entryId: String
+    let sourceId: String
     let name: String?
     let chapter: Double
     let volume: Double?
@@ -38,7 +39,7 @@ struct TextSourceChapter: Sendable {
     }
 }
 
-struct TextSourceChapterDetails: Sendable {
+struct TextSourceChapterDetails: Codable {
     let id: String
     let entryId: String
     let html: String

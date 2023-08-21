@@ -7,9 +7,10 @@
 
 import Foundation
 
-struct ImageSourceChapter: Sendable {
+struct ImageSourceChapter: Codable {
     let id: String
     let entryId: String
+    let sourceId: String
     let name: String?
     let chapter: Double
     let volume: Double?
@@ -38,14 +39,13 @@ struct ImageSourceChapter: Sendable {
     }
 }
 
-struct ImageSourceChapterDetails: Sendable {
+struct ImageSourceChapterDetails: Codable {
     let id: String
     let entryId: String
     let pages: [ImageSourceChapterPage]
 }
 
-struct ImageSourceChapterPage: Sendable {
-    let index: Int
+struct ImageSourceChapterPage: Codable {
     let url: String?
     let base64: String?
 }

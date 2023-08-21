@@ -9,7 +9,7 @@ import Foundation
 import Nuke
 
 protocol ImageSource: Source {
-    func getChapters(id: String) async -> [ImageSourceChapter]
+    func getChapters(id: String, page: Int) async -> SourceResults<ImageSourceChapter>?
     func getChapterDetails(id: String, entryId: String) async -> ImageSourceChapterDetails?
     func modifyImageRequest(request: ImageRequest) async -> ImageRequest?
 }

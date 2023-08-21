@@ -105,7 +105,7 @@ class TrackerManager {
         }
     }
 
-    func setHistory(entry: Entry, history: History) async {
+    func setHistory(entry: Entry_Old, history: History_Old) async {
         for tracker in trackers {
             if UserDefaults.standard.object(forKey: "user.trackers.\(tracker.id).\(entry._id).isTracking") as? Bool ??
                 UserDefaults.standard.bool(forKey: "settings.tracker.\(tracker.id).automaticallyTrack") == true,
@@ -117,13 +117,13 @@ class TrackerManager {
 
     func injectDependencies() {
         context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext LOG: \(value.toString() ?? "")")
+            LogManager.shared.log("JSContext LOG: \(value.toString() ?? "")", at: .info)
         } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "log")
         context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext WARN: \(value.toString() ?? "")")
+            LogManager.shared.log("JSContext WARN: \(value.toString() ?? "")", at: .warn)
         } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "warn")
         context.objectForKeyedSubscript("console").setObject({ value in
-            print("JSContext ERROR: \(value.toString() ?? "")")
+            LogManager.shared.log("JSContext ERROR: \(value.toString() ?? "")", at: .error)
         } as @convention(block) (JSValue) -> Void, forKeyedSubscript: "error")
         JSFetch.inject(into: context)
         JSDom.inject(into: context)

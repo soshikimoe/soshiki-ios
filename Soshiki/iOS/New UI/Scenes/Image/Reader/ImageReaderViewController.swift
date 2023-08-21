@@ -96,8 +96,8 @@ class ImageReaderViewController: BaseViewController {
 
     var currentPageIndex: Int
 
-    var entry: Entry?
-    var history: History?
+    var entry: ImageEntry
+    var history: ImageHistory
 
     var currentIndexPath: IndexPath? {
         let centerPoint = CGPoint(
@@ -117,7 +117,7 @@ class ImageReaderViewController: BaseViewController {
 
     var fetchTask: Task<Void, Never>?
 
-    init(source: any ImageSource, chapters: [ImageSourceChapter], chapterIndex: Int, entry: Entry? = nil, history: History? = nil) {
+    init(source: any ImageSource, entry: ImageEntry, chapters: [ImageSourceChapter], chapterIndex: Int, history: ImageHistory? = nil) {
         self.collectionNode = ASCollectionNode(collectionViewLayout: UICollectionViewLayout())
 
         self.settingsViewController = ImageReaderSettingsViewController()
@@ -156,7 +156,15 @@ class ImageReaderViewController: BaseViewController {
         self.details = []
 
         self.entry = entry
-        self.history = history
+        if let history {
+            self.history = history
+        } else if let history = DataManager.shared.getHistory(entry) {
+            self.history = history
+        } else {
+            let history = ImageHistory(id: entry.id, sourceId: entry.sourceId)
+            DataManager.shared.addHistory(history)
+            self.history = history
+        }
 
         self.currentPageIndex = 0
 
@@ -226,6 +234,21 @@ class ImageReaderViewController: BaseViewController {
             if let chapter = self.chapters[safe: chapterIndex] {
                 self.setChapter(to: chapter)
             }
+
+            if self.history.chapter == self.chapters[safe: self.chapterIndex]?.chapter,
+               self.history.volume == self.chapters[safe: self.chapterIndex]?.volume,
+               let chapter = self.chapters[safe: self.chapterIndex],
+               let details = self.details.first(where: { $0.id == chapter.id }) {
+                self.collectionNode.scrollToItem(
+                    at: IndexPath(
+                        item: self.readingMode.isReversed ? details.pages.count - 1 - self.history.page : self.history.page,
+                        section: self.currentIndexPath?.section ?? 0
+                    ),
+                    at: self.readingMode.scrollDirection == .vertical ? .centeredVertically : .centeredHorizontally,
+                    animated: false
+                )
+            }
+
             self.collectionNode.isUserInteractionEnabled = true
             self.isLoaded = true
         }
@@ -392,12 +415,16 @@ class ImageReaderViewController: BaseViewController {
             var offset: CGPoint = .zero
             if self.readingMode.scrollDirection == .vertical {
                 for section in 0..<(currentIndexPath.section) {
-                    offset.y += CGFloat(self.details[section].pages.count + 1) * size.height
+                    if let details = self.details[safe: section] {
+                        offset.y += CGFloat(details.pages.count + 1) * size.height
+                    }
                 }
                 offset.y += CGFloat(currentIndexPath.item) * size.height / CGFloat(self.readingMode.isPaged ? 1 : 2)
             } else {
                 for section in 0..<(currentIndexPath.section) {
-                    offset.x += CGFloat(self.details[section].pages.count + 1) * size.width
+                    if let details = self.details[safe: section] {
+                        offset.x += CGFloat(details.pages.count + 1) * size.width
+                    }
                 }
                 offset.x += CGFloat(currentIndexPath.item) * size.width
             }
@@ -421,11 +448,11 @@ class ImageReaderViewController: BaseViewController {
         let layout = UICollectionViewFlowLayout()
         layout.minimumLineSpacing = 0
         layout.minimumInteritemSpacing = 0
-        layout.scrollDirection = readingMode.scrollDirection
+        layout.scrollDirection = self.readingMode.scrollDirection
 
         self.collectionNode.collectionViewLayout = layout
 
-        self.collectionNode.isPagingEnabled = readingMode.isPaged
+        self.collectionNode.isPagingEnabled = self.readingMode.isPaged
     }
 }
 
@@ -493,22 +520,13 @@ extension ImageReaderViewController {
 
     func setChapter(to chapter: ImageSourceChapter) {
         self.titleLabel.text = chapter.toListString()
-        self.subtitleLabel.text = self.entry?.title
+        self.subtitleLabel.text = self.entry.title
 
-        if let entry = self.entry,
-           let currentIndexPath = self.currentIndexPath,
-           let chapter = self.chapters.first(where: { $0.id == self.details[currentIndexPath.section].id }) {
-            Task {
-                await SoshikiAPI.shared.setHistory(
-                    mediaType: .image,
-                    id: entry._id,
-                    query: [ .chapter(chapter.chapter), .page(self.currentPageIndex) ] + (chapter.volume.flatMap({ [ .volume($0) ] }) ?? [])
-                )
-                if let history = try? await SoshikiAPI.shared.getHistory(mediaType: .image, id: entry._id).get() {
-                    self.history = history
-                    await TrackerManager.shared.setHistory(entry: entry, history: history)
-                }
-            }
+        if let currentIndexPath = self.currentIndexPath,
+           let chapter = self.chapters.first(where: { $0.id == self.details[safe: currentIndexPath.section]?.id }) {
+            self.history.chapter = chapter.chapter
+            self.history.volume = chapter.volume
+            DataManager.shared.setHistory(self.history)
         }
     }
 
@@ -612,9 +630,10 @@ extension ImageReaderViewController: ASCollectionDelegate {
         if let currentIndexPath = self.currentIndexPath,
            let currentDetails = self.details[safe: currentIndexPath.section],
            let currentChapterIndex = self.chapters.firstIndex(where: { $0.id == currentDetails.id }),
-           self.chapterIndex != currentChapterIndex {
+           self.chapterIndex != currentChapterIndex,
+           let chapter = self.chapters[safe: currentChapterIndex] {
             self.chapterIndex = currentChapterIndex
-            setChapter(to: self.chapters[currentChapterIndex])
+            setChapter(to: chapter)
         }
     }
 }
@@ -672,15 +691,33 @@ extension ImageReaderViewController {
         guard let currentIndexPath = self.currentIndexPath,
               let currentDetails = self.details[safe: currentIndexPath.section] else { return }
 
+        let previousPageIndex = self.currentPageIndex
+
         if self.readingMode.isReversed {
             self.currentPageIndex = currentDetails.pages.count - currentIndexPath.item.clamped(to: 0..<currentDetails.pages.count) - 1
         } else {
             self.currentPageIndex = currentIndexPath.item.clamped(to: 0..<currentDetails.pages.count)
         }
 
-        Task { @MainActor in
-            self.leftPageLabel.text = "Page \(self.currentPageIndex + 1)"
-            self.rightPageLabel.text = "\(currentDetails.pages.count) Pages"
+        if previousPageIndex != self.currentPageIndex { // Do image preloading
+            for offset in -3...3 {
+                if let node = self.collectionNode.nodeForItem(
+                    at: IndexPath(
+                        item: (currentIndexPath.item + offset).clamped(to: 0..<currentDetails.pages.count),
+                        section: currentIndexPath.section
+                    )
+                ) as? ImageReaderImageCellNode, node.imageNode.image == nil, node.imageTask == nil {
+                    node.loadImage()
+                }
+            }
+
+            self.history.page = self.currentPageIndex + 1
+            DataManager.shared.setHistory(self.history)
+
+            Task { @MainActor in
+                self.leftPageLabel.text = "Page \(self.currentPageIndex + 1)"
+                self.rightPageLabel.text = "\(currentDetails.pages.count) Pages"
+            }
         }
     }
 }
@@ -691,18 +728,6 @@ extension ImageReaderViewController {
     @objc func closeButtonPressed(_ sender: UIButton? = nil) {
         if sender != nil { // Ensure that a button sent the gesture
             self.tapGesture()
-        }
-
-        if let entry = self.entry,
-           let currentIndexPath = self.currentIndexPath,
-           let chapter = self.chapters.first(where: { $0.id == self.details[currentIndexPath.section].id }) {
-            Task {
-                await SoshikiAPI.shared.setHistory(
-                    mediaType: .image,
-                    id: entry._id,
-                    query: [ .chapter(chapter.chapter), .page(self.currentPageIndex) ] + (chapter.volume.flatMap({ [ .volume($0) ] }) ?? [])
-                )
-            }
         }
 
         self.navigationController?.popViewController(animated: true)

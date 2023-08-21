@@ -7,45 +7,50 @@
 
 import UIKit
 
-class DiscoverViewController: BaseViewController {
-    var entries: [String: [SourceEntry]]
+class DiscoverViewController<SourceType: Source>: BaseViewController {
+    typealias EntryType = SourceType.EntryType
 
-    var sections: [String]
+    var source: SourceType
+
+    var entries: [String: [EntryType]]
+    var hasMoreMap: [String: Bool]
+
+    var listings: [SourceListing]
 
     var collectionView: UICollectionView!
+    var delegate: Delegate!
     let refreshControl: UIRefreshControl
 
-    var dataSource: UICollectionViewDiffableDataSource<Int, [SourceEntry]>!
+    var layout: UICollectionViewCompositionalLayout!
+    var dataSource: UICollectionViewDiffableDataSource<String, SourceType.EntryType>!
 
     var isLandscape: Bool {
         self.view.frame.width > self.view.frame.height
     }
 
-    var tracker: Tracker? {
-        UserDefaults.standard.string(forKey: "app.settings.discoverSource").flatMap({ name in
-            TrackerManager.shared.trackers.first(where: { $0.name == name && $0.schema >= 2 })
-        }) ?? TrackerManager.shared.trackers.filter({ $0.schema >= 2 }).first
-    }
-
-    override init() {
+    init(source: SourceType) {
         self.refreshControl = UIRefreshControl()
 
+        self.source = source
         self.entries = [:]
-        self.sections = []
+        self.listings = []
+        self.hasMoreMap = [:]
 
         super.init()
 
-        let configuration = UICollectionViewCompositionalLayoutConfiguration()
-        configuration.contentInsetsReference = .none
+        self.title = self.source.name
 
-        let layout = StretchingCollectionViewCompositionalLayout(sectionProvider: { section, _ in
-            switch section {
-            case 0: // Trending
+        let configuration = UICollectionViewCompositionalLayoutConfiguration()
+        configuration.interSectionSpacing = 8
+
+        self.layout = UICollectionViewCompositionalLayout(sectionProvider: { section, _ in
+            switch self.listings[section].type {
+            case .featured:
                 let section = NSCollectionLayoutSection(
                     group: NSCollectionLayoutGroup.horizontal(
                         layoutSize: NSCollectionLayoutSize(
                             widthDimension: .fractionalWidth(1),
-                            heightDimension: .absolute(200 + 40)
+                            heightDimension: self.isLandscape ? .fractionalHeight(1) : .fractionalWidth(1.5)
                         ),
                         subitems: [
                             NSCollectionLayoutItem(
@@ -57,58 +62,137 @@ class DiscoverViewController: BaseViewController {
                         ]
                     )
                 )
-                section.boundarySupplementaryItems = [
-                    NSCollectionLayoutBoundarySupplementaryItem(
-                        layoutSize: NSCollectionLayoutSize(
-                            widthDimension: .fractionalWidth(1),
-                            heightDimension: self.isLandscape ? .absolute(self.view.frame.height) : .fractionalWidth(1.5)
-                        ),
-                        elementKind: UICollectionView.elementKindSectionHeader,
-                        alignment: .top
+                section.orthogonalScrollingBehavior = .groupPaging
+                let footer = NSCollectionLayoutBoundarySupplementaryItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .absolute(26)
+                    ),
+                    elementKind: UICollectionView.elementKindSectionFooter,
+                    alignment: .bottomLeading
+                )
+                footer.contentInsets = NSDirectionalEdgeInsets(all: 8)
+                section.boundarySupplementaryItems = [ footer ]
+                section.visibleItemsInvalidationHandler = { [weak self] items, location, environment in
+                    if let indexPath = items.first?.indexPath,
+                       let view = self?.collectionView.supplementaryView(
+                        forElementKind: UICollectionView.elementKindSectionFooter,
+                        at: indexPath
+                       ) as? DiscoverFeaturedPageControlReusableView {
+                        view.pageControl.currentPage = Int(round(location.x / environment.container.contentSize.width))
+                    }
+                }
+                return section
+            case .trending:
+                let item = NSCollectionLayoutItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .fractionalHeight(1)
                     )
+                )
+                item.contentInsets = NSDirectionalEdgeInsets(all: 8)
+                let section = NSCollectionLayoutSection(
+                    group: NSCollectionLayoutGroup.horizontal(
+                        layoutSize: NSCollectionLayoutSize(
+                            widthDimension: .fractionalWidth(0.9),
+                            heightDimension: .absolute(200)
+                        ),
+                        subitems: [ item ]
+                    )
+                )
+                section.contentInsets = NSDirectionalEdgeInsets(all: 8)
+                let header = NSCollectionLayoutBoundarySupplementaryItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .absolute(40)
+                    ),
+                    elementKind: UICollectionView.elementKindSectionHeader,
+                    alignment: .topLeading
+                )
+                header.contentInsets = NSDirectionalEdgeInsets(top: 8, left: 8)
+                section.boundarySupplementaryItems = [ header ]
+                section.orthogonalScrollingBehavior = .groupPaging
+                section.decorationItems = [
+                    NSCollectionLayoutDecorationItem.background(elementKind: "DiscoverSectionBackgroundReusableView")
                 ]
                 return section
-            case 1: // Top Rated
-                return NSCollectionLayoutSection(
-                    group: NSCollectionLayoutGroup.horizontal(
-                        layoutSize: NSCollectionLayoutSize(
-                            widthDimension: .fractionalWidth(1),
-                            heightDimension: .absolute(450 + 40)
-                        ),
-                        subitems: [
-                            NSCollectionLayoutItem(
-                                layoutSize: NSCollectionLayoutSize(
-                                    widthDimension: .fractionalWidth(1),
-                                    heightDimension: .fractionalHeight(1)
-                                )
-                            )
-                        ]
+            case .topRated:
+                let item = NSCollectionLayoutItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .absolute(150 + 16 * 2)
                     )
                 )
-            default: // Standard Category
-                return NSCollectionLayoutSection(
-                    group: NSCollectionLayoutGroup.horizontal(
+                item.contentInsets = NSDirectionalEdgeInsets(horizontal: 8)
+                let section = NSCollectionLayoutSection(
+                    group: NSCollectionLayoutGroup.vertical(
                         layoutSize: NSCollectionLayoutSize(
-                            widthDimension: .fractionalWidth(1),
-                            heightDimension: .absolute(240 + 40)
+                            widthDimension: .fractionalWidth(0.9),
+                            heightDimension: .absolute(450 + 16 * 2 * 3)
                         ),
-                        subitems: [
-                            NSCollectionLayoutItem(
-                                layoutSize: NSCollectionLayoutSize(
-                                    widthDimension: .fractionalWidth(1),
-                                    heightDimension: .fractionalHeight(1)
-                                )
-                            )
-                        ]
+                        subitems: [ item ]
                     )
                 )
+                section.contentInsets = NSDirectionalEdgeInsets(horizontal: 8)
+                let header = NSCollectionLayoutBoundarySupplementaryItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .absolute(40)
+                    ),
+                    elementKind: UICollectionView.elementKindSectionHeader,
+                    alignment: .topLeading
+                )
+                header.contentInsets = NSDirectionalEdgeInsets(top: 8, left: 8)
+                section.boundarySupplementaryItems = [ header ]
+                section.orthogonalScrollingBehavior = .groupPaging
+                section.decorationItems = [
+                    NSCollectionLayoutDecorationItem.background(elementKind: "DiscoverSectionBackgroundReusableView")
+                ]
+                return section
+            case .basic:
+                let item = NSCollectionLayoutItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .fractionalHeight(1)
+                    )
+                )
+                item.contentInsets = NSDirectionalEdgeInsets(all: 8)
+                let section = NSCollectionLayoutSection(
+                    group: NSCollectionLayoutGroup.horizontal(
+                        layoutSize: NSCollectionLayoutSize(
+                            widthDimension: .absolute(140),
+                            heightDimension: .absolute(260)
+                        ),
+                        subitems: [ item ]
+                    )
+                )
+                section.contentInsets = NSDirectionalEdgeInsets(horizontal: 8)
+                let header = NSCollectionLayoutBoundarySupplementaryItem(
+                    layoutSize: NSCollectionLayoutSize(
+                        widthDimension: .fractionalWidth(1),
+                        heightDimension: .absolute(40)
+                    ),
+                    elementKind: UICollectionView.elementKindSectionHeader,
+                    alignment: .topLeading
+                )
+                header.contentInsets = NSDirectionalEdgeInsets(top: 8, left: 8)
+                section.boundarySupplementaryItems = [ header ]
+                section.orthogonalScrollingBehavior = .continuous
+                section.decorationItems = [
+                    NSCollectionLayoutDecorationItem.background(elementKind: "DiscoverSectionBackgroundReusableView")
+                ]
+                return section
             }
         }, configuration: configuration)
 
-        self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        self.layout.register(DiscoverSectionBackgroundReusableView.self, forDecorationViewOfKind: "DiscoverSectionBackgroundReusableView")
+
+        self.collectionView = UICollectionView(frame: .zero, collectionViewLayout: self.layout)
 
         self.collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "UICollectionViewCell")
-        self.collectionView.delegate = self
+
+        self.delegate = Self.Delegate(self)
+        self.collectionView.delegate = self.delegate
 
         self.dataSource = configureDataSource()
 
@@ -127,26 +211,6 @@ class DiscoverViewController: BaseViewController {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        self.navigationItem.hidesBackButton = true
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithTransparentBackground()
-        self.navigationItem.standardAppearance = appearance
-        self.navigationItem.scrollEdgeAppearance = appearance
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        self.navigationController?.setNavigationBarHidden(true, animated: animated)
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        self.navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 
     override func configureViews() {
@@ -169,121 +233,152 @@ class DiscoverViewController: BaseViewController {
         ])
     }
 
-    func configureDataSource() -> UICollectionViewDiffableDataSource<Int, [SourceEntry]> {
-        let headerRegistration = UICollectionView.SupplementaryRegistration<DiscoverFeaturedView>(
+    func configureDataSource() -> UICollectionViewDiffableDataSource<String, EntryType> {
+        let featuredCellRegistration = UICollectionView.CellRegistration<DiscoverFeaturedEntryView, EntryType> { cell, _, entry in
+            cell.setEntry(to: entry)
+            cell.delegate = self
+        }
+
+        let trendingCellRegistration = UICollectionView.CellRegistration<DiscoverTrendingEntryView, EntryType> { cell, _, entry in
+            cell.setEntry(to: entry)
+        }
+
+        let topCellRegistration = UICollectionView.CellRegistration<DiscoverTopEntryView, EntryType> { cell, indexPath, entry in
+            cell.setEntry(to: entry, number: indexPath.item + 1)
+        }
+
+        let basicCellRegistration = UICollectionView.CellRegistration<EntryCollectionViewCell, EntryType> { cell, _, entry in
+            cell.setEntry(to: entry)
+        }
+
+        let headerSupplementaryRegistration = UICollectionView.SupplementaryRegistration<ExpandableSectionHeaderView>(
             elementKind: UICollectionView.elementKindSectionHeader
-        ) { view, _, _ in
-            view.setEntries(to: self.entries["Featured"] ?? [])
-            view.delegate = self
-        }
-
-        let trendingCellRegistration = UICollectionView.CellRegistration<DiscoverTrendingView, [SourceEntry]> { cell, _, entries in
-            cell.setEntries(to: entries)
-            cell.delegate = self
-        }
-
-        let topCellRegistration = UICollectionView.CellRegistration<DiscoverTopView, [SourceEntry]> { cell, _, entries in
-            cell.setEntries(to: entries)
-            cell.delegate = self
-        }
-
-        let categoryCellRegistration = UICollectionView.CellRegistration<DiscoverCategoryView, [SourceEntry]> { cell, indexPath, entries in
-            cell.setTitle(to: self.sections[safe: indexPath.section - 2] ?? "")
-            cell.setEntries(to: entries)
-            cell.delegate = self
-        }
-
-        let dataSource = UICollectionViewDiffableDataSource<Int, [SourceEntry]>(
-            collectionView: collectionView
-        ) { collectionView, indexPath, entries in
-            switch indexPath.section {
-            case 0: // Trending
-                return collectionView.dequeueConfiguredReusableCell(using: trendingCellRegistration, for: indexPath, item: entries)
-            case 1: // Top Rated
-                return collectionView.dequeueConfiguredReusableCell(using: topCellRegistration, for: indexPath, item: entries)
-            default: // Standard Category
-                return collectionView.dequeueConfiguredReusableCell(using: categoryCellRegistration, for: indexPath, item: entries)
+        ) { header, _, indexPath in
+            header.setTitle(to: self.listings[indexPath.section].name)
+            header.setExpandable(self.hasMoreMap[self.listings[indexPath.section].id] ?? false)
+            header.setExpandAction { [weak self] in
+                guard let self, let entries = self.entries[self.listings[indexPath.section].id] else { return }
+                self.navigationController?.pushViewController(
+                    DiscoverSeeMoreViewController(source: self.source, entries: entries, listing: self.listings[indexPath.section]),
+                    animated: true
+                )
             }
         }
 
-        dataSource.supplementaryViewProvider = { collectionView, _, indexPath in
-            collectionView.dequeueConfiguredReusableSupplementary(using: headerRegistration, for: indexPath)
+        let footerSupplementaryRegistration = UICollectionView.SupplementaryRegistration<DiscoverFeaturedPageControlReusableView>(
+            elementKind: UICollectionView.elementKindSectionFooter
+        ) { footer, _, indexPath in
+            footer.pageControl.tag = indexPath.section
+            footer.pageControl.numberOfPages = self.entries[self.listings[indexPath.section].id]?.count ?? 0
+            footer.pageControl.addTarget(self, action: #selector(self.pageControlValueChanged(_:)), for: .valueChanged)
+        }
+
+        let dataSource = UICollectionViewDiffableDataSource<String, EntryType>(
+            collectionView: collectionView
+        ) { collectionView, indexPath, entry in
+            switch self.listings[indexPath.section].type {
+            case .featured:
+                return collectionView.dequeueConfiguredReusableCell(using: featuredCellRegistration, for: indexPath, item: entry)
+            case .trending:
+                return collectionView.dequeueConfiguredReusableCell(using: trendingCellRegistration, for: indexPath, item: entry)
+            case .topRated:
+                return collectionView.dequeueConfiguredReusableCell(using: topCellRegistration, for: indexPath, item: entry)
+            case .basic:
+                return collectionView.dequeueConfiguredReusableCell(using: basicCellRegistration, for: indexPath, item: entry)
+            }
+        }
+
+        dataSource.supplementaryViewProvider = { collectionView, kind, indexPath in
+            switch kind {
+            case UICollectionView.elementKindSectionHeader:
+                return collectionView.dequeueConfiguredReusableSupplementary(using: headerSupplementaryRegistration, for: indexPath)
+            case UICollectionView.elementKindSectionFooter:
+                return collectionView.dequeueConfiguredReusableSupplementary(using: footerSupplementaryRegistration, for: indexPath)
+            default:
+                return nil
+            }
         }
 
         return dataSource
     }
 
+    func reloadSections() {
+        var snapshot = NSDiffableDataSourceSnapshot<String, EntryType>()
+        snapshot.appendSections(self.listings.map({ $0.id }))
+        self.dataSource.apply(snapshot)
+    }
+
     func reloadData() {
-        var snapshot = NSDiffableDataSourceSnapshot<Int, [SourceEntry]>()
-        snapshot.appendSections(Array(0..<(self.sections.count + 2)))
-        for (index, section) in ([ "Trending", "Top" ] + self.sections).enumerated() {
-            if let entries = self.entries[section] {
-                snapshot.appendItems([ entries ], toSection: index)
-            }
+        var snapshot = NSDiffableDataSourceSnapshot<String, EntryType>()
+        snapshot.appendSections(self.listings.map({ $0.id }))
+        for entries in self.entries {
+            snapshot.appendItems(entries.value, toSection: entries.key)
         }
         self.dataSource.apply(snapshot)
     }
 
-    func reloadData(in section: String, index: Int) {
-        var snapshot = NSDiffableDataSourceSectionSnapshot<[SourceEntry]>()
+    func reloadData(in section: String) {
+        var snapshot = NSDiffableDataSourceSectionSnapshot<EntryType>()
         if let entries = self.entries[section] {
-            snapshot.append([ entries ])
+            snapshot.append(entries)
         }
-        self.dataSource.apply(snapshot, to: index)
+        self.dataSource.apply(snapshot, to: section)
     }
 
     @objc func refresh(_ sender: UIRefreshControl? = nil) {
         Task {
-            if let tracker = self.tracker {
-                self.sections = tracker.getDiscoverSections(mediaType: LibraryManager.shared.mediaType)
-                for (index, section) in ([ "Featured", "Trending", "Top" ] + self.sections).enumerated() {
-                    let entries = await tracker.getDiscoverEntries(mediaType: LibraryManager.shared.mediaType, category: section)
-                    self.entries[section] = entries
-                    if index >= 1 {
-                        self.reloadData(in: section, index: index - 1) // Trending is 1 in the above array but 0 in the collection view
-                    } else if let header = self.collectionView.supplementaryView(
-                        forElementKind: UICollectionView.elementKindSectionHeader,
-                        at: IndexPath(item: 0, section: 0)
-                    ) as? DiscoverFeaturedView {
-                        header.setEntries(to: entries)
-                    }
+            self.listings = await self.source.getListings()
+            self.reloadSections()
+            for listing in self.listings {
+                if let results = await self.source.getListing(listing: listing, page: 1) {
+                    self.entries[listing.id] = results.results
+                    self.hasMoreMap[listing.id] = results.hasMore
+                    self.reloadData(in: listing.id)
                 }
             }
-            sender?.endRefreshing()
+            self.refreshControl.endRefreshing()
         }
     }
-}
 
-// MARK: - DiscoverViewController + UICollectionViewDelegate
+    @objc func pageControlValueChanged(_ sender: UIPageControl) {
+        self.collectionView.scrollToItem(
+            at: IndexPath(item: sender.currentPage, section: sender.tag),
+            at: .centeredHorizontally,
+            animated: true
+        )
+    }
 
-extension DiscoverViewController: UICollectionViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        for view in self.collectionView.visibleSupplementaryViews(ofKind: UICollectionView.elementKindSectionHeader) {
-            if let view = view as? DiscoverFeaturedView {
-                view.scrollViewDidScroll(scrollView)
+    class Delegate: NSObject, UICollectionViewDelegate {
+        weak var parent: DiscoverViewController?
+
+        init(_ parent: DiscoverViewController) {
+            self.parent = parent
+        }
+
+        func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+            if let listing = self.parent?.listings[safe: indexPath.section],
+               listing.type != .featured,
+               let entry = self.parent?.entries[listing.id]?[indexPath.item],
+               let source = self.parent?.source {
+                self.parent?.navigationController?.pushViewController(EntryViewController(entry: entry, source: source), animated: true)
             }
+            collectionView.deselectItem(at: indexPath, animated: false)
         }
     }
 }
 
-// MARK: - DiscoverViewController + StretchingCollectionViewLayoutParent
-
-extension DiscoverViewController: StretchingLayoutParent {
-    var headerHeight: CGFloat {
-        self.isLandscape ? self.view.frame.height : self.view.frame.width * 1.5
-    }
-}
+// MARK: - DiscoverViewController + DiscoverViewControllerChildDelegate
 
 extension DiscoverViewController: DiscoverViewControllerChildDelegate {
-    func didSelect(entry: SourceEntry) {
-        if let tracker = self.tracker {
-            self.navigationController?.pushViewController(EntryViewController(sourceEntry: entry, tracker: tracker), animated: true)
-        }
+    func didSelect(entry: EntryType) {
+        self.navigationController?.pushViewController(EntryViewController(entry: entry, source: self.source), animated: true)
     }
 }
 
 // MARK: - DiscoverViewControllerChildDelegate
 
-protocol DiscoverViewControllerChildDelegate: AnyObject {
-    func didSelect(entry: SourceEntry)
+protocol DiscoverViewControllerChildDelegate<EntryType>: AnyObject {
+    associatedtype EntryType: Entry
+
+    func didSelect(entry: EntryType)
 }

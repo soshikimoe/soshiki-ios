@@ -8,10 +8,10 @@
 import UIKit
 import Nuke
 
-class DiscoverFeaturedEntryView: UICollectionViewCell {
-    var entry: SourceEntry!
+class DiscoverFeaturedEntryView<EntryType: Entry>: UICollectionViewCell {
+    var entry: EntryType!
 
-    let coverImageView: ResizeListeningImageView
+    let coverImageView: UIImageView
     let coverImageViewGradientLayer = CAGradientLayer()
 
     let titleLabel: UILabel
@@ -22,13 +22,22 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
 
     let contentStackView: UIStackView
 
-    weak var delegate: DiscoverViewControllerChildDelegate?
+    weak var delegate: (any DiscoverViewControllerChildDelegate<EntryType>)?
+
+    override var bounds: CGRect {
+        didSet {
+            CATransaction.begin()
+            CATransaction.setAnimationDuration(0)
+            self.coverImageViewGradientLayer.frame = self.bounds
+            CATransaction.commit()
+        }
+    }
 
     var image: URL? {
         if self.frame.width > self.frame.height {
-            return self.entry.banner.flatMap({ URL(string: $0) }) ?? URL(string: self.entry.cover)
+            return self.entry.banner.flatMap({ URL(string: $0) }) ?? URL(string: self.entry.cover ?? "")
         } else {
-            return URL(string: self.entry.cover)
+            return URL(string: self.entry.cover ?? "")
         }
     }
 
@@ -49,7 +58,7 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
         activateConstraints()
     }
 
-    func setEntry(to entry: SourceEntry) {
+    func setEntry(to entry: EntryType) {
         self.entry = entry
         reloadView()
     }
@@ -70,46 +79,54 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
         self.titleLabel.text = self.entry.title
 
         var subtitleComponents: [String] = []
-        if let season = self.entry.season, let year = self.entry.year {
-            subtitleComponents.append("\(season.rawValue.capitalized) \(year)")
+        if let entry = self.entry as? VideoEntry, entry.season != .unknown, let year = entry.year {
+            subtitleComponents.append("\(entry.season.rawValue.capitalized) \(year)")
+        } else if let year = self.entry.year {
+            subtitleComponents.append("\(year)")
         }
-        if let items = self.entry.items {
-            subtitleComponents.append("\(items) \(LibraryManager.shared.mediaType == .video ? "Episode" : "Chapter")\(items == 1 ? "" : "s")")
+
+        if let entry = self.entry as? VideoEntry, let episodes = entry.episodes, !episodes.isNaN {
+            subtitleComponents.append("\(episodes.toTruncatedString()) Episodes")
+        } else if let entry = self.entry as? ImageEntry, let chapters = entry.chapters, !chapters.isNaN {
+            subtitleComponents.append("\(chapters.toTruncatedString()) Chapters")
+        } else if let entry = self.entry as? TextEntry, let chapters = entry.chapters, !chapters.isNaN {
+            subtitleComponents.append("\(chapters.toTruncatedString()) Chapters")
         }
+
         self.subtitleLabel.text = subtitleComponents.joined(separator: "  •  ")
 
         self.genreLabel.text = self.entry.tags.prefix(3).map({ $0.uppercased() }).joined(separator: "  •  ")
 
-        self.descriptionLabel.attributedText = NSAttributedString.html(self.entry.description, font: .systemFont(ofSize: 12), color: .white)
+        self.descriptionLabel.attributedText = NSAttributedString.html(self.entry.synopsis ?? "", font: .systemFont(ofSize: 12), color: .label)
     }
 
     func configureSubviews() {
-        self.coverImageView.delegate = self
         self.coverImageView.contentMode = .scaleAspectFill
         self.coverImageView.clipsToBounds = true
         self.coverImageView.alpha = 0
 
         self.coverImageViewGradientLayer.colors = [
-            UIColor(white: 0, alpha: 0.6).cgColor,
+            UIColor.systemBackground.cgColor,
+            UIColor.systemBackground.withAlphaComponent(0.6).cgColor,
             UIColor.clear.cgColor,
-            UIColor(white: 0, alpha: 0.8).cgColor,
-            UIColor.black.cgColor
+            UIColor.systemBackground.withAlphaComponent(0.8).cgColor,
+            UIColor.systemBackground.cgColor
         ]
-        self.coverImageViewGradientLayer.locations = [ 0, 0.3, 0.6, 0.8 ]
+        self.coverImageViewGradientLayer.locations = [ 0, 0.1, 0.3, 0.6, 0.8 ]
         self.coverImageViewGradientLayer.frame = self.coverImageView.bounds
         self.coverImageViewGradientLayer.needsDisplayOnBoundsChange = true
 
         self.coverImageView.layer.insertSublayer(self.coverImageViewGradientLayer, at: 0)
 
         self.titleLabel.font = .systemFont(ofSize: 35, weight: .bold)
-        self.titleLabel.textColor = .white
+        self.titleLabel.textColor = .label
         self.titleLabel.numberOfLines = 2
 
         self.subtitleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
-        self.subtitleLabel.textColor = .lightGray
+        self.subtitleLabel.textColor = .secondaryLabel
 
         self.genreLabel.font = .systemFont(ofSize: 12, weight: .heavy)
-        self.genreLabel.textColor = .lightGray
+        self.genreLabel.textColor = .secondaryLabel
 
         self.descriptionLabel.numberOfLines = 3
 
@@ -120,14 +137,14 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
         self.contentStackView.addArrangedSubview(self.genreLabel)
         self.contentStackView.addArrangedSubview(self.descriptionLabel)
 
-        self.openEntryButton.tintColor = .black
-        self.openEntryButton.backgroundColor = .white
+        self.openEntryButton.tintColor = .systemBackground
+        self.openEntryButton.backgroundColor = .label
         self.openEntryButton.setAttributedTitle(
             NSAttributedString(
                 string: "See More",
                 attributes: [
                     .font: UIFont.systemFont(ofSize: 17, weight: .bold),
-                    .foregroundColor: UIColor.black
+                    .foregroundColor: UIColor.systemBackground
                 ]
             ),
             for: .normal
@@ -152,7 +169,7 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
             self.coverImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
 
             self.openEntryButton.centerXAnchor.constraint(equalTo: self.contentView.centerXAnchor),
-            self.openEntryButton.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -8),
+            self.openEntryButton.bottomAnchor.constraint(equalTo: self.contentView.bottomAnchor, constant: -16),
             self.openEntryButton.widthAnchor.constraint(equalTo: self.contentView.widthAnchor, constant: -16 * 2),
             self.openEntryButton.heightAnchor.constraint(equalToConstant: 40),
 
@@ -168,44 +185,5 @@ class DiscoverFeaturedEntryView: UICollectionViewCell {
 
     @objc func openEntryButtonPressed(_ sender: UIButton) {
         self.delegate?.didSelect(entry: self.entry)
-    }
-}
-
-// MARK: - DiscoverFeaturedEntryView + UIScrollViewDelegate
-
-extension DiscoverFeaturedEntryView: UIScrollViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if scrollView.contentOffset.y >= 0, scrollView.contentOffset.y <= self.frame.maxY {
-            self.coverImageView.frame = self.bounds.offsetBy(dx: 0, dy: scrollView.contentOffset.y / 2)
-        }
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(0)
-        CATransaction.setDisableActions(true)
-        self.coverImageViewGradientLayer.frame = self.coverImageView.bounds
-        CATransaction.commit()
-    }
-}
-
-// MARK: - DiscoverFeaturedEntryView + ResizeListeningImageViewDelegate
-
-extension DiscoverFeaturedEntryView: ResizeListeningImageViewDelegate {
-    func frameDidChange(to frame: CGRect) {
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(0)
-        CATransaction.setDisableActions(true)
-        self.coverImageViewGradientLayer.frame = self.coverImageView.bounds
-        CATransaction.commit()
-    }
-
-    func boundsDidChange(to bounds: CGRect) {
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(0)
-        CATransaction.setDisableActions(true)
-        self.coverImageViewGradientLayer.frame = self.coverImageView.bounds
-        CATransaction.commit()
     }
 }

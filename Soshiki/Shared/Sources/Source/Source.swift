@@ -7,16 +7,17 @@
 
 import Foundation
 
-protocol Source: Equatable, Identifiable {
+protocol Source<EntryType>: Equatable, Identifiable {
+    associatedtype EntryType: Entry
     var id: String { get }
     var name: String { get }
 
-    func getListing(listing: SourceListing, previousResultsInfo: SourceEntryResultsInfo?) async -> SourceEntryResults?
-    func getSearchResults(query: String, filters: [any SourceFilter], previousResultsInfo: SourceEntryResultsInfo?) async -> SourceEntryResults?
-    func getEntry(id: String) async -> SourceEntry?
-    func getFilters() async -> [any SourceFilter]
+    func getListing(listing: SourceListing, page: Int) async -> SourceResults<EntryType>?
+    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<EntryType>?
+    func getEntry(id: String) async -> EntryType?
+    func getFilters() async -> [SourceFilterGroup]
     func getListings() async -> [SourceListing]
-    func getSettings() async -> [any SourceFilter]
+    func getSettings() async -> [SourceFilterGroup]
 }
 
 protocol NetworkSource: Source {

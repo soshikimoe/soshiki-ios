@@ -13,8 +13,7 @@ extension URL {
     public func mimeType() -> String {
         if let mimeType = UTType(filenameExtension: self.pathExtension)?.preferredMIMEType {
             return mimeType
-        }
-        else {
+        } else {
             return "application/octet-stream"
         }
     }

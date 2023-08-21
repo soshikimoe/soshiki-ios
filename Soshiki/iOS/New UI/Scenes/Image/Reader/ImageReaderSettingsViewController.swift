@@ -14,10 +14,11 @@ class ImageReaderSettingsViewController: SettingTableViewController {
                 SelectSettingItem(
                     id: "readingMode",
                     title: "Reading Mode",
-                    value: readingMode.rawValue,
-                    options: ImageReaderViewController.ReadingMode.allCases.map({ $0.rawValue })
-                ) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.image.readingMode")
+                    value: ImageReaderViewController.ReadingMode.allCases.map({
+                        SourceSelectFilterOption(id: $0.rawValue, name: $0.rawValue, selected: $0 == self.readingMode)
+                    })
+                ) { item in
+                    UserDefaults.standard.set(item.value.first(where: { $0.selected })?.id, forKey: "settings.image.readingMode")
                     NotificationCenter.default.post(name: .init("settings.image.readingMode"), object: nil)
                 }
             ])

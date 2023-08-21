@@ -10,7 +10,7 @@ import UIKit
 class EntryTrackersViewController: UITableViewController {
     var observers: [NSObjectProtocol] = []
 
-    let entry: Entry
+    let entry: Entry_Old
 
     var trackers: [Tracker] {
         TrackerManager.shared.trackers.filter({ tracker in
@@ -18,7 +18,7 @@ class EntryTrackersViewController: UITableViewController {
         })
     }
 
-    init(entry: Entry) {
+    init(entry: Entry_Old) {
         self.entry = entry
         super.init(style: .insetGrouped)
         self.title = "Trackers"
@@ -47,11 +47,11 @@ class EntryTrackersViewController: UITableViewController {
         guard let tracker = trackers[safe: sender.tag] else { return }
         Task {
             if sender.isOn {
-                _ = await SoshikiAPI.shared.addTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
+                // _ = await SoshikiAPI.shared.addTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
             } else {
-                _ = await SoshikiAPI.shared.removeTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
+                // _ = await SoshikiAPI.shared.removeTracker(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
             }
-            await LibraryManager.shared.refreshUser()
+            // await LibraryManager.shared.refreshUser()
         }
         if sender.isOn {
             let alert = UIAlertController(
@@ -60,14 +60,14 @@ class EntryTrackersViewController: UITableViewController {
                 preferredStyle: .alert
             )
             alert.addAction(
-                UIAlertAction(title: "Push", style: .default) { [weak self] _ in
-                    Task {
-                        if let entry = self?.entry,
-                           let entryId = entry.trackers.first(where: { $0.id == tracker.id })?.entryId,
-                           let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
-                            await tracker.setHistory(mediaType: entry.mediaType, id: entryId, history: history)
-                        }
-                    }
+                UIAlertAction(title: "Push", style: .default) { _ in
+//                    Task {
+//                        if let entry = self?.entry,
+//                           let entryId = entry.trackers.first(where: { $0.id == tracker.id })?.entryId,
+//                           let history = try? await SoshikiAPI.shared.getHistory(mediaType: entry.mediaType, id: entry._id).get() {
+//                            await tracker.setHistory(mediaType: entry.mediaType, id: entryId, history: history)
+//                        }
+//                    }
                 }
             )
             alert.addAction(
@@ -83,7 +83,7 @@ class EntryTrackersViewController: UITableViewController {
                             if let timestamp = history.timestamp { query.append(.timestamp(timestamp)) }
                             if let episode = history.episode { query.append(.episode(episode)) }
                             if let score = history.score { query.append(.score(score)) }
-                            await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: query)
+                            // await SoshikiAPI.shared.setHistory(mediaType: entry.mediaType, id: entry._id, query: query)
                         }
                     }
                 }
@@ -123,7 +123,7 @@ extension EntryTrackersViewController {
         if let tracker = trackers[safe: indexPath.row] {
             let cell = TrackerTableViewCell(tracker: tracker, reuseIdentifier: "TrackerTableViewCell")
             let toggleView = UISwitch()
-            toggleView.isOn = LibraryManager.shared.isTracking(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
+            // toggleView.isOn = LibraryManager.shared.isTracking(mediaType: entry.mediaType, id: entry._id, trackerId: tracker.id)
             toggleView.tag = indexPath.row
             toggleView.addTarget(self, action: #selector(trackingStatusDidChange(_:)), for: .valueChanged)
             cell.accessoryView = toggleView

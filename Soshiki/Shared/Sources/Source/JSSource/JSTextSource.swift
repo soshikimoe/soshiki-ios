@@ -9,84 +9,47 @@ import Foundation
 import JavaScriptCore
 
 class JSTextSource: JSSource, TextSource {
-    func getChapters(id: String) async -> [TextSourceChapter] {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: []) }
-            let callbackId = "getChaptersCallback_\(String.random())"
-            let errorId = "getChaptersError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ entry in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entry.toArray() as? [[String: Any]] {
-                    return callback.resume(returning: dict.compactMap({ chapter in
-                        if let id = chapter["id"] as? String,
-                           let entryId = chapter["entryId"] as? String,
-                           let chapterNumber = chapter["chapter"] as? Double {
-                            return TextSourceChapter(
-                                id: id,
-                                entryId: entryId,
-                                name: chapter["name"] as? String,
-                                chapter: chapterNumber,
-                                volume: chapter["volume"] as? Double,
-                                translator: chapter["translator"] as? String,
-                                thumbnail: chapter["thumbnail"] as? String,
-                                timestamp: chapter["timestamp"] as? Double
-                            )
-                        } else {
-                            return nil
-                        }
-                    }))
-                }
-                return callback.resume(returning: [])
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: [])
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
-                return callback.resume(returning: [])
-            }
-            object.invokeMethod("_getChapters", withArguments: [callbackValue, errorValue, id])
-        }
+    let id: String
+    let name: String
+    let author: String
+    let version: String
+    let image: URL
+    let context: JSContext
+
+    required init(id: String, name: String, author: String, version: String, image: URL, context: JSContext) {
+        self.id = id
+        self.name = name
+        self.author = author
+        self.version = version
+        self.image = image
+        self.context = context
+    }
+
+    func getListing(listing: SourceListing, page: Int) async -> SourceResults<TextEntry>? {
+        await invokeAsyncMethod("_getListing", on: self.context.objectForKeyedSubscript(self.id), with: [ listing, page ])
+    }
+
+    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<TextEntry>? {
+        await invokeAsyncMethod(
+            "_getSearchResults",
+            on: self.context.objectForKeyedSubscript(self.id),
+            with: [ query, page, filters.compactMap({ AnyEncodable(try? $0.toObject()) }) ]
+        )
+    }
+
+    func getEntry(id: String) async -> TextEntry? {
+        await invokeAsyncMethod("_getEntry", on: self.context.objectForKeyedSubscript(self.id), with: [ id ])
+    }
+
+    func getChapters(id: String, page: Int) async -> SourceResults<TextSourceChapter>? {
+        await invokeAsyncMethod("_getChapters", on: self.context.objectForKeyedSubscript(self.id), with: [ id, page ])
     }
 
     func getChapterDetails(id: String, entryId: String) async -> TextSourceChapterDetails? {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: nil) }
-            let callbackId = "getChapterDetailsCallback_\(String.random())"
-            let errorId = "getChapterDetailsError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ entry in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entry.toObject() as? [String: Any],
-                   let id = dict["id"] as? String,
-                   let entryId = dict["entryId"] as? String,
-                   let html = dict["html"] as? String {
-                    return callback.resume(returning: TextSourceChapterDetails(
-                        id: id,
-                        entryId: entryId,
-                        html: html,
-                        baseUrl: dict["baseUrl"] as? String
-                    ))
-                }
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId) else {
-                return callback.resume(returning: nil)
-            }
-            object.invokeMethod("_getChapterDetails", withArguments: [callbackValue, errorValue, id, entryId])
-        }
+        await invokeAsyncMethod("_getChapterDetails", on: self.context.objectForKeyedSubscript(self.id), with: [ id, entryId ])
+    }
+
+    static func == (lhs: JSTextSource, rhs: JSTextSource) -> Bool {
+        lhs.id == rhs.id
     }
 }

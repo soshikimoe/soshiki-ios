@@ -8,395 +8,155 @@
 import Foundation
 import JavaScriptCore
 
-enum SourceFilterType {
-    init?(_ filter: any SourceFilter) {
-        if let filter = filter as? SourceTextFilter {
-            self = .textFilter(filter)
-        } else if let filter = filter as? SourceToggleFilter {
-            self = .toggleFilter(filter)
-        } else if let filter = filter as? SourceSegmentFilter {
-            self = .segmentFilter(filter)
-        } else if let filter = filter as? SourceSelectFilter {
-            self = .selectFilter(filter)
-        } else if let filter = filter as? SourceExcludableSelectFilter {
-            self = .excludableSelectFilter(filter)
-        } else if let filter = filter as? SourceMultiSelectFilter {
-            self = .multiSelectFilter(filter)
-        } else if let filter = filter as? SourceExcludableMultiSelectFilter {
-            self = .excludableMultiSelectFilter(filter)
-        } else if let filter = filter as? SourceSortFilter {
-            self = .sortFilter(filter)
-        } else if let filter = filter as? SourceAscendableSortFilter {
-            self = .ascendableSortFilter(filter)
-        } else if let filter = filter as? SourceNumberFilter {
-            self = .numberFilter(filter)
-        } else if let filter = filter as? SourceRangeFilter {
-            self = .rangeFilter(filter)
-        } else {
-            return nil
-        }
+enum BaseFilterCodingKeys: String, CodingKey {
+    case type
+}
+
+enum FilterType: String, Codable {
+    case text = "TEXT"
+    case toggle = "TOGGLE"
+    case segment = "SEGMENT"
+    case select = "SELECT"
+    case excludableSelect = "EXCLUDABLE_SELECT"
+    case multiSelect = "MULTI_SELECT"
+    case excludableMultiSelect = "EXCLUDABLE_MULTI_SELECT"
+    case sort = "SORT"
+    case ascendableSort = "ASCENDABLE_SORT"
+    case number = "NUMBER"
+}
+
+class SourceFilterGroup: Codable {
+    enum CodingKeys: String, CodingKey {
+        case header
+        case footer
+        case filters
     }
 
-    case textFilter(SourceTextFilter)
-    case toggleFilter(SourceToggleFilter)
-    case segmentFilter(SourceSegmentFilter)
-    case selectFilter(SourceSelectFilter)
-    case excludableSelectFilter(SourceExcludableSelectFilter)
-    case multiSelectFilter(SourceMultiSelectFilter)
-    case excludableMultiSelectFilter(SourceExcludableMultiSelectFilter)
-    case sortFilter(SourceSortFilter)
-    case ascendableSortFilter(SourceAscendableSortFilter)
-    case numberFilter(SourceNumberFilter)
-    case rangeFilter(SourceRangeFilter)
+    let header: String?
+    let footer: String?
+    let filters: [any SourceFilter]
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.header = try container.decodeIfPresent(String.self, forKey: .header)
+        self.footer = try container.decodeIfPresent(String.self, forKey: .footer)
+        var filtersContainer = try container.nestedUnkeyedContainer(forKey: .filters)
+        var filters: [any SourceFilter] = []
+        while !filtersContainer.isAtEnd {
+            let filterContainer = try filtersContainer.nestedContainer(keyedBy: BaseFilterCodingKeys.self)
+            let type = try filterContainer.decode(FilterType.self, forKey: .type)
+            switch type {
+            case .text: filters.append(try SourceTextFilter(from: try filterContainer.superDecoder()))
+            case .toggle: filters.append(try SourceToggleFilter(from: try filterContainer.superDecoder()))
+            case .segment: filters.append(try SourceSegmentFilter(from: try filterContainer.superDecoder()))
+            case .select: filters.append(try SourceSelectFilter(from: try filterContainer.superDecoder()))
+            case .excludableSelect: filters.append(try SourceExcludableSelectFilter(from: try filterContainer.superDecoder()))
+            case .multiSelect: filters.append(try SourceMultiSelectFilter(from: try filterContainer.superDecoder()))
+            case .excludableMultiSelect: filters.append(try SourceExcludableMultiSelectFilter(from: try filterContainer.superDecoder()))
+            case .sort: filters.append(try SourceSortFilter(from: try filterContainer.superDecoder()))
+            case .ascendableSort: filters.append(try SourceAscendableSortFilter(from: try filterContainer.superDecoder()))
+            case .number: filters.append(try SourceNumberFilter(from: try filterContainer.superDecoder()))
+            }
+        }
+        self.filters = filters
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(self.header, forKey: .header)
+        try container.encodeIfPresent(self.footer, forKey: .footer)
+        var filtersContainer = container.nestedUnkeyedContainer(forKey: .filters)
+        for filter in self.filters {
+            try filtersContainer.encode(filter)
+        }
+    }
 }
 
-protocol JSObjectEncodable {
-    var object: [String: Any] { get }
-}
-
-protocol JSObjectDecodable {
-    init?(from object: [String: Any])
-}
-
-protocol JSObjectCodable: JSObjectDecodable, JSObjectEncodable {}
-
-protocol SourceFilter<ValueType>: JSObjectCodable {
-    associatedtype ValueType
+protocol SourceFilter<ValueType>: Codable {
+    associatedtype ValueType: Codable
     var id: String { get }
     var value: ValueType { get set }
     var name: String { get }
-
-    mutating func trySetValue(to value: Any)
 }
 
-protocol SourceMultiRowFilter {
-    var selections: [String] { get }
-}
-
-struct SourceTextFilter: SourceFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? String,
-              let name = object["name"] as? String else { return nil }
-        self.id = id
-        self.value = value
-        self.name = name
-        self.placeholder = object["placeholder"] as? String ?? ""
-    }
-
+class SourceTextFilter: SourceFilter, Codable {
     let id: String
     var value: String
     let name: String
-    let placeholder: String
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value,
-            "name": name,
-            "placeholder": placeholder
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? String {
-            self.value = value
-        }
-    }
+    let placeholder: String?
 }
 
-struct SourceToggleFilter: SourceFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? Bool,
-              let name = object["name"] as? String else { return nil }
-        self.id = id
-        self.value = value
-        self.name = name
-    }
-
+class SourceToggleFilter: SourceFilter, Codable {
     let id: String
     var value: Bool
     let name: String
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value,
-            "name": name
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? Bool {
-            self.value = value
-        }
-    }
 }
 
-struct SourceSegmentFilter: SourceFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? String,
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = value
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceSegmentFilterOption: Codable {
     let id: String
-    var value: String
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? String {
-            self.value = value
-        }
-    }
+    var selected: Bool
 }
 
-struct SourceSelectFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = object["value"] as? String
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceSegmentFilter: SourceFilter, Codable {
     let id: String
-    var value: String?
+    var value: [SourceSegmentFilterOption]
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? String? {
-            self.value = value
-        }
-    }
 }
 
-struct SourceExcludableSelectFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? [Any]?, value.flatMap({ $0.count == 2 && $0[0] is String && $0[1] is Bool }) ?? true,
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = value.flatMap({
-            if $0.count == 2, let string = $0[0] as? String, let bool = $0[1] as? Bool {
-                return (string, bool)
-            } else {
-                return nil
-            }
-        })
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceSelectFilterOption: Codable {
     let id: String
-    var value: (String, Bool)?
     let name: String
-    let selections: [String]
+    var selected: Bool
+    var excluded: Bool?
+    var ascending: Bool?
 
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value.flatMap({ [$0.0, $0.1] }) as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? (String, Bool)? {
-            self.value = value
-        }
+    init(id: String, name: String, selected: Bool, excluded: Bool? = nil, ascending: Bool? = nil) {
+        self.id = id
+        self.name = name
+        self.selected = selected
+        self.excluded = excluded
+        self.ascending = ascending
     }
 }
 
-struct SourceMultiSelectFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? [String],
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = value
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceSelectFilter: SourceFilter, Codable {
     let id: String
-    var value: [String]
+    var value: [SourceSelectFilterOption]
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? [String] {
-            self.value = value
-        }
-    }
 }
 
-struct SourceExcludableMultiSelectFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? [[Any]], value.allSatisfy({ $0.count == 2 && $0[0] is String && $0[1] is Bool }),
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = value.compactMap({
-            if $0.count == 2, let string = $0[0] as? String, let bool = $0[1] as? Bool {
-                return (string, bool)
-            } else {
-                return nil
-            }
-        })
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceExcludableSelectFilter: SourceFilter, Codable {
     let id: String
-    var value: [(String, Bool)]
+    var value: [SourceSelectFilterOption]
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value.map({ [$0.0, $0.1] }) as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? [(String, Bool)] {
-            self.value = value
-        }
-    }
 }
 
-struct SourceSortFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = object["value"] as? String
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceMultiSelectFilter: SourceFilter, Codable {
     let id: String
-    var value: String?
+    var value: [SourceSelectFilterOption]
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? String? {
-            self.value = value
-        }
-    }
 }
 
-struct SourceAscendableSortFilter: SourceFilter, SourceMultiRowFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? [Any]?, value.flatMap({ $0.count == 2 && $0[0] is String && $0[1] is Bool }) ?? true,
-              let name = object["name"] as? String,
-              let selections = object["selections"] as? [String] else { return nil }
-        self.id = id
-        self.value = value.flatMap({
-            if $0.count == 2, let string = $0[0] as? String, let bool = $0[1] as? Bool {
-                return (string, bool)
-            } else {
-                return nil
-            }
-        })
-        self.name = name
-        self.selections = selections
-    }
-
+class SourceExcludableMultiSelectFilter: SourceFilter, Codable {
     let id: String
-    var value: (String, Bool)?
+    var value: [SourceSelectFilterOption]
     let name: String
-    let selections: [String]
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value.flatMap({ [$0.0, $0.1] }) as Any,
-            "name": name,
-            "selections": selections
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? (String, Bool)? {
-            self.value = value
-        }
-    }
 }
 
-struct SourceNumberFilter: SourceFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? Double,
-              let name = object["name"] as? String,
-              let lowerBound = object["lowerBound"] as? Double,
-              let upperBound = object["upperBound"] as? Double else { return nil }
-        self.id = id
-        self.value = value
-        self.name = name
-        self.lowerBound = lowerBound
-        self.upperBound = upperBound
-        self.step = object["step"] as? Double ?? 1
-        self.allowsCustomInput = object["allowsCustomInput"] as? Bool ?? false
-    }
+class SourceSortFilter: SourceFilter, Codable {
+    let id: String
+    var value: [SourceSelectFilterOption]
+    let name: String
+}
 
+class SourceAscendableSortFilter: SourceFilter, Codable {
+    let id: String
+    var value: [SourceSelectFilterOption]
+    let name: String
+}
+
+class SourceNumberFilter: SourceFilter, Codable {
     let id: String
     var value: Double
     let name: String
@@ -404,62 +164,4 @@ struct SourceNumberFilter: SourceFilter {
     let upperBound: Double
     let step: Double
     let allowsCustomInput: Bool
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": value,
-            "name": name,
-            "lowerBound": lowerBound,
-            "upperBound": upperBound,
-            "step": step,
-            "allowsCustomInput": allowsCustomInput
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? Double {
-            self.value = value
-        }
-    }
-}
-
-struct SourceRangeFilter: SourceFilter {
-    init?(from object: [String: Any]) {
-        guard let id = object["id"] as? String,
-              let value = object["value"] as? [Double], value.count == 2,
-              let name = object["name"] as? String,
-              let lowerBound = object["lowerBound"] as? Double,
-              let upperBound = object["upperBound"] as? Double else { return nil }
-        self.id = id
-        self.value = (value[0], value[1])
-        self.name = name
-        self.lowerBound = lowerBound
-        self.upperBound = upperBound
-        self.step = object["step"] as? Double ?? 1
-    }
-
-    let id: String
-    var value: (Double, Double)
-    let name: String
-    let lowerBound: Double
-    let upperBound: Double
-    let step: Double
-
-    var object: [String: Any] {
-        [
-            "id": id,
-            "value": [value.0, value.1],
-            "name": name,
-            "lowerBound": lowerBound,
-            "upperBound": upperBound,
-            "step": step
-        ]
-    }
-
-    mutating func trySetValue(to value: Any) {
-        if let value = value as? (Double, Double) {
-            self.value = value
-        }
-    }
 }

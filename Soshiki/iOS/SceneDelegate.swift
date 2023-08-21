@@ -33,6 +33,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 Task {
                     await TrackerManager.shared.installTracker(url)
                 }
+            } else if url.pathExtension == "soshikibackup" {
+                let alert = UIAlertController(
+                    title: "Import Backup",
+                    message: "Importing this backup will overwrite your current data. Would you like to proceed?",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+                alert.addAction(UIAlertAction(title: "Import", style: .destructive) { _ in
+                    DataManager.shared.importBackup(url)
+                })
+                UIApplication.shared.connectedScenes.compactMap({
+                    $0 as? UIWindowScene
+                }).first?.keyWindow?.rootViewController?.present(alert, animated: true)
             } else if url.pathExtension == "epub" {
                 // TODO: add
             } else if url.scheme == "soshiki" {

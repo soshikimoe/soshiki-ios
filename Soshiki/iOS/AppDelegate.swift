@@ -10,6 +10,8 @@ import UserNotifications
 import Foundation
 import AsyncDisplayKit
 import GoogleCast
+import RealmSwift
+import Unrealm
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -36,6 +38,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             URLSession.shared.configuration.httpCookieStorage?.deleteCookie(cookie)
         }
 
+        Realm.registerRealmables([
+            TextEntry.self,
+            ImageEntry.self,
+            VideoEntry.self,
+            TextHistory.self,
+            ImageHistory.self,
+            VideoHistory.self,
+            LibraryItem.self,
+            LibraryCategory.self,
+            TextSourceManifest.self,
+            ImageSourceManifest.self,
+            VideoSourceManifest.self
+        ], enums: [
+            MediaType.self,
+            EntrySeason.self,
+            Status.self,
+            ContentRating.self,
+            HistoryStatus.self
+        ])
+
         Task {
             let notifications = await UNUserNotificationCenter.current().deliveredNotifications()
             application.applicationIconBadgeNumber = notifications.reduce(0, { accum, item in
@@ -58,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         UserDefaults.standard.set(token, forKey: "app.notification.id")
         Task {
-            _ = await SoshikiAPI.shared.addNotificationDevice(id: token)
+            // _ = await SoshikiAPI.shared.addNotificationDevice(id: token)
         }
     }
 
@@ -69,14 +91,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
-        let info = response.notification.request.content.userInfo
-        guard let id = info["id"] as? String,
-              let mediaType = (info["mediaType"] as? String).flatMap({ MediaType(rawValue: $0) }) else { return }
-        Task {
-            if let entry = try? await SoshikiAPI.shared.getEntry(mediaType: mediaType, id: id).get() {
-                NotificationCenter.default.post(name: .init("app.openToEntry"), object: entry)
-            }
-        }
+//        let info = response.notification.request.content.userInfo
+//        guard let id = info["id"] as? String,
+//              let mediaType = (info["mediaType"] as? String).flatMap({ MediaType(rawValue: $0) }) else { return }
+//        Task {
+//            if let entry = try? await SoshikiAPI.shared.getEntry(mediaType: mediaType, id: id).get() {
+//                NotificationCenter.default.post(name: .init("app.openToEntry"), object: entry)
+//            }
+//        }
     }
 }
 

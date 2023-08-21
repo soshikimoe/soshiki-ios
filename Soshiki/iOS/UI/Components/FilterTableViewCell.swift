@@ -62,8 +62,8 @@ class FilterTableViewCell: UITableViewCell {
             contentView.addSubview(titleLabel)
             titleLabel.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor).isActive = true
             titleLabel.topAnchor.constraint(equalTo: contentView.layoutMarginsGuide.topAnchor).isActive = true
-            let segmentView = UISegmentedControl(items: filter.selections)
-            segmentView.selectedSegmentIndex = filter.selections.firstIndex(of: filter.value) ?? 0
+            let segmentView = UISegmentedControl(items: filter.value.map({ $0.name }))
+            segmentView.selectedSegmentIndex = filter.value.firstIndex(where: { $0.selected }) ?? 0
             segmentView.isSpringLoaded = true
             segmentView.addTarget(self, action: #selector(updateSegmentFilter(_:)), for: .valueChanged)
             segmentView.translatesAutoresizingMaskIntoConstraints = false
@@ -80,12 +80,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value,
-                indicatorType: .includeExclude
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: false,
+                multi: false,
+                type: .includeExclude
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceExcludableSelectFilter:
@@ -96,12 +95,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value,
-                indicatorType: .includeExclude
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: true,
+                multi: false,
+                type: .includeExclude
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceMultiSelectFilter:
@@ -112,11 +110,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: false,
+                multi: true,
+                type: .includeExclude
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceExcludableMultiSelectFilter:
@@ -127,11 +125,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: true,
+                multi: true,
+                type: .includeExclude
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceSortFilter:
@@ -142,12 +140,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value,
-                indicatorType: .ascendDescend
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: false,
+                multi: false,
+                type: .ascendDescend
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceAscendableSortFilter:
@@ -158,12 +155,11 @@ class FilterTableViewCell: UITableViewCell {
             self.contentConfiguration = content
             self.viewControllerToPresent = StringSelectViewController(
                 title: filter.name,
-                options: filter.selections,
-                selected: filter.value,
-                indicatorType: .ascendDescend
-            ) { [weak self] value in
-                var filter = filter
-                filter.value = value
+                options: filter.value,
+                tristate: true,
+                multi: false,
+                type: .ascendDescend
+            ) { [weak self] in
                 self?.updateHandler(filter)
             }
         case let filter as SourceNumberFilter:
@@ -196,19 +192,20 @@ class FilterTableViewCell: UITableViewCell {
     }
 
     @objc func updateToggleFilter(_ sender: UISwitch) {
-        guard var filter = filter as? SourceToggleFilter else { return }
+        guard let filter = filter as? SourceToggleFilter else { return }
         filter.value = sender.isOn
         updateHandler(filter)
     }
 
     @objc func updateSegmentFilter(_ sender: UISegmentedControl) {
-        guard var filter = filter as? SourceSegmentFilter else { return }
-        filter.value = filter.selections[sender.selectedSegmentIndex]
+        guard let filter = filter as? SourceSegmentFilter else { return }
+        filter.value.first(where: { $0.selected })?.selected = false
+        filter.value[sender.selectedSegmentIndex].selected = true
         updateHandler(filter)
     }
 
     @objc func updateNumberFilter(_ sender: UIStepper) {
-        guard var filter = filter as? SourceNumberFilter else { return }
+        guard let filter = filter as? SourceNumberFilter else { return }
         filter.value = sender.value
         updateHandler(filter)
         var content = self.contentConfiguration as? UIListContentConfiguration ?? self.defaultContentConfiguration()
@@ -219,7 +216,7 @@ class FilterTableViewCell: UITableViewCell {
 
 extension FilterTableViewCell: UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
-        guard var filter = filter as? SourceTextFilter else { return }
+        guard let filter = filter as? SourceTextFilter else { return }
         filter.value = textField.text ?? ""
         updateHandler(filter)
     }

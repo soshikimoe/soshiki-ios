@@ -26,7 +26,7 @@ class SoshikiAPI {
 
     // MARK: - Entry
 
-    func getEntry(mediaType: MediaType, id: String) async -> Result<Entry, Error> {
+    func getEntry(mediaType: MediaType, id: String) async -> Result<Entry_Old, Error> {
         do {
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)") else {
                 throw APIError("Could not create URL from '\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())/\(id)'.")
@@ -34,7 +34,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(from: url)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                let entry = try JSONDecoder().decode(Entry.self, from: data)
+                let entry = try JSONDecoder().decode(Entry_Old.self, from: data)
 //                if let localEntry = DataManager.shared.getEntry(mediaType: entry.mediaType, id: entry._id) {
 //                    localEntry.set(entry, context: DataManager.shared.container.viewContext)
 //                    DataManager.shared.save()
@@ -59,7 +59,7 @@ class SoshikiAPI {
         }
     }
 
-    func getEntries(mediaType: MediaType, query: [EntriesQuery]) async -> Result<[Entry], Error> {
+    func getEntries(mediaType: MediaType, query: [EntriesQuery]) async -> Result<[Entry_Old], Error> {
         do {
             let urlString = "\(SoshikiAPI.baseUrl)/entry/\(mediaType.rawValue.lowercased())"
             var queryItems: [String] = []
@@ -81,7 +81,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(from: url)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                let entries = try JSONDecoder().decode([Entry].self, from: data)
+                let entries = try JSONDecoder().decode([Entry_Old].self, from: data)
 //                for entry in entries {
 //                    if let localEntry = DataManager.shared.getEntry(mediaType: entry.mediaType, id: entry._id) {
 //                        localEntry.set(entry, context: DataManager.shared.container.viewContext)
@@ -101,18 +101,6 @@ class SoshikiAPI {
                 throw APIError("API responded with status \(response.statusCode)\(error.flatMap({ ": \($0)" }) ?? "").")
             }
         } catch {
-            let fetchRequest = EntryObject.fetchRequest()
-            for item in query {
-                switch item {
-                case .ids(let ids): fetchRequest.predicate = NSPredicate(format: "id IN %@", ids)
-                case .limit(let limit): fetchRequest.fetchLimit = limit
-                case .offset(let offset): fetchRequest.fetchOffset = offset
-                default: break
-                }
-            }
-//            if let results = try? DataManager.shared.container.viewContext.fetch(fetchRequest).map({ $0.get() }) {
-//                return .success(results)
-//            }
             return .failure(error)
         }
     }
@@ -120,8 +108,8 @@ class SoshikiAPI {
     enum EntriesQuery {
         case title(String)
         case ids([String])
-        case status([Entry.Status])
-        case contentRating([Entry.ContentRating])
+        case status([Entry_Old.Status])
+        case contentRating([Entry_Old.ContentRating])
         case limit(Int)
         case offset(Int)
     }
@@ -171,7 +159,7 @@ class SoshikiAPI {
         }
     }
 
-    func getLink(mediaType: MediaType, trackerId: String, entryId: String) async -> Result<[Entry], Error> {
+    func getLink(mediaType: MediaType, trackerId: String, entryId: String) async -> Result<[Entry_Old], Error> {
         do {
             let query = [
                 "trackerId=" + trackerId,
@@ -185,7 +173,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(from: url)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode([Entry].self, from: data))
+                return .success(try JSONDecoder().decode([Entry_Old].self, from: data))
             } else if response.statusCode == 401 {
                 if !isRefreshing {
                     await refreshToken()
@@ -200,7 +188,7 @@ class SoshikiAPI {
         }
     }
 
-    func getLink(mediaType: MediaType, platformId: String, sourceId: String, entryId: String) async -> Result<[Entry], Error> {
+    func getLink(mediaType: MediaType, platformId: String, sourceId: String, entryId: String) async -> Result<[Entry_Old], Error> {
         do {
             let query = [
                 "platformId=" + platformId,
@@ -215,7 +203,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(from: url)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode([Entry].self, from: data))
+                return .success(try JSONDecoder().decode([Entry_Old].self, from: data))
             } else if response.statusCode == 401 {
                 if !isRefreshing {
                     await refreshToken()
@@ -231,7 +219,7 @@ class SoshikiAPI {
     }
 
     // MARK: - User
-
+/*
     func getUser(id: String = "me") async -> Result<User, Error> {
         do {
             let query = [
@@ -269,10 +257,10 @@ class SoshikiAPI {
             return .failure(error)
         }
     }
-
+*/
     // MARK: - History
 
-    func getHistory(mediaType: MediaType, id: String) async -> Result<History, Error> {
+    func getHistory(mediaType: MediaType, id: String) async -> Result<History_Old, Error> {
         do {
             guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())/\(id)") else {
@@ -285,7 +273,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode(History.self, from: data))
+                return .success(try JSONDecoder().decode(History_Old.self, from: data))
             } else if response.statusCode == 401 {
                 if !isRefreshing {
                     await refreshToken()
@@ -300,7 +288,7 @@ class SoshikiAPI {
         }
     }
 
-    func getHistories(mediaType: MediaType) async -> Result<[History], Error> {
+    func getHistories(mediaType: MediaType) async -> Result<[History_Old], Error> {
         do {
             guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history/\(mediaType.rawValue.lowercased())") else {
@@ -313,7 +301,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode([History].self, from: data))
+                return .success(try JSONDecoder().decode([History_Old].self, from: data))
             } else if response.statusCode == 401 {
                 if !isRefreshing {
                     await refreshToken()
@@ -328,7 +316,7 @@ class SoshikiAPI {
         }
     }
 
-    func getAllHistories() async -> Result<Histories, Error> {
+    func getAllHistories() async -> Result<Histories_Old, Error> {
         do {
             guard let token else { throw UnauthorizedError() }
             guard let url = URL(string: "\(SoshikiAPI.baseUrl)/history") else {
@@ -341,7 +329,7 @@ class SoshikiAPI {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let response = response as? HTTPURLResponse else { throw APIError("Could not parse response.") }
             if response.statusCode == 200 {
-                return .success(try JSONDecoder().decode(Histories.self, from: data))
+                return .success(try JSONDecoder().decode(Histories_Old.self, from: data))
             } else if response.statusCode == 401 {
                 if !isRefreshing {
                     await refreshToken()
@@ -407,7 +395,7 @@ class SoshikiAPI {
         case season(Double)
         case percent(Double)
         case score(Double)
-        case status(History.Status)
+        case status(History_Old.Status)
     }
 
     @discardableResult
@@ -469,7 +457,7 @@ class SoshikiAPI {
             return .failure(error)
         }
     }
-
+/*
     func getLibrary(mediaType: MediaType) async -> Result<Library, Error> {
         do {
             guard let token else { throw UnauthorizedError() }
@@ -553,7 +541,7 @@ class SoshikiAPI {
             return .failure(error)
         }
     }
-
+*/
     @discardableResult
     func addEntryToLibraryCategory(mediaType: MediaType, id: String, entryId: String) async -> Result<Void, Error> {
         do {

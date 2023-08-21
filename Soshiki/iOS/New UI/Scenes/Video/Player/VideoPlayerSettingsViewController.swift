@@ -11,24 +11,24 @@ class VideoPlayerSettingsViewController: SettingTableViewController {
     var settingGroups: [SettingGroup] {
         [
             SettingGroup(id: "general", header: "General", items: [
-                ToggleSettingItem(id: "autoPlay", title: "Auto Play on Open", value: self.autoPlay) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.video.autoPlay")
+                ToggleSettingItem(id: "autoPlay", title: "Auto Play on Open", value: self.autoPlay) { item in
+                    UserDefaults.standard.set(item.value, forKey: "settings.video.autoPlay")
                     NotificationCenter.default.post(name: .init("settings.video.autoPlay"), object: nil)
                 },
-                ToggleSettingItem(id: "autoNextEpisode", title: "Auto Play Next Episode", value: self.autoNextEpisode) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.video.autoNextEpisode")
+                ToggleSettingItem(id: "autoNextEpisode", title: "Auto Play Next Episode", value: self.autoNextEpisode) { item in
+                    UserDefaults.standard.set(item.value, forKey: "settings.video.autoNextEpisode")
                     NotificationCenter.default.post(name: .init("settings.video.autoNextEpisode"), object: nil)
                 },
-                ToggleSettingItem(id: "persistTimestamp", title: "Persist Time on Server Change", value: self.persistTimestamp) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.video.persistTimestamp")
+                ToggleSettingItem(id: "persistTimestamp", title: "Persist Time on Server Change", value: self.persistTimestamp) { item in
+                    UserDefaults.standard.set(item.value, forKey: "settings.video.persistTimestamp")
                     NotificationCenter.default.post(name: .init("settings.video.persistTimestamp"), object: nil)
                 },
-                ToggleSettingItem(id: "showSkipButton", title: "Show Skip Button", value: self.showSkipButton) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.video.showSkipButton")
+                ToggleSettingItem(id: "showSkipButton", title: "Show Skip Button", value: self.showSkipButton) { item in
+                    UserDefaults.standard.set(item.value, forKey: "settings.video.showSkipButton")
                     NotificationCenter.default.post(name: .init("settings.video.showSkipButton"), object: nil)
                 },
-                ToggleSettingItem(id: "simplePlayer", title: "Simple Player", value: self.simplePlayer) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "settings.video.simplePlayer")
+                ToggleSettingItem(id: "simplePlayer", title: "Simple Player", value: self.simplePlayer) { item in
+                    UserDefaults.standard.set(item.value, forKey: "settings.video.simplePlayer")
                     NotificationCenter.default.post(name: .init("settings.video.simplePlayer"), object: nil)
                 },
                 NumberSettingItem(
@@ -38,8 +38,8 @@ class VideoPlayerSettingsViewController: SettingTableViewController {
                     lowerBound: 0,
                     upperBound: 180,
                     step: 5
-                ) { newValue in
-                    UserDefaults.standard.set(Int(newValue), forKey: "settings.video.endThreshold")
+                ) { item in
+                    UserDefaults.standard.set(Int(item.value), forKey: "settings.video.endThreshold")
                     NotificationCenter.default.post(name: .init("settings.video.endThreshold"), object: nil)
                 }
             ])

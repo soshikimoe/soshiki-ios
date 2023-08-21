@@ -7,18 +7,26 @@
 
 import UIKit
 
-class ExpandableSectionHeaderView: UIView {
+class ExpandableSectionHeaderView: UICollectionReusableView {
     let titleLabel: UILabel
     let chevronImageView: UIImageView
 
     let contentStackView: UIStackView
 
-    init() {
+    let gestureRecognizer: UITapGestureRecognizer
+
+    var expandAction: () -> Void
+
+    override init(frame: CGRect) {
         self.titleLabel = UILabel()
         self.chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
         self.contentStackView = UIStackView()
 
-        super.init(frame: .zero)
+        self.gestureRecognizer = UITapGestureRecognizer()
+
+        self.expandAction = {}
+
+        super.init(frame: frame)
 
         configureSubviews()
         applyConstraints()
@@ -43,6 +51,12 @@ class ExpandableSectionHeaderView: UIView {
 
         self.contentStackView.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(self.contentStackView)
+
+        self.gestureRecognizer.numberOfTapsRequired = 1
+        self.gestureRecognizer.numberOfTouchesRequired = 1
+        self.gestureRecognizer.addTarget(self, action: #selector(viewPressed))
+
+        self.addGestureRecognizer(self.gestureRecognizer)
     }
 
     func applyConstraints() {
@@ -55,5 +69,19 @@ class ExpandableSectionHeaderView: UIView {
 
     func setTitle(to title: String) {
         self.titleLabel.text = title
+    }
+
+    func setExpandable(_ expandable: Bool) {
+        self.chevronImageView.isHidden = !expandable
+    }
+
+    func setExpandAction(_ action: @escaping () -> Void) {
+        self.expandAction = action
+    }
+
+    @objc func viewPressed() {
+        if !self.chevronImageView.isHidden {
+            self.expandAction()
+        }
     }
 }

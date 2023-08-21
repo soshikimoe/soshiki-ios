@@ -28,8 +28,8 @@ class SettingsViewController: SettingTableViewController {
                     lowerBound: 2,
                     upperBound: 8,
                     step: 1
-                ) { newValue in
-                    UserDefaults.standard.set(Int(newValue), forKey: "app.settings.itemsPerRow")
+                ) { item in
+                    UserDefaults.standard.set(Int(item.value), forKey: "app.settings.itemsPerRow")
                     NotificationCenter.default.post(name: .init("app.settings.itemsPerRow"), object: nil)
                 },
                 ColorSettingItem(
@@ -38,21 +38,10 @@ class SettingsViewController: SettingTableViewController {
                     supportsAlpha: false,
                     canReset: true,
                     value: UserDefaults.standard.string(forKey: "app.settings.accentColor").flatMap({ UIColor.from(rawValue: $0) })
-                ) { [weak self] newValue in
-                    UserDefaults.standard.set(newValue?.rawValue, forKey: "app.settings.accentColor")
+                ) { [weak self] item in
+                    UserDefaults.standard.set(item.value?.rawValue, forKey: "app.settings.accentColor")
                     NotificationCenter.default.post(name: .init("app.settings.accentColor"), object: nil)
-                    self?.tableView.window?.tintColor = newValue ?? UIColor.tintColor
-                },
-                SelectSettingItem(
-                    id: "discoverSource",
-                    title: "Discover Source",
-                    value: UserDefaults.standard.string(forKey: "app.settings.discoverSource").flatMap({ name in
-                        TrackerManager.shared.trackers.first(where: { $0.name == name && $0.schema >= 2 })?.name
-                    }) ?? TrackerManager.shared.trackers.filter({ $0.schema >= 2 }).first?.name,
-                    options: TrackerManager.shared.trackers.filter({ $0.schema >= 2 }).map({ $0.name })
-                ) { newValue in
-                    UserDefaults.standard.set(newValue, forKey: "app.settings.discoverSource")
-                    NotificationCenter.default.post(name: .init("app.settings.discoverSource"), object: nil)
+                    self?.tableView.window?.tintColor = item.value ?? UIColor.tintColor
                 }
             ]),
             SettingGroup(id: "sources", header: "Sources", items: [
@@ -60,17 +49,35 @@ class SettingsViewController: SettingTableViewController {
                     self?.navigationController?.pushViewController(SourcesViewController(), animated: true)
                 }
             ]),
-            SettingGroup(id: "trackers", header: "Trackers", items: [
-                ButtonSettingItem(id: "trackers", title: "Trackers", presentsView: true) { [weak self] _ in
-                    self?.navigationController?.pushViewController(TrackersViewController(), animated: true)
+//            SettingGroup(id: "trackers", header: "Trackers", items: [
+//                ButtonSettingItem(id: "trackers", title: "Trackers", presentsView: true) { [weak self] _ in
+//                    self?.navigationController?.pushViewController(TrackersViewController(), animated: true)
+//                }
+//            ]),
+            SettingGroup(id: "backups", header: "Backups", items: [
+                ButtonSettingItem(id: "backups", title: "Export Backup") { [weak self] _ in
+                    guard let data = DataManager.shared.createBackup() else { return }
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+                        "soshiki-backup-\(Date().hyphenated()).soshikibackup"
+                    )
+                    FileManager.default.createFile(atPath: url.path, contents: data)
+                    self?.present(
+                        UIActivityViewController(activityItems: [ url ], applicationActivities: nil),
+                        animated: true
+                    )
                 }
             ]),
             SettingGroup(id: "notifications", header: "Notifications", items: [
                 ButtonSettingItem(id: "forceResetBadge", title: "Force Reset Badge") { _ in
                     UIApplication.shared.applicationIconBadgeNumber = 0
                     Task {
-                        await SoshikiAPI.shared.setNotificationBadge(count: 0)
+                        // await SoshikiAPI.shared.setNotificationBadge(count: 0)
                     }
+                }
+            ]),
+            SettingGroup(id: "logs", header: "Logs", items: [
+                ButtonSettingItem(id: "logs", title: "Logs", presentsView: true) { [weak self] _ in
+                    self?.navigationController?.pushViewController(LogViewController(), animated: true)
                 }
             ])
         ]

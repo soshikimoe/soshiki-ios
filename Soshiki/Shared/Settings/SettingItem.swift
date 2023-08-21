@@ -14,7 +14,7 @@ protocol SettingItem {
     var id: String { get }
     var title: String { get }
     var value: ValueType { get set }
-    var valueDidChange: (ValueType) -> Void { get }
+    var valueDidChange: (Self) -> Void { get }
 }
 
 class TextSettingItem: SettingItem {
@@ -22,9 +22,9 @@ class TextSettingItem: SettingItem {
     let title: String
     var value: String
     let placeholder: String?
-    let valueDidChange: (String) -> Void
+    let valueDidChange: (TextSettingItem) -> Void
 
-    init(id: String, title: String, value: String = "", placeholder: String? = nil, valueDidChange: @escaping (String) -> Void) {
+    init(id: String, title: String, value: String = "", placeholder: String? = nil, valueDidChange: @escaping (TextSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
@@ -37,9 +37,9 @@ class ToggleSettingItem: SettingItem {
     let id: String
     let title: String
     var value: Bool
-    let valueDidChange: (Bool) -> Void
+    let valueDidChange: (ToggleSettingItem) -> Void
 
-    init(id: String, title: String, value: Bool = false, valueDidChange: @escaping (Bool) -> Void) {
+    init(id: String, title: String, value: Bool = false, valueDidChange: @escaping (ToggleSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
@@ -50,15 +50,13 @@ class ToggleSettingItem: SettingItem {
 class SegmentSettingItem: SettingItem {
     let id: String
     let title: String
-    var value: String
-    let options: [String]
-    let valueDidChange: (String) -> Void
+    var value: [SourceSelectFilterOption]
+    let valueDidChange: (SegmentSettingItem) -> Void
 
-    init(id: String, title: String, value: String? = nil, options: [String], valueDidChange: @escaping (String) -> Void) {
+    init(id: String, title: String, value: [SourceSelectFilterOption], valueDidChange: @escaping (SegmentSettingItem) -> Void) {
         self.id = id
         self.title = title
-        self.value = value ?? options[0]
-        self.options = options
+        self.value = value
         self.valueDidChange = valueDidChange
     }
 }
@@ -66,15 +64,13 @@ class SegmentSettingItem: SettingItem {
 class SelectSettingItem: SettingItem {
     let id: String
     let title: String
-    var value: String?
-    let options: [String]
-    let valueDidChange: (String?) -> Void
+    var value: [SourceSelectFilterOption]
+    let valueDidChange: (SelectSettingItem) -> Void
 
-    init(id: String, title: String, value: String? = nil, options: [String], valueDidChange: @escaping (String?) -> Void) {
+    init(id: String, title: String, value: [SourceSelectFilterOption], valueDidChange: @escaping (SelectSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
-        self.options = options
         self.valueDidChange = valueDidChange
     }
 }
@@ -82,15 +78,13 @@ class SelectSettingItem: SettingItem {
 class ExcludableSelectSettingItem: SettingItem {
     let id: String
     let title: String
-    var value: (String, Bool)?
-    let options: [String]
-    let valueDidChange: ((String, Bool)?) -> Void
+    var value: [SourceSelectFilterOption]
+    let valueDidChange: (ExcludableSelectSettingItem) -> Void
 
-    init(id: String, title: String, value: (String, Bool)? = nil, options: [String], valueDidChange: @escaping ((String, Bool)?) -> Void) {
+    init(id: String, title: String, value: [SourceSelectFilterOption], valueDidChange: @escaping (ExcludableSelectSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
-        self.options = options
         self.valueDidChange = valueDidChange
     }
 }
@@ -98,15 +92,13 @@ class ExcludableSelectSettingItem: SettingItem {
 class MultiSelectSettingItem: SettingItem {
     let id: String
     let title: String
-    var value: [String]
-    let options: [String]
-    let valueDidChange: ([String]) -> Void
+    var value: [SourceSelectFilterOption]
+    let valueDidChange: (MultiSelectSettingItem) -> Void
 
-    init(id: String, title: String, value: [String] = [], options: [String], valueDidChange: @escaping ([String]) -> Void) {
+    init(id: String, title: String, value: [SourceSelectFilterOption], valueDidChange: @escaping (MultiSelectSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
-        self.options = options
         self.valueDidChange = valueDidChange
     }
 }
@@ -114,15 +106,13 @@ class MultiSelectSettingItem: SettingItem {
 class ExcludableMultiSelectSettingItem: SettingItem {
     let id: String
     let title: String
-    var value: [(String, Bool)]
-    let options: [String]
-    let valueDidChange: ([(String, Bool)]) -> Void
+    var value: [SourceSelectFilterOption]
+    let valueDidChange: (ExcludableMultiSelectSettingItem) -> Void
 
-    init(id: String, title: String, value: [(String, Bool)] = [], options: [String], valueDidChange: @escaping ([(String, Bool)]) -> Void) {
+    init(id: String, title: String, value: [SourceSelectFilterOption], valueDidChange: @escaping (ExcludableMultiSelectSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.value = value
-        self.options = options
         self.valueDidChange = valueDidChange
     }
 }
@@ -134,9 +124,17 @@ class NumberSettingItem: SettingItem {
     let lowerBound: Double
     let upperBound: Double
     let step: Double
-    let valueDidChange: (Double) -> Void
+    let valueDidChange: (NumberSettingItem) -> Void
 
-    init(id: String, title: String, value: Double, lowerBound: Double, upperBound: Double, step: Double, valueDidChange: @escaping (Double) -> Void) {
+    init(
+        id: String,
+        title: String,
+        value: Double,
+        lowerBound: Double,
+        upperBound: Double,
+        step: Double,
+        valueDidChange: @escaping (NumberSettingItem) -> Void
+    ) {
         self.id = id
         self.title = title
         self.value = value
@@ -152,9 +150,9 @@ class ButtonSettingItem: SettingItem {
     let title: String
     var value: Void
     let presentsView: Bool
-    let valueDidChange: (()) -> Void
+    let valueDidChange: (ButtonSettingItem) -> Void
 
-    init(id: String, title: String, presentsView: Bool = false, valueDidChange: @escaping (()) -> Void) {
+    init(id: String, title: String, presentsView: Bool = false, valueDidChange: @escaping (ButtonSettingItem) -> Void) {
         self.id = id
         self.title = title
         self.presentsView = presentsView
@@ -168,7 +166,7 @@ class ColorSettingItem: SettingItem {
     let supportsAlpha: Bool
     let canReset: Bool
     var value: UIColor?
-    let valueDidChange: (UIColor?) -> Void
+    let valueDidChange: (ColorSettingItem) -> Void
 
     init(
         id: String,
@@ -176,7 +174,7 @@ class ColorSettingItem: SettingItem {
         supportsAlpha: Bool = true,
         canReset: Bool = false,
         value: UIColor?,
-        valueDidChange: @escaping (UIColor?) -> Void
+        valueDidChange: @escaping (ColorSettingItem) -> Void
     ) {
         self.id = id
         self.title = title

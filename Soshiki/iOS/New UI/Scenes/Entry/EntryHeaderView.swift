@@ -31,9 +31,6 @@ class EntryHeaderView: UIView {
 
     let contentStackView: UIStackView
 
-    let closeButton: UIButton
-    let moreButton: UIButton
-
     var isLandscape: Bool {
         self.frame.width > self.frame.height
     }
@@ -55,8 +52,6 @@ class EntryHeaderView: UIView {
         self.descriptionLabel = UILabel()
         self.titleSubtitleStackView = UIStackView()
         self.contentStackView = UIStackView()
-        self.closeButton = UIButton(type: .roundedRect)
-        self.moreButton = UIButton(type: .roundedRect)
 
         super.init(frame: frame)
 
@@ -76,7 +71,6 @@ class EntryHeaderView: UIView {
 
     func configureSubviews() {
         self.clipsToBounds = true
-        self.backgroundColor = .black
 
         self.coverImageView.delegate = self
         self.coverImageView.contentMode = .scaleAspectFill
@@ -84,23 +78,24 @@ class EntryHeaderView: UIView {
         self.coverImageView.alpha = 0
 
         self.coverImageViewGradientLayer.colors = [
-            UIColor(white: 0, alpha: 0.6).cgColor,
+            UIColor.systemBackground.cgColor,
+            UIColor.systemBackground.withAlphaComponent(0.6).cgColor,
             UIColor.clear.cgColor,
-            UIColor(white: 0, alpha: 0.8).cgColor,
-            UIColor.black.cgColor
+            UIColor.systemBackground.withAlphaComponent(0.8).cgColor,
+            UIColor.systemBackground.cgColor
         ]
-        self.coverImageViewGradientLayer.locations = [ 0, 0.3, 0.6, 0.8 ]
+        self.coverImageViewGradientLayer.locations = [ 0, 0.1, 0.3, 0.6, 0.8 ]
         self.coverImageViewGradientLayer.frame = self.coverImageView.bounds
         self.coverImageViewGradientLayer.needsDisplayOnBoundsChange = true
 
         self.coverImageView.layer.insertSublayer(self.coverImageViewGradientLayer, at: 0)
 
         self.titleLabel.font = .systemFont(ofSize: 35, weight: .bold)
-        self.titleLabel.textColor = .white
+        self.titleLabel.textColor = .label
         self.titleLabel.numberOfLines = 2
 
         self.subtitleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
-        self.subtitleLabel.textColor = .lightGray
+        self.subtitleLabel.textColor = .secondaryLabel
 
         self.tagScrollView.showsHorizontalScrollIndicator = false
 
@@ -115,14 +110,14 @@ class EntryHeaderView: UIView {
         var configuration = UIButton.Configuration.plain()
         configuration.imagePadding = 8
         self.startButton.configuration = configuration
-        self.startButton.tintColor = .black
-        self.startButton.backgroundColor = .white
+        self.startButton.tintColor = .systemBackground
+        self.startButton.backgroundColor = .label
         self.startButton.setAttributedTitle(
             NSAttributedString(
                 string: "No Content Available",
                 attributes: [
                     .font: UIFont.systemFont(ofSize: 17, weight: .bold),
-                    .foregroundColor: UIColor.black
+                    .foregroundColor: UIColor.systemBackground
                 ]
             ),
             for: .normal
@@ -132,24 +127,24 @@ class EntryHeaderView: UIView {
         self.startButton.addTarget(self, action: #selector(startButtonPressed(_:)), for: .touchUpInside)
 
         self.libraryButton.setImage(UIImage(systemName: "bookmark"), for: .normal)
-        self.libraryButton.tintColor = .black
-        self.libraryButton.backgroundColor = .white
+        self.libraryButton.tintColor = .systemBackground
+        self.libraryButton.backgroundColor = .label
         self.libraryButton.layer.cornerRadius = 10
         self.libraryButton.clipsToBounds = true
         self.libraryButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold), forImageIn: .normal)
         self.libraryButton.addTarget(self, action: #selector(libraryButtonPressed(_:)), for: .touchUpInside)
 
         self.webviewButton.setImage(UIImage(systemName: "globe"), for: .normal)
-        self.webviewButton.tintColor = .black
-        self.webviewButton.backgroundColor = .white
+        self.webviewButton.tintColor = .systemBackground
+        self.webviewButton.backgroundColor = .label
         self.webviewButton.layer.cornerRadius = 10
         self.webviewButton.clipsToBounds = true
         self.webviewButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold), forImageIn: .normal)
         self.webviewButton.addTarget(self, action: #selector(webviewButtonPressed(_:)), for: .touchUpInside)
 
         self.trackerButton.setImage(UIImage(systemName: "location.fill"), for: .normal)
-        self.trackerButton.tintColor = .black
-        self.trackerButton.backgroundColor = .white
+        self.trackerButton.tintColor = .systemBackground
+        self.trackerButton.backgroundColor = .label
         self.trackerButton.layer.cornerRadius = 10
         self.trackerButton.clipsToBounds = true
         self.trackerButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20, weight: .semibold), forImageIn: .normal)
@@ -175,44 +170,10 @@ class EntryHeaderView: UIView {
         self.contentStackView.addArrangedSubview(self.startButton)
         self.contentStackView.addArrangedSubview(self.buttonStackView)
 
-        self.closeButton.setImage(UIImage(systemName: "xmark"), for: .normal)
-        self.closeButton.backgroundColor = .darkGray
-        self.closeButton.tintColor = .white
-        self.closeButton.layer.cornerRadius = 16
-        self.closeButton.clipsToBounds = true
-        self.closeButton.addTarget(self, action: #selector(closeButtonPressed(_:)), for: .touchUpInside)
-        self.closeButton.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold),
-            forImageIn: .normal
-        )
-
-        self.moreButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
-        self.moreButton.backgroundColor = .darkGray
-        self.moreButton.tintColor = .white
-        self.moreButton.layer.cornerRadius = 16
-        self.moreButton.clipsToBounds = true
-        if let menu = self.delegate?.moreButtonMenu {
-            self.moreButton.showsMenuAsPrimaryAction = true
-            self.moreButton.removeTarget(self, action: #selector(moreButtonPressed(_:)), for: .touchUpInside)
-            self.moreButton.menu = menu
-        } else {
-            self.moreButton.showsMenuAsPrimaryAction = false
-            self.moreButton.addTarget(self, action: #selector(moreButtonPressed(_:)), for: .touchUpInside)
-            self.moreButton.menu = nil
-        }
-        self.moreButton.setPreferredSymbolConfiguration(
-            UIImage.SymbolConfiguration(pointSize: 16, weight: .semibold),
-            forImageIn: .normal
-        )
-
         self.coverImageView.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(self.coverImageView)
         self.contentStackView.translatesAutoresizingMaskIntoConstraints = false
         self.addSubview(self.contentStackView)
-        self.closeButton.translatesAutoresizingMaskIntoConstraints = false
-        self.addSubview(self.closeButton)
-        self.moreButton.translatesAutoresizingMaskIntoConstraints = false
-        self.addSubview(self.moreButton)
     }
 
     func applyConstraints() {
@@ -241,23 +202,13 @@ class EntryHeaderView: UIView {
 
             self.contentStackView.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             self.contentStackView.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8),
-            self.contentStackView.widthAnchor.constraint(equalTo: self.widthAnchor, constant: -16 * 2),
-
-            self.closeButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 48),
-            self.closeButton.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 16),
-            self.closeButton.widthAnchor.constraint(equalToConstant: 32),
-            self.closeButton.heightAnchor.constraint(equalToConstant: 32),
-
-            self.moreButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 48),
-            self.moreButton.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -16),
-            self.moreButton.widthAnchor.constraint(equalToConstant: 32),
-            self.moreButton.heightAnchor.constraint(equalToConstant: 32)
+            self.contentStackView.widthAnchor.constraint(equalTo: self.widthAnchor, constant: -16 * 2)
         ])
     }
 
-    func setEntry(to sourceEntry: SourceEntry) {
+    func setEntry(to entry: any Entry) {
         self.coverImageView.alpha = 0
-        if let url = URL(string: self.isLandscape ? sourceEntry.banner ?? sourceEntry.cover : sourceEntry.cover) {
+        if let url = URL(string: self.isLandscape ? entry.banner ?? entry.cover ?? "" : entry.cover ?? "") {
             ImagePipeline.shared.loadImage(with: url) { [weak self] result in
                 if case let .success(response) = result {
                     self?.coverImageView.image = response.image
@@ -266,26 +217,28 @@ class EntryHeaderView: UIView {
             }
         }
 
-        self.titleLabel.text = sourceEntry.title
+        self.titleLabel.text = entry.title
 
-        self.subtitleLabel.text = sourceEntry.staff.first
+        self.subtitleLabel.text = (entry as? TextEntry)?.author ?? (entry as? ImageEntry)?.author ?? entry.alternativeTitles.first ?? ""
 
         self.tagStackView.arrangedSubviews.forEach({ $0.removeFromSuperview() })
 
         self.tagStackView.addArrangedSubview(
-            EntryTagView(title: sourceEntry.status.rawValue.capitalized, image: UIImage(systemName: "timer"))
+            EntryTagView(title: entry.status.rawValue.capitalized, image: UIImage(systemName: "timer"))
         )
 
-        if let year = sourceEntry.year {
+        if let year = entry.year {
             self.tagStackView.addArrangedSubview(
                 EntryTagView(
-                    title: ((sourceEntry.season.flatMap({ [ $0.rawValue.capitalized ] }) ?? []) + [ "\(year)" ]).joined(separator: " "),
+                    title: (((entry as? VideoEntry).flatMap({
+                        [ $0.season.rawValue.capitalized ]
+                    }) ?? []) + [ "\(year)" ]).joined(separator: " "),
                     image: UIImage(systemName: "calendar")
                 )
             )
         }
 
-        if let score = sourceEntry.score {
+        if let score = entry.score {
             self.tagStackView.addArrangedSubview(
                 EntryTagView(
                     title: score.toTruncatedString(),
@@ -295,39 +248,19 @@ class EntryHeaderView: UIView {
             )
         }
 
-        for tag in sourceEntry.tags {
+        for tag in entry.tags {
             self.tagStackView.addArrangedSubview(EntryTagView(title: tag))
         }
 
-        self.descriptionLabel.attributedText = NSAttributedString.html(sourceEntry.description, font: .systemFont(ofSize: 12), color: .white)
+        self.descriptionLabel.attributedText = NSAttributedString.html(entry.synopsis ?? "", font: .systemFont(ofSize: 12), color: .label)
 
         self.delegate?.sizeDidChange?()
-    }
-
-    func updateMoreButtonState() {
-        if let menu = self.delegate?.moreButtonMenu {
-            self.moreButton.showsMenuAsPrimaryAction = true
-            self.moreButton.removeTarget(self, action: #selector(moreButtonPressed(_:)), for: .touchUpInside)
-            self.moreButton.menu = menu
-        } else {
-            self.moreButton.showsMenuAsPrimaryAction = false
-            self.moreButton.addTarget(self, action: #selector(moreButtonPressed(_:)), for: .touchUpInside)
-            self.moreButton.menu = nil
-        }
     }
 }
 
 // MARK: - Button Handlers
 
 extension EntryHeaderView {
-    @objc func closeButtonPressed(_ sender: UIButton) {
-        self.delegate?.closeButtonPressed?()
-    }
-
-    @objc func moreButtonPressed(_ sender: UIButton) {
-        self.delegate?.moreButtonPressed?()
-    }
-
     @objc func startButtonPressed(_ sender: UIButton) {
         self.delegate?.startButtonPressed?()
     }
@@ -342,16 +275,6 @@ extension EntryHeaderView {
 
     @objc func trackerButtonPressed(_ sender: UIButton) {
         self.delegate?.trackerButtonPressed?()
-    }
-}
-
-// MARK: - EntryHeaderView + UIScrollViewDelegate
-
-extension EntryHeaderView: UIScrollViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if scrollView.contentOffset.y >= 0, scrollView.contentOffset.y <= self.frame.maxY {
-            self.coverImageView.frame.origin = self.bounds.offsetBy(dx: 0, dy: scrollView.contentOffset.y / 2).origin
-        }
     }
 }
 
@@ -376,11 +299,7 @@ extension EntryHeaderView: ResizeListeningImageViewDelegate {
 }
 
 @objc protocol EntryHeaderViewDelegate {
-    @objc optional var moreButtonMenu: UIMenu? { get }
-
     @objc optional func startButtonPressed()
-    @objc optional func closeButtonPressed()
-    @objc optional func moreButtonPressed()
     @objc optional func libraryButtonPressed()
     @objc optional func trackerButtonPressed()
     @objc optional func webviewButtonPressed()

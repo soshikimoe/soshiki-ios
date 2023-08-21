@@ -8,8 +8,8 @@
 import UIKit
 import Nuke
 
-class DiscoverTrendingEntryView: UICollectionViewCell {
-    var entry: SourceEntry!
+class DiscoverTrendingEntryView<EntryType: Entry>: UICollectionViewCell {
+    var entry: EntryType!
 
     let coverImageView: UIImageView
 
@@ -34,13 +34,13 @@ class DiscoverTrendingEntryView: UICollectionViewCell {
         activateConstraints()
     }
 
-    func setEntry(to entry: SourceEntry) {
+    func setEntry(to entry: EntryType) {
         self.entry = entry
         reloadView()
     }
 
     func reloadView() {
-        if let cover = URL(string: self.entry.cover) {
+        if let cover = URL(string: self.entry.cover ?? "") {
             ImagePipeline.shared.loadImage(with: cover) { [weak self] result in
                 if case .success(let response) = result {
                     self?.coverImageView.image = response.image
@@ -53,15 +53,23 @@ class DiscoverTrendingEntryView: UICollectionViewCell {
         self.titleLabel.text = self.entry.title
 
         var subtitleComponents: [String] = []
-        if let season = self.entry.season, let year = self.entry.year {
-            subtitleComponents.append("\(season.rawValue.capitalized) \(year)")
+        if let entry = self.entry as? VideoEntry, entry.season != .unknown, let year = entry.year {
+            subtitleComponents.append("\(entry.season.rawValue.capitalized) \(year)")
+        } else if let year = self.entry.year {
+            subtitleComponents.append("\(year)")
         }
-        if let items = self.entry.items {
-            subtitleComponents.append("\(items) \(LibraryManager.shared.mediaType == .video ? "Episode" : "Chapter")\(items == 1 ? "" : "s")")
+
+        if let entry = self.entry as? VideoEntry, let episodes = entry.episodes, !episodes.isNaN {
+            subtitleComponents.append("\(episodes.toTruncatedString()) Episodes")
+        } else if let entry = self.entry as? ImageEntry, let chapters = entry.chapters, !chapters.isNaN {
+            subtitleComponents.append("\(chapters.toTruncatedString()) Chapters")
+        } else if let entry = self.entry as? TextEntry, let chapters = entry.chapters, !chapters.isNaN {
+            subtitleComponents.append("\(chapters.toTruncatedString()) Chapters")
         }
+
         self.subtitleLabel.text = subtitleComponents.joined(separator: "  •  ")
 
-        self.descriptionLabel.attributedText = NSAttributedString.html(self.entry.description, font: .systemFont(ofSize: 12), color: .label)
+        self.descriptionLabel.attributedText = NSAttributedString.html(self.entry.synopsis ?? "", font: .systemFont(ofSize: 12), color: .label)
     }
 
     func configureSubviews() {

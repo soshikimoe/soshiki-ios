@@ -101,63 +101,63 @@ class Tracker {
         }
     }
 
-    func getSearchResults(
-        mediaType: MediaType,
-        query: String,
-        previousResultsInfo: SourceEntryResultsInfo? = nil
-    ) async -> SourceEntryResults? {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: nil) }
-            let callbackId = "getSearchResultsCallback_\(String.random())"
-            let errorId = "getSearchResultsError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] entryResults in
-                guard let self = self else { return callback.resume(returning: nil) }
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entryResults.toDictionary() as? [String: Any],
-                   let page = dict["page"] as? Int,
-                   let hasMore = dict["hasMore"] as? Bool,
-                   let entries = dict["entries"] as? [[String: String]] {
-                    return callback.resume(returning: SourceEntryResults(
-                        page: page,
-                        hasMore: hasMore,
-                        entries: entries.compactMap({ entry in
-                            if let id = entry["id"],
-                               let title = entry["title"],
-                               let subtitle = entry["subtitle"],
-                               let cover = entry["cover"] {
-                                return SourceShortEntry(
-                                    id: id,
-                                    title: title,
-                                    subtitle: subtitle,
-                                    cover: cover
-                                )
-                            } else {
-                                return nil
-                            }
-                        })
-                    ))
-                }
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId),
-                  let metadata = previousResultsInfo.flatMap({ JSValue(object: ["page": $0.page], in: context) }) ?? JSValue(nullIn: context)
-            else {
-                return callback.resume(returning: nil)
-            }
-            object.invokeMethod("_getSearchResults", withArguments: [callbackValue, errorValue, metadata, mediaType.rawValue.uppercased(), query])
-        }
-    }
+//    func getSearchResults(
+//        mediaType: MediaType,
+//        query: String,
+//        previousResultsInfo: SourceEntryResultsInfo? = nil
+//    ) async -> SourceEntryResults? {
+//        await withCheckedContinuation { [weak self] callback in
+//            guard let self = self else { return callback.resume(returning: nil) }
+//            let callbackId = "getSearchResultsCallback_\(String.random())"
+//            let errorId = "getSearchResultsError_\(String.random())"
+//            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] entryResults in
+//                guard let self = self else { return callback.resume(returning: nil) }
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+//                if let dict = entryResults.toDictionary() as? [String: Any],
+//                   let page = dict["page"] as? Int,
+//                   let hasMore = dict["hasMore"] as? Bool,
+//                   let entries = dict["entries"] as? [[String: String]] {
+//                    return callback.resume(returning: SourceEntryResults(
+//                        page: page,
+//                        hasMore: hasMore,
+//                        entries: entries.compactMap({ entry in
+//                            if let id = entry["id"],
+//                               let title = entry["title"],
+//                               let subtitle = entry["subtitle"],
+//                               let cover = entry["cover"] {
+//                                return SourceShortEntry(
+//                                    id: id,
+//                                    title: title,
+//                                    subtitle: subtitle,
+//                                    cover: cover
+//                                )
+//                            } else {
+//                                return nil
+//                            }
+//                        })
+//                    ))
+//                }
+//                return callback.resume(returning: nil)
+//            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
+//            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+//                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
+//                return callback.resume(returning: nil)
+//            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
+//            guard let object = self.context.objectForKeyedSubscript(self.id),
+//                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
+//                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId),
+//                  let metadata = previousResultsInfo.flatMap({ JSValue(object: ["page": $0.page], in: context) }) ?? JSValue(nullIn: context)
+//            else {
+//                return callback.resume(returning: nil)
+//            }
+//            object.invokeMethod("_getSearchResults", withArguments: [callbackValue, errorValue, metadata, mediaType.rawValue.uppercased(), query])
+//        }
+//    }
 
-    func getHistory(mediaType: MediaType, id: String) async -> History? {
+    func getHistory(mediaType: MediaType, id: String) async -> History_Old? {
         await withCheckedContinuation { [weak self] callback in
             guard let self = self else { return callback.resume(returning: nil) }
             let callbackId = "getHistoryCallback_\(String.random())"
@@ -168,8 +168,8 @@ class Tracker {
                 self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
                 if let dict = entryResults.toDictionary() as? [String: Any],
                    let id = dict["id"] as? String,
-                   let status = (dict["status"] as? String).flatMap({ History.Status(rawValue: $0) }) {
-                    return callback.resume(returning: History(
+                   let status = (dict["status"] as? String).flatMap({ History_Old.Status(rawValue: $0) }) {
+                    return callback.resume(returning: History_Old(
                         id: id,
                         page: dict["page"] as? Int,
                         chapter: dict["chapter"] as? Double,
@@ -199,7 +199,7 @@ class Tracker {
         }
     }
 
-    func setHistory(mediaType: MediaType, id: String, history: History) async {
+    func setHistory(mediaType: MediaType, id: String, history: History_Old) async {
         await withCheckedContinuation { [weak self] callback in
             guard let self = self else { return callback.resume(returning: ()) }
             let callbackId = "setHistoryCallback_\(String.random())"
@@ -322,62 +322,62 @@ class Tracker {
         }
     }
 
-    func getSeeMoreEntries(
-        mediaType: MediaType,
-        category: String,
-        previousResultsInfo: SourceEntryResultsInfo? = nil
-    ) async -> SourceEntryResults? {
-        await withCheckedContinuation { [weak self] callback in
-            guard let self = self else { return callback.resume(returning: nil) }
-            let callbackId = "getSeeMoreEntriesCallback_\(String.random())"
-            let errorId = "getSeeeMoreEntriesError_\(String.random())"
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] entryResults in
-                guard let self = self else { return callback.resume(returning: nil) }
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                if let dict = entryResults.toDictionary() as? [String: Any],
-                   let page = dict["page"] as? Int,
-                   let hasMore = dict["hasMore"] as? Bool,
-                   let entries = dict["entries"] as? [[String: String]] {
-                    return callback.resume(returning: SourceEntryResults(
-                        page: page,
-                        hasMore: hasMore,
-                        entries: entries.compactMap({ entry in
-                            if let id = entry["id"],
-                               let title = entry["title"],
-                               let subtitle = entry["subtitle"],
-                               let cover = entry["cover"] {
-                                return SourceShortEntry(
-                                    id: id,
-                                    title: title,
-                                    subtitle: subtitle,
-                                    cover: cover
-                                )
-                            } else {
-                                return nil
-                            }
-                        })
-                    ))
-                }
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
-            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
-                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
-                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
-                return callback.resume(returning: nil)
-            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
-            guard self.schema >= 2,
-                  let object = self.context.objectForKeyedSubscript(self.id),
-                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
-                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId),
-                  let metadata = previousResultsInfo.flatMap({ JSValue(object: ["page": $0.page], in: context) }) ?? JSValue(nullIn: context)
-            else {
-                return callback.resume(returning: nil)
-            }
-            object.invokeMethod("_getSeeMoreEntries", withArguments: [callbackValue, errorValue, metadata, mediaType.rawValue, category])
-        }
-    }
+//    func getSeeMoreEntries(
+//        mediaType: MediaType,
+//        category: String,
+//        previousResultsInfo: SourceEntryResultsInfo? = nil
+//    ) async -> SourceEntryResults? {
+//        await withCheckedContinuation { [weak self] callback in
+//            guard let self = self else { return callback.resume(returning: nil) }
+//            let callbackId = "getSeeMoreEntriesCallback_\(String.random())"
+//            let errorId = "getSeeeMoreEntriesError_\(String.random())"
+//            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ [weak self] entryResults in
+//                guard let self = self else { return callback.resume(returning: nil) }
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+//                if let dict = entryResults.toDictionary() as? [String: Any],
+//                   let page = dict["page"] as? Int,
+//                   let hasMore = dict["hasMore"] as? Bool,
+//                   let entries = dict["entries"] as? [[String: String]] {
+//                    return callback.resume(returning: SourceEntryResults(
+//                        page: page,
+//                        hasMore: hasMore,
+//                        entries: entries.compactMap({ entry in
+//                            if let id = entry["id"],
+//                               let title = entry["title"],
+//                               let subtitle = entry["subtitle"],
+//                               let cover = entry["cover"] {
+//                                return SourceShortEntry(
+//                                    id: id,
+//                                    title: title,
+//                                    subtitle: subtitle,
+//                                    cover: cover
+//                                )
+//                            } else {
+//                                return nil
+//                            }
+//                        })
+//                    ))
+//                }
+//                return callback.resume(returning: nil)
+//            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: callbackId as NSString)
+//            self.context.objectForKeyedSubscript("__callbacks__" as NSString).setObject({ error in
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(callbackId)
+//                self.context.objectForKeyedSubscript("__callbacks__").deleteProperty(errorId)
+//                LogManager.shared.log(error.toString() ?? "JSContext Error", at: .error)
+//                return callback.resume(returning: nil)
+//            } as @convention(block) (JSValue) -> Void, forKeyedSubscript: errorId as NSString)
+//            guard self.schema >= 2,
+//                  let object = self.context.objectForKeyedSubscript(self.id),
+//                  let callbackValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(callbackId),
+//                  let errorValue = self.context.objectForKeyedSubscript("__callbacks__").objectForKeyedSubscript(errorId),
+//                  let metadata = previousResultsInfo.flatMap({ JSValue(object: ["page": $0.page], in: context) }) ?? JSValue(nullIn: context)
+//            else {
+//                return callback.resume(returning: nil)
+//            }
+//            object.invokeMethod("_getSeeMoreEntries", withArguments: [callbackValue, errorValue, metadata, mediaType.rawValue, category])
+//        }
+//    }
 
     func getDiscoverSections(mediaType: MediaType) -> [String] {
         self.context.objectForKeyedSubscript(self.id)?.invokeMethod("getDiscoverSections", withArguments: [

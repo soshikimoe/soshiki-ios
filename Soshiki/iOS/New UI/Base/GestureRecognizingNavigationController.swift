@@ -9,6 +9,8 @@ import UIKit
 
 class GestureRecognizingNavigationController: UINavigationController {
     override func viewDidLoad() {
+        super.viewDidLoad()
+
         self.interactivePopGestureRecognizer?.delegate = self
     }
 }
