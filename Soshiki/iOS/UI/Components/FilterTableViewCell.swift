@@ -8,16 +8,16 @@
 import UIKit
 
 class FilterTableViewCell: UITableViewCell {
-    let filter: any SourceFilter
-    let updateHandler: (any SourceFilter) -> Void
+    let filter: SourceFilter
+    let updateHandler: (any SourceFilterBase) -> Void
 
     var viewControllerToPresent: UIViewController?
 
-    init(filter: any SourceFilter, updateHandler: @escaping (any SourceFilter) -> Void) {
+    init(filter: SourceFilter, updateHandler: @escaping (any SourceFilterBase) -> Void) {
         self.filter = filter
         self.updateHandler = updateHandler
         switch filter {
-        case let filter as SourceTextFilter:
+        case .text(let filter):
             super.init(style: .default, reuseIdentifier: "TextFilterTableViewCell")
             let titleLabel = UILabel()
             titleLabel.text = filter.name
@@ -25,26 +25,19 @@ class FilterTableViewCell: UITableViewCell {
             contentView.addSubview(titleLabel)
             titleLabel.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor).isActive = true
             titleLabel.topAnchor.constraint(equalTo: contentView.layoutMarginsGuide.topAnchor).isActive = true
-            let dividerView = UIView()
-            dividerView.backgroundColor = .separator
-            dividerView.translatesAutoresizingMaskIntoConstraints = false
-            contentView.addSubview(dividerView)
-            dividerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor).isActive = true
-            dividerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor).isActive = true
-            dividerView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8).isActive = true
-            dividerView.heightAnchor.constraint(equalToConstant: 1 / UIScreen.main.scale).isActive = true
             let textField = UITextField()
             textField.text = filter.value
+            textField.placeholder = filter.placeholder ?? "..."
             textField.delegate = self
             textField.returnKeyType = .done
             textField.translatesAutoresizingMaskIntoConstraints = false
             contentView.addSubview(textField)
             textField.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor).isActive = true
             textField.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor).isActive = true
-            textField.topAnchor.constraint(equalTo: dividerView.bottomAnchor, constant: 8).isActive = true
+            textField.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8).isActive = true
             textField.bottomAnchor.constraint(equalTo: contentView.layoutMarginsGuide.bottomAnchor).isActive = true
             self.selectionStyle = .none
-        case let filter as SourceToggleFilter:
+        case .toggle(let filter):
             super.init(style: .default, reuseIdentifier: "ToggleFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -54,7 +47,7 @@ class FilterTableViewCell: UITableViewCell {
             self.accessoryView = toggleView
             self.contentConfiguration = content
             self.selectionStyle = .none
-        case let filter as SourceSegmentFilter:
+        case .segment(let filter):
             super.init(style: .default, reuseIdentifier: "SegmentFilterTableViewCell")
             let titleLabel = UILabel()
             titleLabel.text = filter.name
@@ -72,7 +65,7 @@ class FilterTableViewCell: UITableViewCell {
             segmentView.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor).isActive = true
             segmentView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 8).isActive = true
             segmentView.bottomAnchor.constraint(equalTo: contentView.layoutMarginsGuide.bottomAnchor).isActive = true
-        case let filter as SourceSelectFilter:
+        case .select(let filter):
             super.init(style: .default, reuseIdentifier: "SelectFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -87,7 +80,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceExcludableSelectFilter:
+        case .excludableSelect(let filter):
             super.init(style: .default, reuseIdentifier: "ExcludableSelectFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -102,7 +95,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceMultiSelectFilter:
+        case .multiSelect(let filter):
             super.init(style: .default, reuseIdentifier: "MultiSelectFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -117,7 +110,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceExcludableMultiSelectFilter:
+        case .excludableMultiSelect(let filter):
             super.init(style: .default, reuseIdentifier: "ExcludableMultiSelectFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -132,7 +125,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceSortFilter:
+        case .sort(let filter):
             super.init(style: .default, reuseIdentifier: "SortFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -147,7 +140,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceAscendableSortFilter:
+        case .ascendableSort(let filter):
             super.init(style: .default, reuseIdentifier: "AscendableSortFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -162,7 +155,7 @@ class FilterTableViewCell: UITableViewCell {
             ) { [weak self] in
                 self?.updateHandler(filter)
             }
-        case let filter as SourceNumberFilter:
+        case .number(let filter):
             super.init(style: .value1, reuseIdentifier: "NumberFilterTableViewCell")
             var content = self.defaultContentConfiguration()
             content.text = filter.name
@@ -176,8 +169,6 @@ class FilterTableViewCell: UITableViewCell {
             self.accessoryView = stepperView
             self.contentConfiguration = content
             self.selectionStyle = .none
-        default:
-            super.init(style: .default, reuseIdentifier: "FilterTableViewCell")
         }
     }
 
@@ -192,20 +183,20 @@ class FilterTableViewCell: UITableViewCell {
     }
 
     @objc func updateToggleFilter(_ sender: UISwitch) {
-        guard let filter = filter as? SourceToggleFilter else { return }
+        guard case .toggle(let filter) = self.filter else { return }
         filter.value = sender.isOn
         updateHandler(filter)
     }
 
     @objc func updateSegmentFilter(_ sender: UISegmentedControl) {
-        guard let filter = filter as? SourceSegmentFilter else { return }
+        guard case .segment(let filter) = self.filter else { return }
         filter.value.first(where: { $0.selected })?.selected = false
         filter.value[sender.selectedSegmentIndex].selected = true
         updateHandler(filter)
     }
 
     @objc func updateNumberFilter(_ sender: UIStepper) {
-        guard let filter = filter as? SourceNumberFilter else { return }
+        guard case .number(let filter) = self.filter else { return }
         filter.value = sender.value
         updateHandler(filter)
         var content = self.contentConfiguration as? UIListContentConfiguration ?? self.defaultContentConfiguration()
@@ -216,7 +207,7 @@ class FilterTableViewCell: UITableViewCell {
 
 extension FilterTableViewCell: UITextFieldDelegate {
     func textFieldDidEndEditing(_ textField: UITextField) {
-        guard let filter = filter as? SourceTextFilter else { return }
+        guard case .text(let filter) = self.filter else { return }
         filter.value = textField.text ?? ""
         updateHandler(filter)
     }

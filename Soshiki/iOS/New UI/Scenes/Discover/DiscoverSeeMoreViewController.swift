@@ -13,6 +13,7 @@ class DiscoverSeeMoreViewController<SourceType: Source>: BaseViewController {
     let source: SourceType
     var entries: [EntryType]
     let listing: SourceListing
+    var settings: [SourceFilterGroup]
 
     var page: Int
     var hasMore: Bool
@@ -25,10 +26,11 @@ class DiscoverSeeMoreViewController<SourceType: Source>: BaseViewController {
 
     let refreshControl: UIRefreshControl
 
-    init(source: SourceType, entries: [EntryType], listing: SourceListing) {
+    init(source: SourceType, entries: [EntryType], listing: SourceListing, settings: [SourceFilterGroup]) {
         self.source = source
         self.entries = entries
         self.listing = listing
+        self.settings = settings
 
         self.page = 1
         self.hasMore = true
@@ -102,6 +104,22 @@ class DiscoverSeeMoreViewController<SourceType: Source>: BaseViewController {
         super.viewDidLoad()
         refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
         self.collectionView.refreshControl = refreshControl
+    }
+
+    override func configureViews() {
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "gear"),
+            primaryAction: UIAction { [weak self] _ in
+                if let settings = self?.settings, let sourceId = self?.source.id {
+                    self?.navigationController?.pushViewController(
+                        SourceSettingsViewController(settings: settings, sourceId: sourceId, handler: {
+                            self?.refresh()
+                        }),
+                        animated: true
+                    )
+                }
+            }
+        )
     }
 
     @objc func refresh() {

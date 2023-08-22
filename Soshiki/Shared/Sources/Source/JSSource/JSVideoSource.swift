@@ -29,7 +29,7 @@ class JSVideoSource: JSSource, VideoSource {
         await invokeAsyncMethod("_getListing", on: self.context.objectForKeyedSubscript(self.id), with: [ listing, page ])
     }
 
-    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<VideoEntry>? {
+    func getSearchResults(query: String, page: Int, filters: [SourceFilter]) async -> SourceResults<VideoEntry>? {
         await invokeAsyncMethod(
             "_getSearchResults",
             on: self.context.objectForKeyedSubscript(self.id),

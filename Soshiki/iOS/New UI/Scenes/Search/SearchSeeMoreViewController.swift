@@ -12,6 +12,8 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
 
     let source: SourceType
     var entries: [EntryType]
+    var filters: [SourceFilterGroup]
+    var settings: [SourceFilterGroup]
 
     var query: String
     var page: Int
@@ -30,6 +32,9 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
         self.source = source
         self.entries = entries
         self.query = query
+
+        self.filters = []
+        self.settings = []
 
         self.page = 1
         self.hasMore = true
@@ -88,6 +93,11 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
 
         self.refresh()
 
+        Task {
+            self.filters = await self.source.getFilters()
+            self.settings = await self.source.getSettings()
+        }
+
         self.observers.append(
             NotificationCenter.default.addObserver(forName: .init("app.settings.itemsPerRow"), object: nil, queue: nil) { [weak self] _ in
                 Task { @MainActor in
@@ -95,6 +105,34 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
                 }
             }
         )
+    }
+
+    override func configureViews() {
+        self.navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(
+                image: UIImage(systemName: "line.3.horizontal.decrease"),
+                primaryAction: UIAction { [weak self] _ in
+                    if let filters = self?.filters {
+                        self?.navigationController?.pushViewController(SearchFiltersViewController(filters: filters, handler: {
+                            self?.refresh()
+                        }), animated: true)
+                    }
+                }
+            ),
+            UIBarButtonItem(
+                image: UIImage(systemName: "gear"),
+                primaryAction: UIAction { [weak self] _ in
+                    if let settings = self?.settings, let sourceId = self?.source.id {
+                        self?.navigationController?.pushViewController(
+                            SourceSettingsViewController(settings: settings, sourceId: sourceId, handler: {
+                                self?.refresh()
+                            }),
+                            animated: true
+                        )
+                    }
+                }
+            )
+        ]
     }
 
     required init?(coder: NSCoder) {
@@ -121,7 +159,7 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
     func loadEntries(page: Int, delayMillis: Int = 0) {
         self.entryLoadTask = Task {
             try? await Task.sleep(nanoseconds: UInt64(delayMillis) * 1_000_000)
-            if let results = await self.source.getSearchResults(query: self.query, page: page, filters: []) {
+            if let results = await self.source.getSearchResults(query: self.query, page: page, filters: self.filters.flatMap({ $0.filters })) {
                 self.page = results.page
                 self.hasMore = results.hasMore
                 self.entries.append(contentsOf: results.results)

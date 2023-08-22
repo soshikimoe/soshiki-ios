@@ -668,7 +668,8 @@ extension ImageReaderViewController {
 
     func updateSeekSliderPosition() {
         guard let currentIndexPath = self.currentIndexPath,
-              let currentDetails = self.details[safe: currentIndexPath.section] else { return }
+              let currentDetails = self.details[safe: currentIndexPath.section],
+              self.seekSliderBackgroundView.frame.width.isFinite else { return }
 
         if self.readingMode.isPaged {
             let index = self.readingMode.isReversed ? currentDetails.pages.count - currentIndexPath.item - 1 : currentIndexPath.item

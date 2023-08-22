@@ -110,7 +110,7 @@ class SourceManager {
             }
         }
         guard (try? FileManager.default.unzipItem(at: url, to: temporaryDirectory)) != nil else { return }
-        if let manifest = SourceManager.manifest(directory: temporaryDirectory) {
+        if let manifest = SourceManager.manifest(directory: temporaryDirectory), (manifest.schema ?? 0) >= 2 {
             let sourcesDirectory = FileManager.default.documentDirectory.appendingPathComponent("Sources", conformingTo: .folder)
             if !FileManager.default.fileExists(atPath: sourcesDirectory.path) {
                 guard (try? FileManager.default.createDirectory(at: sourcesDirectory, withIntermediateDirectories: true)) != nil else { return }
@@ -125,7 +125,7 @@ class SourceManager {
             for item in items {
                 _ = try? FileManager.default.moveItem(at: item, to: sourceDirectory.appendingPathComponent(item.lastPathComponent))
             }
-            if (manifest.schema ?? 0) >= 2, let source = SourceManager.load(directory: sourceDirectory, context: context) {
+            if let source = SourceManager.load(directory: sourceDirectory, context: context) {
                 self.sources.append(source)
                 NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
             }

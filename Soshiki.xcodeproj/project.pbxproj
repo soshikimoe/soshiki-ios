@@ -97,21 +97,15 @@
 		37AAC9AF2980B45F00EF9A57 /* TrackersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9AE2980B45F00EF9A57 /* TrackersViewController.swift */; };
 		37AAC9B12980B4EE00EF9A57 /* TrackerTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9B02980B4EE00EF9A57 /* TrackerTableViewCell.swift */; };
 		37AAC9B32980B5E300EF9A57 /* TrackerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9B22980B5E300EF9A57 /* TrackerViewController.swift */; };
-		37AAC9B52980C2B400EF9A57 /* LibraryViewController_Old.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9B42980C2B300EF9A57 /* LibraryViewController_Old.swift */; };
 		37AAC9B72980CA4200EF9A57 /* EntryCollectionViewCell_Old.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9B62980CA4200EF9A57 /* EntryCollectionViewCell_Old.swift */; };
 		37AAC9BA29818FFC00EF9A57 /* LibraryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9B929818FFC00EF9A57 /* LibraryManager.swift */; };
-		37AAC9BC298196BB00EF9A57 /* LibraryCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9BB298196BB00EF9A57 /* LibraryCollectionViewCell.swift */; };
-		37AAC9BE29821F2D00EF9A57 /* LibraryCategoryEditViewController_Old.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9BD29821F2D00EF9A57 /* LibraryCategoryEditViewController_Old.swift */; };
 		37AAC9C62984A1B500EF9A57 /* InlineStepperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9C52984A1B500EF9A57 /* InlineStepperView.swift */; };
 		37AAC9CC29856D3900EF9A57 /* UIColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9CB29856D3900EF9A57 /* UIColor.swift */; };
 		37AAC9CE2985746C00EF9A57 /* Numeric.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9CD2985746C00EF9A57 /* Numeric.swift */; };
 		37AAC9D0298575AB00EF9A57 /* TextReaderSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9CF298575AB00EF9A57 /* TextReaderSettingsViewController.swift */; };
 		37AAC9D229857DCC00EF9A57 /* ColorPickerTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9D129857DCC00EF9A57 /* ColorPickerTableViewCell.swift */; };
 		37AAC9DB298601F600EF9A57 /* FilterTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9DA298601F600EF9A57 /* FilterTableViewCell.swift */; };
-		37AAC9DD298604D300EF9A57 /* SourceFiltersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9DC298604D300EF9A57 /* SourceFiltersViewController.swift */; };
 		37AAC9DF29861B1C00EF9A57 /* StringSelectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9DE29861B1C00EF9A57 /* StringSelectViewController.swift */; };
-		37AAC9E42986352A00EF9A57 /* SourceSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9E32986352A00EF9A57 /* SourceSettingsViewController.swift */; };
-		37AAC9E629863A0C00EF9A57 /* SearchViewController_Old.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9E529863A0C00EF9A57 /* SearchViewController_Old.swift */; };
 		37AAC9E929863D9300EF9A57 /* ZoomableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9E729863D9300EF9A57 /* ZoomableView.swift */; };
 		37AAC9EA29863D9300EF9A57 /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9E829863D9300EF9A57 /* CircularProgressView.swift */; };
 		37AAC9EF2986409D00EF9A57 /* UIResponder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AAC9EE2986409D00EF9A57 /* UIResponder.swift */; };
@@ -128,7 +122,9 @@
 		37AD65732A928DE200749ACF /* NukeVideo in Frameworks */ = {isa = PBXBuildFile; productRef = 37AD65722A928DE200749ACF /* NukeVideo */; };
 		37AD65762A92A73400749ACF /* InstallButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD65752A92A73400749ACF /* InstallButton.swift */; };
 		37AD65782A92E5D600749ACF /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD65772A92E5D600749ACF /* Date.swift */; };
-		37D68139295D285200583A2F /* SourceFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68138295D285200583A2F /* SourceFilter.swift */; };
+		37AD657B2A93077200749ACF /* SearchFiltersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD657A2A93077200749ACF /* SearchFiltersViewController.swift */; };
+		37AD657D2A9443A200749ACF /* SourceSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD657C2A9443A200749ACF /* SourceSettingsViewController.swift */; };
+		37D68139295D285200583A2F /* SourceFilterBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68138295D285200583A2F /* SourceFilterBase.swift */; };
 		37D6813B295D3D5400583A2F /* SourceListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D6813A295D3D5400583A2F /* SourceListing.swift */; };
 		37D68143296129EA00583A2F /* ImageSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68142296129EA00583A2F /* ImageSource.swift */; };
 		37D6814F2961F3B800583A2F /* TextSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D6814E2961F3B800583A2F /* TextSource.swift */; };
@@ -272,21 +268,15 @@
 		37AAC9AE2980B45F00EF9A57 /* TrackersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackersViewController.swift; sourceTree = "<group>"; };
 		37AAC9B02980B4EE00EF9A57 /* TrackerTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerTableViewCell.swift; sourceTree = "<group>"; };
 		37AAC9B22980B5E300EF9A57 /* TrackerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackerViewController.swift; sourceTree = "<group>"; };
-		37AAC9B42980C2B300EF9A57 /* LibraryViewController_Old.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewController_Old.swift; sourceTree = "<group>"; };
 		37AAC9B62980CA4200EF9A57 /* EntryCollectionViewCell_Old.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryCollectionViewCell_Old.swift; sourceTree = "<group>"; };
 		37AAC9B929818FFC00EF9A57 /* LibraryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryManager.swift; sourceTree = "<group>"; };
-		37AAC9BB298196BB00EF9A57 /* LibraryCollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCollectionViewCell.swift; sourceTree = "<group>"; };
-		37AAC9BD29821F2D00EF9A57 /* LibraryCategoryEditViewController_Old.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCategoryEditViewController_Old.swift; sourceTree = "<group>"; };
 		37AAC9C52984A1B500EF9A57 /* InlineStepperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineStepperView.swift; sourceTree = "<group>"; };
 		37AAC9CB29856D3900EF9A57 /* UIColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIColor.swift; sourceTree = "<group>"; };
 		37AAC9CD2985746C00EF9A57 /* Numeric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Numeric.swift; sourceTree = "<group>"; };
 		37AAC9CF298575AB00EF9A57 /* TextReaderSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextReaderSettingsViewController.swift; sourceTree = "<group>"; };
 		37AAC9D129857DCC00EF9A57 /* ColorPickerTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPickerTableViewCell.swift; sourceTree = "<group>"; };
 		37AAC9DA298601F600EF9A57 /* FilterTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTableViewCell.swift; sourceTree = "<group>"; };
-		37AAC9DC298604D300EF9A57 /* SourceFiltersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFiltersViewController.swift; sourceTree = "<group>"; };
 		37AAC9DE29861B1C00EF9A57 /* StringSelectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringSelectViewController.swift; sourceTree = "<group>"; };
-		37AAC9E32986352A00EF9A57 /* SourceSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSettingsViewController.swift; sourceTree = "<group>"; };
-		37AAC9E529863A0C00EF9A57 /* SearchViewController_Old.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchViewController_Old.swift; sourceTree = "<group>"; };
 		37AAC9E729863D9300EF9A57 /* ZoomableView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZoomableView.swift; sourceTree = "<group>"; };
 		37AAC9E829863D9300EF9A57 /* CircularProgressView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircularProgressView.swift; sourceTree = "<group>"; };
 		37AAC9EE2986409D00EF9A57 /* UIResponder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIResponder.swift; sourceTree = "<group>"; };
@@ -300,7 +290,9 @@
 		37AACA3C2990644400EF9A57 /* SettingItemTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingItemTableViewCell.swift; sourceTree = "<group>"; };
 		37AD65752A92A73400749ACF /* InstallButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallButton.swift; sourceTree = "<group>"; };
 		37AD65772A92E5D600749ACF /* Date.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date.swift; sourceTree = "<group>"; };
-		37D68138295D285200583A2F /* SourceFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilter.swift; sourceTree = "<group>"; };
+		37AD657A2A93077200749ACF /* SearchFiltersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFiltersViewController.swift; sourceTree = "<group>"; };
+		37AD657C2A9443A200749ACF /* SourceSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSettingsViewController.swift; sourceTree = "<group>"; };
+		37D68138295D285200583A2F /* SourceFilterBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilterBase.swift; sourceTree = "<group>"; };
 		37D6813A295D3D5400583A2F /* SourceListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceListing.swift; sourceTree = "<group>"; };
 		37D68142296129EA00583A2F /* ImageSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSource.swift; sourceTree = "<group>"; };
 		37D6814E2961F3B800583A2F /* TextSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSource.swift; sourceTree = "<group>"; };
@@ -371,6 +363,7 @@
 			children = (
 				37035A962A8E9A9500F2D24B /* SearchViewController.swift */,
 				37035A982A8EA70B00F2D24B /* SearchSeeMoreViewController.swift */,
+				37AD657A2A93077200749ACF /* SearchFiltersViewController.swift */,
 			);
 			path = Search;
 			sourceTree = "<group>";
@@ -488,21 +481,13 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		3733CCE6292AA38200901DA6 /* Search */ = {
-			isa = PBXGroup;
-			children = (
-				37AAC9E529863A0C00EF9A57 /* SearchViewController_Old.swift */,
-			);
-			path = Search;
-			sourceTree = "<group>";
-		};
 		3733CCF7292BD92200901DA6 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				3733CCF8292BD92F00901DA6 /* SourceEntry.swift */,
 				3733CD162937B36600901DA6 /* SourceResults.swift */,
 				3733CD1A293A420D00901DA6 /* ImageSourceChapter.swift */,
-				37D68138295D285200583A2F /* SourceFilter.swift */,
+				37D68138295D285200583A2F /* SourceFilterBase.swift */,
 				37D6813A295D3D5400583A2F /* SourceListing.swift */,
 				37D6815C2962890F00583A2F /* VideoSourceEpisode.swift */,
 				3715DDEF2974738000F173EA /* TextSourceChapter.swift */,
@@ -528,8 +513,6 @@
 			children = (
 				37D681482961555E00583A2F /* Link */,
 				37035A9A2A8F1DF900F2D24B /* BrowseViewController.swift */,
-				37AAC9DC298604D300EF9A57 /* SourceFiltersViewController.swift */,
-				37AAC9E32986352A00EF9A57 /* SourceSettingsViewController.swift */,
 			);
 			path = Browse;
 			sourceTree = "<group>";
@@ -584,16 +567,6 @@
 				3750879B29BD860F00830FCC /* EntryCollectionViewCell.swift */,
 			);
 			path = Entry;
-			sourceTree = "<group>";
-		};
-		37612AA6292323D400E55BFF /* Library */ = {
-			isa = PBXGroup;
-			children = (
-				37AAC9B42980C2B300EF9A57 /* LibraryViewController_Old.swift */,
-				37AAC9BB298196BB00EF9A57 /* LibraryCollectionViewCell.swift */,
-				37AAC9BD29821F2D00EF9A57 /* LibraryCategoryEditViewController_Old.swift */,
-			);
-			path = Library;
 			sourceTree = "<group>";
 		};
 		37612AB42923C64200E55BFF /* Extensions */ = {
@@ -683,9 +656,7 @@
 				3733CD132937B00F00901DA6 /* Components */,
 				3733CD0C2937AF7200901DA6 /* Browse */,
 				3733CCFC292EDAD000901DA6 /* Settings */,
-				3733CCE6292AA38200901DA6 /* Search */,
 				3733CCE02929990900901DA6 /* Entry */,
-				37612AA6292323D400E55BFF /* Library */,
 				37AAC9A5297DEB0C00EF9A57 /* MainViewController.swift */,
 			);
 			path = UI;
@@ -720,6 +691,7 @@
 		377B6F4A29B6E56300CAEC3C /* Scenes */ = {
 			isa = PBXGroup;
 			children = (
+				37AD65792A93075100749ACF /* Source */,
 				37035A952A8E9A8200F2D24B /* Search */,
 				37035A8E2A8C0D5700F2D24B /* Library */,
 				3727B61529D4F6560004531A /* Entry */,
@@ -835,6 +807,14 @@
 				37AD65752A92A73400749ACF /* InstallButton.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		37AD65792A93075100749ACF /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				37AD657C2A9443A200749ACF /* SourceSettingsViewController.swift */,
+			);
+			path = Source;
 			sourceTree = "<group>";
 		};
 		37D68141296129D700583A2F /* Source */ = {
@@ -1095,12 +1075,12 @@
 				37AAC9DF29861B1C00EF9A57 /* StringSelectViewController.swift in Sources */,
 				3715DE0629762D0B00F173EA /* LocalSource.swift in Sources */,
 				37FC72FA297DDE1500DFBA2F /* SceneDelegate.swift in Sources */,
+				37AD657B2A93077200749ACF /* SearchFiltersViewController.swift in Sources */,
 				37AAC9A6297DEB0C00EF9A57 /* MainViewController.swift in Sources */,
 				37AD65782A92E5D600749ACF /* Date.swift in Sources */,
 				377B6F5A29B7BBA800CAEC3C /* DiscoverFeaturedEntryView.swift in Sources */,
 				37AACA3B2990627E00EF9A57 /* SettingTableViewController.swift in Sources */,
 				37A02F0E292942A50020B817 /* Collection.swift in Sources */,
-				37AAC9BC298196BB00EF9A57 /* LibraryCollectionViewCell.swift in Sources */,
 				37D6813B295D3D5400583A2F /* SourceListing.swift in Sources */,
 				37035A9B2A8F1DF900F2D24B /* BrowseViewController.swift in Sources */,
 				375087A029BD8D2600830FCC /* VideoPlayerViewController.swift in Sources */,
@@ -1108,8 +1088,7 @@
 				37AAC9E929863D9300EF9A57 /* ZoomableView.swift in Sources */,
 				3715DDF82974771100F173EA /* JSImageSource.swift in Sources */,
 				37AAC9B32980B5E300EF9A57 /* TrackerViewController.swift in Sources */,
-				37D68139295D285200583A2F /* SourceFilter.swift in Sources */,
-				37AAC9E42986352A00EF9A57 /* SourceSettingsViewController.swift in Sources */,
+				37D68139295D285200583A2F /* SourceFilterBase.swift in Sources */,
 				3715DDFC2974771F00F173EA /* JSSource.swift in Sources */,
 				37AACA3729905D2200EF9A57 /* SettingItem.swift in Sources */,
 				371CBBA929C34FEE002571C4 /* NSLayoutConstraint.swift in Sources */,
@@ -1133,7 +1112,6 @@
 				375087A229BEA2B000830FCC /* CallbackMenuButton.swift in Sources */,
 				3727B60E29CEB6850004531A /* CGSize.swift in Sources */,
 				37AAC9CC29856D3900EF9A57 /* UIColor.swift in Sources */,
-				37AAC9E629863A0C00EF9A57 /* SearchViewController_Old.swift in Sources */,
 				3727B61229D10CA30004531A /* ExpandedEventView.swift in Sources */,
 				3715DE042976111000F173EA /* ImportView.swift in Sources */,
 				37FC72F8297DDD7F00DFBA2F /* AppDelegate.swift in Sources */,
@@ -1151,7 +1129,6 @@
 				3750879C29BD860F00830FCC /* EntryCollectionViewCell.swift in Sources */,
 				3727B61029D108B60004531A /* BackgroundView.swift in Sources */,
 				37035A942A8E918100F2D24B /* LibraryCategoryEditViewController.swift in Sources */,
-				37AAC9B52980C2B400EF9A57 /* LibraryViewController_Old.swift in Sources */,
 				37D6815D2962890F00583A2F /* VideoSourceEpisode.swift in Sources */,
 				37A02EF029241F5D0020B817 /* JSONDecoder.swift in Sources */,
 				37AAC9CE2985746C00EF9A57 /* Numeric.swift in Sources */,
@@ -1165,9 +1142,9 @@
 				37AAC9A9297F691600EF9A57 /* SettingsViewController.swift in Sources */,
 				3733CD05292EDD7D00901DA6 /* FileManager.swift in Sources */,
 				3733CCDF29296E9D00901DA6 /* String.swift in Sources */,
-				37AAC9DD298604D300EF9A57 /* SourceFiltersViewController.swift in Sources */,
 				3750879729BC193F00830FCC /* DiscoverSeparatorView.swift in Sources */,
 				379615C229FEBFED0083E639 /* GestureRecognizingNavigationController.swift in Sources */,
+				37AD657D2A9443A200749ACF /* SourceSettingsViewController.swift in Sources */,
 				37E7C40C2A3EB24300545730 /* Encodable.swift in Sources */,
 				377B6F4929B6E39200CAEC3C /* BaseViewController.swift in Sources */,
 				37A5E5C82966663900453DF3 /* History.swift in Sources */,
@@ -1188,7 +1165,6 @@
 				3715DDF62974770900F173EA /* JSTextSource.swift in Sources */,
 				37A02EEE29241EEA0020B817 /* JSONAny.swift in Sources */,
 				3715DDF32974745100F173EA /* LocalTextSource.swift in Sources */,
-				37AAC9BE29821F2D00EF9A57 /* LibraryCategoryEditViewController_Old.swift in Sources */,
 				3715DDFA2974771900F173EA /* JSVideoSource.swift in Sources */,
 				37AD65762A92A73400749ACF /* InstallButton.swift in Sources */,
 				3727B60A29CD1D1B0004531A /* ImageReaderCellNodeDelegate.swift in Sources */,

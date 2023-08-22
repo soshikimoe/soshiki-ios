@@ -16,6 +16,7 @@ class DiscoverViewController<SourceType: Source>: BaseViewController {
     var hasMoreMap: [String: Bool]
 
     var listings: [SourceListing]
+    var settings: [SourceFilterGroup]
 
     var collectionView: UICollectionView!
     var delegate: Delegate!
@@ -34,6 +35,7 @@ class DiscoverViewController<SourceType: Source>: BaseViewController {
         self.source = source
         self.entries = [:]
         self.listings = []
+        self.settings = []
         self.hasMoreMap = [:]
 
         super.init()
@@ -200,6 +202,10 @@ class DiscoverViewController<SourceType: Source>: BaseViewController {
 
         refresh()
 
+        Task {
+            self.settings = await self.source.getSettings()
+        }
+
         super.addObserver(LibraryManager.Keys.mediaType) { [weak self] _ in
             self?.refresh()
         }
@@ -214,6 +220,20 @@ class DiscoverViewController<SourceType: Source>: BaseViewController {
     }
 
     override func configureViews() {
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "gear"),
+            primaryAction: UIAction { [weak self] _ in
+                if let settings = self?.settings, let sourceId = self?.source.id {
+                    self?.navigationController?.pushViewController(
+                        SourceSettingsViewController(settings: settings, sourceId: sourceId, handler: {
+                            self?.refresh()
+                        }),
+                        animated: true
+                    )
+                }
+            }
+        )
+
         self.refreshControl.addTarget(self, action: #selector(refresh(_:)), for: .valueChanged)
         self.collectionView.refreshControl = self.refreshControl
 
@@ -259,7 +279,12 @@ class DiscoverViewController<SourceType: Source>: BaseViewController {
             header.setExpandAction { [weak self] in
                 guard let self, let entries = self.entries[self.listings[indexPath.section].id] else { return }
                 self.navigationController?.pushViewController(
-                    DiscoverSeeMoreViewController(source: self.source, entries: entries, listing: self.listings[indexPath.section]),
+                    DiscoverSeeMoreViewController(
+                        source: self.source,
+                        entries: entries,
+                        listing: self.listings[indexPath.section],
+                        settings: self.settings
+                    ),
                     animated: true
                 )
             }

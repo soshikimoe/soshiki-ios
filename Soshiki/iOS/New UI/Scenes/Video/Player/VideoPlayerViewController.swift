@@ -1349,7 +1349,10 @@ extension VideoPlayerViewController {
             }
             return
         }
-        guard sender.numberOfTouches > 0 else { return }
+        guard sender.numberOfTouches > 0,
+              self.seekSliderForegroundView.frame.width.isFinite,
+              self.volumeSliderForegroundView.frame.width.isFinite,
+              self.brightnessSliderForegroundView.frame.width.isFinite else { return }
         let initialLocation = sender.location(ofTouch: 0, in: nil)
         let offset = sender.translation(in: nil)
         let velocity = sender.velocity(in: nil)
@@ -1378,7 +1381,7 @@ extension VideoPlayerViewController {
                 to: 0...self.seekSliderBackgroundView.frame.width
             )
 
-            if let totalTime = self.playerLayer.player?.currentItem?.duration.seconds {
+            if let totalTime = self.playerLayer.player?.currentItem?.duration.seconds, totalTime.isFinite {
                 let barPercentage = self.seekSliderForegroundView.frame.width / self.seekSliderBackgroundView.frame.width
                 self.leftTimeLabel.text = Int(totalTime * barPercentage).toMinuteSecondString()
                 self.rightTimeLabel.text = "-" + Int(totalTime - totalTime * barPercentage).toMinuteSecondString()

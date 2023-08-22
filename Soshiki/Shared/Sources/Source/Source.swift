@@ -13,7 +13,7 @@ protocol Source<EntryType>: Equatable, Identifiable {
     var name: String { get }
 
     func getListing(listing: SourceListing, page: Int) async -> SourceResults<EntryType>?
-    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<EntryType>?
+    func getSearchResults(query: String, page: Int, filters: [SourceFilter]) async -> SourceResults<EntryType>?
     func getEntry(id: String) async -> EntryType?
     func getFilters() async -> [SourceFilterGroup]
     func getListings() async -> [SourceListing]

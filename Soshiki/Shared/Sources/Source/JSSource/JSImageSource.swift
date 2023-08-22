@@ -30,7 +30,7 @@ class JSImageSource: JSSource, ImageSource {
         await invokeAsyncMethod("_getListing", on: self.context.objectForKeyedSubscript(self.id), with: [ listing, page ])
     }
 
-    func getSearchResults(query: String, page: Int, filters: [any SourceFilter]) async -> SourceResults<ImageEntry>? {
+    func getSearchResults(query: String, page: Int, filters: [SourceFilter]) async -> SourceResults<ImageEntry>? {
         await invokeAsyncMethod(
             "_getSearchResults",
             on: self.context.objectForKeyedSubscript(self.id),
