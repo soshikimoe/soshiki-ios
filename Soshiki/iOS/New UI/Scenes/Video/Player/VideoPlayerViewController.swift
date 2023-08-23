@@ -914,12 +914,16 @@ extension VideoPlayerViewController {
                 if let duration = self.playerLayer.player?.currentItem?.duration.seconds {
                     if time.seconds < duration - Double(self.endThreshold) {
                         self.history.timestamp = duration
-                        DataManager.shared.setHistory(self.history)
+                        Task { @MainActor in
+                            DataManager.shared.setHistory(self.history)
+                        }
                     } else if !self.hasCrossedEndThreshold, let nextEpisode = self.nextEpisode {
                         self.history.timestamp = 0
                         self.history.episode = nextEpisode.episode
                         self.history.season = nextEpisode.season
-                        DataManager.shared.setHistory(self.history)
+                        Task { @MainActor in
+                            DataManager.shared.setHistory(self.history)
+                        }
 
                         self.hasCrossedEndThreshold = true
                     }
