@@ -211,7 +211,11 @@ class SearchViewController: BaseViewController {
 
         self.loadTask?.cancel()
         self.loadTask = Task {
-            try? await Task.sleep(nanoseconds: UInt64(delayMillis) * 1_000_000)
+            do {
+                try await Task.sleep(nanoseconds: UInt64(delayMillis) * 1_000_000)
+            } catch {
+                return
+            }
 
             await withTaskGroup(of: Void.self) { group in
                 for source in self.sources {

@@ -184,7 +184,6 @@ class SourceManager {
                     DataManager.shared.addSource(source)
                 }
             }
-            print(uninstalledTextSources.map({ $0.name }), uninstalledImageSources.map({ $0.name }), uninstalledVideoSources.map({ $0.name }))
         }
         NotificationCenter.default.post(name: .init(SourceManager.Keys.update), object: nil)
     }

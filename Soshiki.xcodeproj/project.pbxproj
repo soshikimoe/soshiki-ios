@@ -124,6 +124,7 @@
 		37AD65782A92E5D600749ACF /* Date.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD65772A92E5D600749ACF /* Date.swift */; };
 		37AD657B2A93077200749ACF /* SearchFiltersViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD657A2A93077200749ACF /* SearchFiltersViewController.swift */; };
 		37AD657D2A9443A200749ACF /* SourceSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AD657C2A9443A200749ACF /* SourceSettingsViewController.swift */; };
+		37AF2C982AA7A62000FFE17D /* InterceptingAssetResourceLoaderDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37AF2C972AA7A62000FFE17D /* InterceptingAssetResourceLoaderDelegate.swift */; };
 		37D68139295D285200583A2F /* SourceFilterBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68138295D285200583A2F /* SourceFilterBase.swift */; };
 		37D6813B295D3D5400583A2F /* SourceListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D6813A295D3D5400583A2F /* SourceListing.swift */; };
 		37D68143296129EA00583A2F /* ImageSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37D68142296129EA00583A2F /* ImageSource.swift */; };
@@ -149,7 +150,7 @@
 		37EBD6762958F37600371978 /* UIViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37EBD6752958F37600371978 /* UIViewController.swift */; };
 		37FC72F8297DDD7F00DFBA2F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FC72F7297DDD7F00DFBA2F /* AppDelegate.swift */; };
 		37FC72FA297DDE1500DFBA2F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37FC72F9297DDE1500DFBA2F /* SceneDelegate.swift */; };
-		FF5CFAEAF9B27D34CF2CD8AB /* Pods_Soshiki.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5575F42A65D09F845C1C0672 /* Pods_Soshiki.framework */; };
+		A4903902E5D4AABC004B6075 /* Pods_Soshiki.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C64405A323D7BD1343FA763D /* Pods_Soshiki.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -292,6 +293,7 @@
 		37AD65772A92E5D600749ACF /* Date.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date.swift; sourceTree = "<group>"; };
 		37AD657A2A93077200749ACF /* SearchFiltersViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFiltersViewController.swift; sourceTree = "<group>"; };
 		37AD657C2A9443A200749ACF /* SourceSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSettingsViewController.swift; sourceTree = "<group>"; };
+		37AF2C972AA7A62000FFE17D /* InterceptingAssetResourceLoaderDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterceptingAssetResourceLoaderDelegate.swift; sourceTree = "<group>"; };
 		37D68138295D285200583A2F /* SourceFilterBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceFilterBase.swift; sourceTree = "<group>"; };
 		37D6813A295D3D5400583A2F /* SourceListing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceListing.swift; sourceTree = "<group>"; };
 		37D68142296129EA00583A2F /* ImageSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSource.swift; sourceTree = "<group>"; };
@@ -313,9 +315,9 @@
 		37EBD6752958F37600371978 /* UIViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIViewController.swift; sourceTree = "<group>"; };
 		37FC72F7297DDD7F00DFBA2F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		37FC72F9297DDE1500DFBA2F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		5575F42A65D09F845C1C0672 /* Pods_Soshiki.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Soshiki.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		86EB191258131B21B85CA953 /* Pods-Soshiki.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Soshiki.debug.xcconfig"; path = "Target Support Files/Pods-Soshiki/Pods-Soshiki.debug.xcconfig"; sourceTree = "<group>"; };
-		D24CED0B8F47A95365AB5AFA /* Pods-Soshiki.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Soshiki.release.xcconfig"; path = "Target Support Files/Pods-Soshiki/Pods-Soshiki.release.xcconfig"; sourceTree = "<group>"; };
+		44918A625EB828B169DAFF07 /* Pods-Soshiki.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Soshiki.release.xcconfig"; path = "Target Support Files/Pods-Soshiki/Pods-Soshiki.release.xcconfig"; sourceTree = "<group>"; };
+		52898C5D1C056F58841A6E5D /* Pods-Soshiki.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Soshiki.debug.xcconfig"; path = "Target Support Files/Pods-Soshiki/Pods-Soshiki.debug.xcconfig"; sourceTree = "<group>"; };
+		C64405A323D7BD1343FA763D /* Pods_Soshiki.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Soshiki.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -331,9 +333,9 @@
 				373F6BFA2968F452009F268A /* KeychainSwift in Frameworks */,
 				37D681592962378400583A2F /* SwiftSoup in Frameworks */,
 				37E7C41F2A3F9BAE00545730 /* Unrealm in Frameworks */,
-				FF5CFAEAF9B27D34CF2CD8AB /* Pods_Soshiki.framework in Frameworks */,
 				37AD65732A928DE200749ACF /* NukeVideo in Frameworks */,
 				37AD65712A928DE200749ACF /* NukeExtensions in Frameworks */,
+				A4903902E5D4AABC004B6075 /* Pods_Soshiki.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -548,6 +550,7 @@
 			isa = PBXGroup;
 			children = (
 				3750879E29BD8D1600830FCC /* Player */,
+				37AF2C972AA7A62000FFE17D /* InterceptingAssetResourceLoaderDelegate.swift */,
 			);
 			path = Video;
 			sourceTree = "<group>";
@@ -887,7 +890,7 @@
 			isa = PBXGroup;
 			children = (
 				370114DD2A0825E90027CD37 /* GoogleCast.xcframework */,
-				5575F42A65D09F845C1C0672 /* Pods_Soshiki.framework */,
+				C64405A323D7BD1343FA763D /* Pods_Soshiki.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -895,8 +898,8 @@
 		7249AC9176B7B9C1F494AAFA /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				86EB191258131B21B85CA953 /* Pods-Soshiki.debug.xcconfig */,
-				D24CED0B8F47A95365AB5AFA /* Pods-Soshiki.release.xcconfig */,
+				52898C5D1C056F58841A6E5D /* Pods-Soshiki.debug.xcconfig */,
+				44918A625EB828B169DAFF07 /* Pods-Soshiki.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -908,14 +911,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 37661CD12922BD120052C629 /* Build configuration list for PBXNativeTarget "Soshiki" */;
 			buildPhases = (
-				7DBD5E5966208ABDD764908F /* [CP] Check Pods Manifest.lock */,
+				803D56DE43EDEE91D00FC035 /* [CP] Check Pods Manifest.lock */,
 				37661CBA2922BD0D0052C629 /* Sources */,
 				37661CBB2922BD0D0052C629 /* Frameworks */,
 				37661CBC2922BD0D0052C629 /* Resources */,
 				37EBD6742958E36A00371978 /* ShellScript */,
 				37AACA10298ECBCB00EF9A57 /* Embed Foundation Extensions */,
-				E13AB85460AF294701F8EA0E /* [CP] Embed Pods Frameworks */,
 				370114E12A0826170027CD37 /* Embed Frameworks */,
+				7A21E3A25768778DAC461107 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -945,7 +948,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1420;
-				LastUpgradeCheck = 1420;
+				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					37661CBD2922BD0D0052C629 = {
 						CreatedOnToolsVersion = 14.0;
@@ -1011,7 +1014,24 @@
 			shellPath = /bin/sh;
 			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\nif which swiftlint >/dev/null; then\n    swiftlint\nelse\n    echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
 		};
-		7DBD5E5966208ABDD764908F /* [CP] Check Pods Manifest.lock */ = {
+		7A21E3A25768778DAC461107 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		803D56DE43EDEE91D00FC035 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1031,23 +1051,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		E13AB85460AF294701F8EA0E /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Soshiki/Pods-Soshiki-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1170,6 +1173,7 @@
 				3727B60A29CD1D1B0004531A /* ImageReaderCellNodeDelegate.swift in Sources */,
 				374DC9ED2A88559E00E3CA15 /* DiscoverSectionBackgroundReusableView.swift in Sources */,
 				3733CCF6292BD25E00901DA6 /* Source.swift in Sources */,
+				37AF2C982AA7A62000FFE17D /* InterceptingAssetResourceLoaderDelegate.swift in Sources */,
 				37AACA3929905DBF00EF9A57 /* SettingGroup.swift in Sources */,
 				3733CD1F293A815E00901DA6 /* Double.swift in Sources */,
 				371CBBA729C15336002571C4 /* VideoPlayerSettingsViewController.swift in Sources */,
@@ -1195,6 +1199,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1228,6 +1233,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1256,6 +1262,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -1289,6 +1296,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -1309,13 +1317,13 @@
 		};
 		37661CD22922BD120052C629 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 86EB191258131B21B85CA953 /* Pods-Soshiki.debug.xcconfig */;
+			baseConfigurationReference = 52898C5D1C056F58841A6E5D /* Pods-Soshiki.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;
@@ -1357,13 +1365,13 @@
 		};
 		37661CD32922BD120052C629 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D24CED0B8F47A95365AB5AFA /* Pods-Soshiki.release.xcconfig */;
+			baseConfigurationReference = 44918A625EB828B169DAFF07 /* Pods-Soshiki.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Soshiki/Soshiki.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = V4VMBJ7UGG;
 				ENABLE_PREVIEWS = NO;

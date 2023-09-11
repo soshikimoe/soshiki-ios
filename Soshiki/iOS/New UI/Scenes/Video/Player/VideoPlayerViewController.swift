@@ -49,7 +49,7 @@ class VideoPlayerViewController: BaseViewController {
     let subtitleLabel: UILabel
 
     let bottomButtonStackView: UIStackView
-    let captionsButton: UIButton
+    let captionsButton: CallbackMenuButton
     let rateButton: CallbackMenuButton
     let providerButton: CallbackMenuButton
 
@@ -118,6 +118,10 @@ class VideoPlayerViewController: BaseViewController {
     override var prefersHomeIndicatorAutoHidden: Bool { true }
 
     override var prefersStatusBarHidden: Bool { true }
+
+    var subtitleDelegate: InterceptingAssetResourceLoaderDelegate?
+
+    var currentSubtitleTrack: VideoSourceEpisodeUrlSubtitle?
 
     // MARK: Entry
     var source: any VideoSource
@@ -200,7 +204,7 @@ class VideoPlayerViewController: BaseViewController {
         self.titleLabel = UILabel()
         self.subtitleLabel = UILabel()
         self.bottomButtonStackView = UIStackView()
-        self.captionsButton = UIButton(type: .roundedRect)
+        self.captionsButton = CallbackMenuButton(type: .roundedRect)
         self.rateButton = CallbackMenuButton(type: .roundedRect)
         self.providerButton = CallbackMenuButton(type: .roundedRect)
         self.seekSliderBackgroundView = UIView()
@@ -433,7 +437,13 @@ class VideoPlayerViewController: BaseViewController {
         self.captionsButton.setImage(UIImage(systemName: "captions.bubble"), for: .normal)
         self.captionsButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20), forImageIn: .normal)
         self.captionsButton.tintColor = .white
-        self.captionsButton.addTarget(self, action: #selector(captionsButtonPressed(_:)), for: .touchUpInside)
+        self.captionsButton.showsMenuAsPrimaryAction = true
+        self.captionsButton.onOpenMenu = { [weak self] in
+            self?.controlsHideTask?.cancel()
+        }
+        self.captionsButton.onCloseMenu = { [weak self] in
+            self?.resetControlsHideTimer()
+        }
 
         self.rateButton.setImage(UIImage(systemName: "speedometer"), for: .normal)
         self.rateButton.setPreferredSymbolConfiguration(UIImage.SymbolConfiguration(pointSize: 20), forImageIn: .normal)
@@ -754,19 +764,24 @@ extension VideoPlayerViewController {
             self.hasCrossedEndThreshold = false
         }
 
+        if self.history.episode != self.episodes[index].episode {
+            self.history.timestamp = 0
+        }
         self.history.episode = self.episodes[index].episode
         self.history.season = self.episodes[index].season
         DataManager.shared.setHistory(self.history)
 
-        if let currentDetails = self.currentDetails, let url = currentDetails.providers.first?.urls.first.flatMap({ URL(string: $0.url) }) {
-            await setUrl(to: url)
+        if let currentDetails = self.currentDetails,
+           let urlObject = currentDetails.providers.first?.urls.first,
+           let url = URL(string: urlObject.url) {
+            await setUrl(to: url, subtitles: urlObject.subtitles ?? [])
         }
 
         updateEpisodeMetadata()
         updateProviderButtonMenu()
     }
 
-    func setUrl(to url: URL, persistTimestamp: Bool = false) async {
+    func setUrl(to url: URL, subtitles: [VideoSourceEpisodeUrlSubtitle] = [], persistTimestamp: Bool = false) async {
         let cachedTime: Double?
         if let session = self.castSession {
             cachedTime = session.remoteMediaClient?.mediaStatus?.streamPosition
@@ -780,15 +795,62 @@ extension VideoPlayerViewController {
             request: URLRequest(url: url)
         )
 
-        let item = AVPlayerItem(
-            asset: AVURLAsset(
+        let player: AVPlayer
+
+        if (request?.url ?? url).pathExtension == "m3u8", let newUrl = URL(
+            string: InterceptingAssetResourceLoaderDelegate.videoUrlPrefix + (request?.url ?? url).absoluteString
+        ) { // use request interception logic
+            let videoAsset = AVURLAsset(
+                url: newUrl,
+                options: [ "AVURLAssetHTTPHeaderFieldsKey": request?.allHTTPHeaderFields ?? [:] ]
+            )
+
+            let delegate = InterceptingAssetResourceLoaderDelegate(subtitles)
+            self.subtitleDelegate = delegate
+            videoAsset.resourceLoader.setDelegate(delegate, queue: .main)
+
+            let item = AVPlayerItem(
+                asset: videoAsset
+            )
+
+            player = AVPlayer(playerItem: item)
+
+            setupPlayer(player: player)
+        } else { // use mutable composition logic
+            let videoAsset = AVURLAsset(
                 url: request?.url ?? url,
                 options: [ "AVURLAssetHTTPHeaderFieldsKey": request?.allHTTPHeaderFields ?? [:] ]
             )
-        )
 
-        let player = AVPlayer(playerItem: item)
-        setupPlayer(player: player)
+            let assetWithSubtitles = AVMutableComposition()
+            let videoTrack = assetWithSubtitles.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
+
+            if let (tracks, duration) = try? await videoAsset.load(.tracks, .duration),
+               let track = tracks.first(where: { $0.mediaType == .video }) {
+                try? videoTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: track, at: .zero)
+            }
+
+            for subtitleUrl in subtitles.compactMap({ URL(string: $0.url) }) {
+                let subtitleAsset = AVURLAsset(
+                    url: subtitleUrl,
+                    options: [ "AVURLAssetHTTPHeaderFieldsKey": request?.allHTTPHeaderFields ?? [:] ]
+                )
+                let subtitleTrack = assetWithSubtitles.addMutableTrack(withMediaType: .subtitle, preferredTrackID: kCMPersistentTrackID_Invalid)
+
+                if let (tracks, duration) = try? await subtitleAsset.load(.tracks, .duration),
+                   let track = tracks.first(where: { $0.mediaType == .subtitle }) {
+                    try? subtitleTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: track, at: .zero)
+                }
+            }
+
+            let item = AVPlayerItem(
+                asset: assetWithSubtitles
+            )
+
+            player = AVPlayer(playerItem: item)
+
+            setupPlayer(player: player)
+        }
 
         if let session = self.castSession {
             let metadata = GCKMediaMetadata()
@@ -816,6 +878,8 @@ extension VideoPlayerViewController {
 
         self.playerLayer.player = player
 
+        setSubtitles(to: subtitles)
+
         if let session = self.castSession {
             player.volume = session.currentDeviceVolume
         }
@@ -833,7 +897,7 @@ extension VideoPlayerViewController {
             } else {
                 await player.seek(to: CMTime(seconds: Double(cachedTime), preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
             }
-        } else if history.episode == self.currentEpisode?.episode {
+        } else if self.history.episode == self.currentEpisode?.episode {
             if let session = self.castSession {
                 let options = GCKMediaSeekOptions()
                 options.interval = TimeInterval(self.history.timestamp)
@@ -867,6 +931,8 @@ extension VideoPlayerViewController {
         self.leftTimeLabel.text = "--:--"
         self.rightTimeLabel.text = "--:--"
         self.seekSliderForegroundViewWidthConstraint.constant = 0
+
+        self.currentSubtitleTrack = nil
     }
 
     func setupPlayer(player: AVPlayer) {
@@ -877,9 +943,9 @@ extension VideoPlayerViewController {
             ) { [weak self] time in
                 guard let self,
                       self.panType != .seek,
-                      let item = self.playerLayer.player?.currentItem,
+                      let item = player.currentItem,
                       time.seconds.isFinite,
-                      item.duration.seconds.isFinite else { return }
+                      item.duration.seconds.isFinite, !item.duration.seconds.isZero else { return }
                 Task { @MainActor in
                     self.leftTimeLabel.text = Int(time.seconds).toMinuteSecondString()
                     self.rightTimeLabel.text = "-" + Int(item.duration.seconds - time.seconds).toMinuteSecondString()
@@ -906,14 +972,14 @@ extension VideoPlayerViewController {
 
         self.timeObservers.append( // History update time observer
             player.addPeriodicTimeObserver(
-                forInterval: CMTime(seconds: 15, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
+                forInterval: CMTime(seconds: 5, preferredTimescale: CMTimeScale(NSEC_PER_SEC)),
                 queue: .global(qos: .utility)
             ) { [weak self] time in
                 guard let self else { return }
 
                 if let duration = self.playerLayer.player?.currentItem?.duration.seconds {
                     if time.seconds < duration - Double(self.endThreshold) {
-                        self.history.timestamp = duration
+                        self.history.timestamp = time.seconds
                         Task { @MainActor in
                             DataManager.shared.setHistory(self.history)
                         }
@@ -1148,6 +1214,39 @@ extension VideoPlayerViewController {
             self.chapterLabel.text = nil
         }
     }
+
+    func setSubtitles(to subtitles: [VideoSourceEpisodeUrlSubtitle]) {
+        Task {
+            if let group = try? await self.playerLayer.player?.currentItem?.asset.loadMediaSelectionGroup(
+                for: AVMediaCharacteristic.legible
+            ) {
+                self.captionsButton.menu = UIMenu(children: [
+                    UIAction(
+                        title: "None",
+                        image: self.currentSubtitleTrack == nil ? UIImage(systemName: "checkmark") : nil
+                    ) { [weak self] _ in
+                        self?.playerLayer.player?.currentItem?.select(nil, in: group)
+                        self?.currentSubtitleTrack = nil
+                        self?.setSubtitles(to: subtitles)
+                    }
+                ] + subtitles.map({ subtitle in
+                    UIAction(
+                        title: subtitle.name,
+                        image: self.currentSubtitleTrack?.url == subtitle.url ? UIImage(systemName: "checkmark") : nil
+                    ) { [weak self] _ in
+                        let options = AVMediaSelectionGroup.mediaSelectionOptions(from: group.options, with: Locale(
+                            identifier: subtitle.language
+                        ))
+                        if let option = options.first {
+                            self?.playerLayer.player?.currentItem?.select(option, in: group)
+                            self?.currentSubtitleTrack = subtitle
+                            self?.setSubtitles(to: subtitles)
+                        }
+                    }
+                }))
+            }
+        }
+    }
 }
 // MARK: - Button Handlers
 
@@ -1155,6 +1254,15 @@ extension VideoPlayerViewController {
     @objc func closeButtonPressed(_ sender: UIButton? = nil) {
         if sender != nil { // Ensure that a button sent the gesture
             self.tapGesture()
+        }
+
+        if let timestamp = self.playerLayer.player?.currentItem?.currentTime().seconds, let episode = self.currentEpisode {
+            self.history.episode = episode.episode
+            self.history.season = episode.season
+            self.history.timestamp = timestamp
+            Task { @MainActor in
+                DataManager.shared.setHistory(self.history)
+            }
         }
 
         stopPlayback()
@@ -1269,12 +1377,6 @@ extension VideoPlayerViewController {
         }
     }
 
-    @objc func captionsButtonPressed(_ sender: UIButton? = nil) { // TODO: Implement for soft subtitles
-        if sender != nil { // Ensure that a button sent the gesture
-            self.tapGesture()
-        }
-    }
-
     @objc func skipButtonPressed(_ sender: UIButton? = nil) {
         if sender != nil { // Ensure that a button sent the gesture
             self.tapGesture()
@@ -1342,6 +1444,11 @@ extension VideoPlayerViewController {
                             seconds: item.duration.seconds * barPercentage,
                             preferredTimescale: CMTimeScale(NSEC_PER_SEC)
                         ))
+                    }
+
+                    self.history.timestamp = item.duration.seconds * barPercentage
+                    Task { @MainActor in
+                        DataManager.shared.setHistory(self.history)
                     }
 
                     play()

@@ -158,7 +158,11 @@ class SearchSeeMoreViewController<SourceType: Source>: BaseViewController {
 
     func loadEntries(page: Int, delayMillis: Int = 0) {
         self.entryLoadTask = Task {
-            try? await Task.sleep(nanoseconds: UInt64(delayMillis) * 1_000_000)
+            do {
+                try await Task.sleep(nanoseconds: UInt64(delayMillis) * 1_000_000)
+            } catch {
+                return
+            }
             if let results = await self.source.getSearchResults(query: self.query, page: page, filters: self.filters.flatMap({ $0.filters })) {
                 self.page = results.page
                 self.hasMore = results.hasMore

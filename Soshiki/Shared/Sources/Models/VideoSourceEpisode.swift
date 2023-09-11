@@ -58,7 +58,14 @@ struct VideoSourceEpisodeProvider: Codable {
 
 struct VideoSourceEpisodeUrl: Codable {
     let url: String
+    let subtitles: [VideoSourceEpisodeUrlSubtitle]?
     let quality: VideoSourceEpisodeUrlQuality
+}
+
+struct VideoSourceEpisodeUrlSubtitle: Codable {
+    let name: String
+    let url: String
+    let language: String
 }
 
 enum VideoSourceEpisodeUrlQuality: Codable, Comparable {

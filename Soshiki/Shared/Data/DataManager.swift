@@ -16,8 +16,7 @@ import Unrealm
 
     init() {
         var configuration = Realm.Configuration()
-        // TODO: REMOVE (and add schema versioning)
-        configuration.deleteRealmIfMigrationNeeded = true
+        configuration.schemaVersion = 1
         guard let realm = try? Realm(configuration: configuration) else { fatalError("Realm could not be initialized.") }
         self.realm = realm
     }
