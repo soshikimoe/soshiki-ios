@@ -119,9 +119,9 @@ class InterceptingAssetResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDe
     }
 
     func addSubs(to dataString: String) -> String {
-        guard dataString.contains("#EXT-X-STREAM-INF:") else { return dataString }
+        guard dataString.contains("#EXT-X-STREAM-INF:"), !self.subtitleBundles.isEmpty else { return dataString }
         var tracks = dataString.split(separator: "\n").map({ $0.hasPrefix("#EXT-X-STREAM-INF:") ? $0 + ",SUBTITLES=\"subs\"" : $0 })
-        tracks.insert(contentsOf: subtitleBundles.map({
+        tracks.insert(contentsOf: self.subtitleBundles.map({
             "#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"subs\",LANGUAGE=\"\($0.subtitleDTO.language)\",NAME=\"\($0.subtitleDTO.title)\","
             + "AUTOSELECT=YES,CHARACTERISTICS=\"public.accessibility.transcribes-spoken-dialog\""
             + ",URI=\"\(Self.subtitleUrlPrefix)://\($0.subtitleDTO.language).\(Self.subtitleUrlSuffix)\""
