@@ -74,6 +74,7 @@ class VideoPlayerViewController: BaseViewController {
 
     // MARK: Gesture Recognizers
     let tapGestureRecognizer: UITapGestureRecognizer
+    let doubleTapGestureRecognizer: UITapGestureRecognizer
     let panGestureRecognizer: UIPanGestureRecognizer
 
     var seekSliderForegroundViewWidthConstraint: NSLayoutConstraint!
@@ -225,6 +226,7 @@ class VideoPlayerViewController: BaseViewController {
         self.volumeImageView = UIImageView()
 
         self.tapGestureRecognizer = UITapGestureRecognizer()
+        self.doubleTapGestureRecognizer = UITapGestureRecognizer()
         self.panGestureRecognizer = UIPanGestureRecognizer()
 
         self.initialBarSize = 0
@@ -593,6 +595,13 @@ class VideoPlayerViewController: BaseViewController {
 
         self.tapGestureRecognizer.addTarget(self, action: #selector(tapGesture(_:)))
         self.view.addGestureRecognizer(self.tapGestureRecognizer)
+        tapGestureRecognizer.delaysTouchesBegan = true
+        tapGestureRecognizer.require(toFail: doubleTapGestureRecognizer)
+
+        self.doubleTapGestureRecognizer.addTarget(self, action: #selector(doubleTapGesture(_:)))
+        self.view.addGestureRecognizer(self.doubleTapGestureRecognizer)
+        doubleTapGestureRecognizer.delaysTouchesBegan = true
+        doubleTapGestureRecognizer.numberOfTapsRequired = 2
 
         self.panGestureRecognizer.addTarget(self, action: #selector(panGesture(_:)))
         self.view.addGestureRecognizer(self.panGestureRecognizer)
@@ -1402,24 +1411,41 @@ extension VideoPlayerViewController {
 // MARK: - Gesture Handlers
 
 extension VideoPlayerViewController {
+    @objc func doubleTapGesture(_ sender: UITapGestureRecognizer? = nil) {
+        self.controlsHideTask?.cancel()
+        if let sender {
+            let initialLocation = sender.location(ofTouch: 0, in: nil)
+            let skipOffset = self.view.center.x > initialLocation.x ? -10.0 : 10.0
+            if let session = self.castSession {
+                let options = GCKMediaSeekOptions()
+                options.interval = TimeInterval(integerLiteral: skipOffset)
+                options.relative = true
+                session.remoteMediaClient?.seek(with: options)
+            } else if let player = self.playerLayer.player {
+                Task {
+                    await player.seek(to: CMTime(seconds: player.currentTime().seconds + skipOffset, preferredTimescale: CMTimeScale(NSEC_PER_SEC)))
+                }
+            }
+        }
+    }
+
     @objc func tapGesture(_ sender: UITapGestureRecognizer? = nil) {
         self.controlsHideTask?.cancel()
         if self.controlsView.isHidden {
             setControlsVisibility(true)
             resetControlsHideTimer()
+            if let sender {
+                if CGRect(
+                    x: self.view.center.x - 100,
+                    y: self.view.center.y - 100,
+                    width: 200,
+                    height: 200
+                ).contains(sender.location(in: self.view)) {
+                    playPauseButtonPressed()
+                }
+            }
         } else if sender != nil { // This tap was not sent by a button
             setControlsVisibility(false)
-        }
-
-        if let sender {
-            if CGRect(
-                x: self.view.center.x - 100,
-                y: self.view.center.y - 100,
-                width: 200,
-                height: 200
-            ).contains(sender.location(in: self.view)) {
-                playPauseButtonPressed()
-            }
         }
     }
 
@@ -1428,37 +1454,31 @@ extension VideoPlayerViewController {
 
         if sender.state == .ended || sender.state == .cancelled {
             resetControlsHideTimer()
+        }
 
-            if self.panType == .seek, let player = self.playerLayer.player, let item = player.currentItem {
-                setChapterLabelVisibility(false)
+        if self.panType == .seek, let player = self.playerLayer.player, let item = player.currentItem {
+            setChapterLabelVisibility(false)
 
-                Task {
-                    let barPercentage = self.seekSliderForegroundView.frame.width / self.seekSliderBackgroundView.frame.width
+                let barPercentage = self.seekSliderForegroundView.frame.width / self.seekSliderBackgroundView.frame.width
 
-                    if let session = self.castSession {
-                        let options = GCKMediaSeekOptions()
-                        options.interval = TimeInterval(floatLiteral: item.duration.seconds * barPercentage)
-                        session.remoteMediaClient?.seek(with: options)
-                    } else {
-                        await player.seek(to: CMTime(
-                            seconds: item.duration.seconds * barPercentage,
-                            preferredTimescale: CMTimeScale(NSEC_PER_SEC)
-                        ))
-                    }
-
+                if let session = self.castSession {
+                    let options = GCKMediaSeekOptions()
+                    options.interval = TimeInterval(floatLiteral: item.duration.seconds * barPercentage)
+                    session.remoteMediaClient?.seek(with: options)
+                } else {
+                    player.seek(to: CMTime(
+                        seconds: item.duration.seconds * barPercentage,
+                        preferredTimescale: CMTimeScale(NSEC_PER_SEC)
+                    ))
+                }
+                if sender.state == .ended || sender.state == .cancelled {
                     self.history.timestamp = item.duration.seconds * barPercentage
                     Task { @MainActor in
                         DataManager.shared.setHistory(self.history)
                     }
-
                     play()
-
                     self.panType = nil
                 }
-            } else {
-                self.panType = nil
-            }
-            return
         }
         guard sender.numberOfTouches > 0,
               self.seekSliderForegroundView.frame.width.isFinite,
@@ -1488,7 +1508,8 @@ extension VideoPlayerViewController {
             }
         }
         if self.panType == .seek {
-            self.seekSliderForegroundViewWidthConstraint.constant = (self.initialBarSize + offset.x).clamped(
+            let panSpeed = self.view.frame.height * 0.85 < initialLocation.y ? offset.x : offset.x / 2
+            self.seekSliderForegroundViewWidthConstraint.constant = (self.initialBarSize + panSpeed).clamped(
                 to: 0...self.seekSliderBackgroundView.frame.width
             )
 
